@@ -2,8 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html, body {
@@ -14,8 +17,8 @@ html, body {
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #1A1A2E 0%, #16213E 50%, #0F3460 100%);
+  font-family: 'Nunito', 'Inter', sans-serif;
+  background: #46178f;
   background-attachment: fixed;
   color: white;
   min-height: 100vh;
@@ -27,147 +30,373 @@ body {
   flex-direction: column;
 }
 
+/* Kahoot purple gradient backgrounds */
+.bg-kahoot-purple {
+  background: linear-gradient(180deg, #46178f 0%, #7b2cbf 100%);
+}
+
+.bg-kahoot-dark {
+  background: #0e0e0e;
+}
+
+.bg-kahoot-lobby {
+  background: linear-gradient(135deg, #1e0a3c 0%, #46178f 50%, #7b2cbf 100%);
+}
+
 @layer components {
-  .btn-primary {
-    @apply bg-primary hover:bg-primary-dark text-white font-bold py-4 px-8 rounded-2xl
-           transition-all duration-200 transform hover:scale-105 active:scale-95
-           shadow-lg hover:shadow-xl;
+  /* Main action buttons */
+  .btn-kahoot-main {
+    @apply font-extrabold text-xl py-5 px-10 rounded-lg
+           transition-all duration-100 transform
+           shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
+           hover:translate-y-[-2px] hover:shadow-[0_6px_0_0_rgba(0,0,0,0.3)]
+           active:translate-y-[2px] active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)];
   }
 
-  .btn-secondary {
-    @apply bg-secondary hover:bg-secondary-dark text-white font-bold py-4 px-8 rounded-2xl
-           transition-all duration-200 transform hover:scale-105 active:scale-95
-           shadow-lg hover:shadow-xl;
+  .btn-create {
+    @apply btn-kahoot-main bg-[#26890c] text-white;
   }
 
-  .btn-kahoot {
-    @apply font-bold py-6 px-8 rounded-xl transition-all duration-150
-           transform hover:scale-[1.02] active:scale-95 shadow-lg
-           flex items-center justify-center gap-3 min-h-[80px];
+  .btn-join {
+    @apply btn-kahoot-main bg-[#0542b9] text-white;
   }
 
-  .btn-kahoot-red {
-    @apply btn-kahoot bg-kahoot-red hover:brightness-110;
+  .btn-start {
+    @apply btn-kahoot-main bg-[#26890c] text-white text-2xl py-6;
   }
 
-  .btn-kahoot-blue {
-    @apply btn-kahoot bg-kahoot-blue hover:brightness-110;
+  /* Answer buttons - Kahoot style */
+  .btn-answer {
+    @apply relative font-bold text-lg md:text-xl py-6 md:py-8 px-4 rounded-lg
+           transition-all duration-75 transform
+           flex items-center justify-center gap-3
+           shadow-[0_6px_0_0_rgba(0,0,0,0.25),inset_0_-2px_0_0_rgba(0,0,0,0.1)]
+           hover:brightness-110 hover:translate-y-[-2px]
+           active:translate-y-[4px] active:shadow-[0_2px_0_0_rgba(0,0,0,0.25)];
   }
 
-  .btn-kahoot-yellow {
-    @apply btn-kahoot bg-kahoot-yellow hover:brightness-110 text-gray-900;
+  .btn-answer-red {
+    @apply btn-answer bg-[#e21b3c];
   }
 
-  .btn-kahoot-green {
-    @apply btn-kahoot bg-kahoot-green hover:brightness-110;
+  .btn-answer-blue {
+    @apply btn-answer bg-[#1368ce];
   }
 
-  .card {
-    @apply bg-white/10 backdrop-blur-md rounded-2xl p-6 shadow-xl;
+  .btn-answer-yellow {
+    @apply btn-answer bg-[#d89e00] text-gray-900;
   }
 
-  .input-field {
-    @apply w-full bg-white/20 border-2 border-white/30 rounded-xl px-4 py-3
-           text-white placeholder-white/50 focus:outline-none focus:border-primary
-           transition-colors duration-200;
+  .btn-answer-green {
+    @apply btn-answer bg-[#26890c];
   }
 
-  .category-badge {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold
-           uppercase tracking-wider;
+  .btn-answer-selected {
+    @apply ring-4 ring-white ring-offset-2 ring-offset-transparent scale-[1.02];
   }
 
-  .category-couple {
-    @apply bg-pink-500/20 text-pink-300 border border-pink-400/30;
+  .btn-answer-disabled {
+    @apply opacity-60 cursor-not-allowed hover:brightness-100 hover:translate-y-0;
   }
 
-  .category-sexy {
-    @apply bg-red-500/20 text-red-300 border border-red-400/30;
+  /* Cards */
+  .card-glass {
+    @apply bg-white/10 backdrop-blur-xl rounded-2xl p-6
+           border border-white/20 shadow-2xl;
   }
 
-  .category-coquin {
-    @apply bg-purple-500/20 text-purple-300 border border-purple-400/30;
+  .card-solid {
+    @apply bg-[#1a1a1a] rounded-2xl p-6 shadow-2xl;
   }
 
-  .category-habitudes {
-    @apply bg-blue-500/20 text-blue-300 border border-blue-400/30;
+  /* Question card */
+  .question-card {
+    @apply bg-white text-gray-900 rounded-xl p-6 md:p-8 shadow-2xl
+           text-center font-bold text-xl md:text-2xl;
   }
 
-  .category-souvenirs {
-    @apply bg-amber-500/20 text-amber-300 border border-amber-400/30;
+  /* Input fields */
+  .input-kahoot {
+    @apply w-full bg-white/95 border-4 border-transparent rounded-lg px-5 py-4
+           text-gray-900 text-lg font-semibold placeholder-gray-400
+           focus:outline-none focus:border-[#46178f] focus:ring-4 focus:ring-[#46178f]/30
+           transition-all duration-200;
   }
 
-  .category-projets {
-    @apply bg-green-500/20 text-green-300 border border-green-400/30;
+  /* Room code display */
+  .room-code {
+    @apply text-5xl md:text-7xl font-black tracking-[0.2em] text-white
+           drop-shadow-[0_4px_0_rgba(0,0,0,0.3)];
   }
 
-  .category-default {
-    @apply bg-gray-500/20 text-gray-300 border border-gray-400/30;
+  /* Score display */
+  .score-pill {
+    @apply bg-white/20 backdrop-blur rounded-full px-4 py-2
+           font-bold text-sm border border-white/30;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    @apply h-2 bg-white/20 rounded-full overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full bg-gradient-to-r from-[#ff6b6b] via-[#ffd93d] to-[#6bcb77]
+           transition-all duration-300 ease-out;
   }
 }
 
-/* Countdown circle animation */
+/* Countdown circle - Kahoot style */
+.countdown-container {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin: 0 auto;
+}
+
 .countdown-circle {
-  transform-origin: center;
   transform: rotate(-90deg);
+  transform-origin: center;
 }
 
-.countdown-circle-bg {
+.countdown-bg {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.2);
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 10;
 }
 
-.countdown-circle-progress {
+.countdown-progress {
   fill: none;
-  stroke: #E91E63;
+  stroke-width: 10;
   stroke-linecap: round;
-  transition: stroke-dashoffset 1s linear;
+  transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+  filter: drop-shadow(0 0 8px currentColor);
 }
 
-/* Confetti animation */
-.confetti-piece {
+.countdown-text {
   position: absolute;
-  width: 10px;
-  height: 10px;
-  animation: confetti 1.5s ease-out forwards;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+  font-weight: 900;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
 }
 
-@keyframes confetti {
+/* Pulsing animation for countdown */
+@keyframes countdown-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.countdown-urgent {
+  animation: countdown-pulse 0.5s ease-in-out infinite;
+  color: #e21b3c;
+}
+
+/* Scale slider - Kahoot style */
+input[type="range"] {
+  @apply w-full h-4 bg-white/20 rounded-full appearance-none cursor-pointer;
+  background: linear-gradient(to right, #e21b3c 0%, #d89e00 50%, #26890c 100%);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  @apply appearance-none w-10 h-10 bg-white rounded-full cursor-pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 255, 255, 0.5);
+  transition: transform 0.1s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(0.95);
+}
+
+input[type="range"]::-moz-range-thumb {
+  @apply w-10 h-10 bg-white rounded-full cursor-pointer border-0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+/* Shapes for answer buttons */
+.shape-triangle {
+  width: 0;
+  height: 0;
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-bottom: 24px solid currentColor;
+}
+
+.shape-diamond {
+  width: 20px;
+  height: 20px;
+  background: currentColor;
+  transform: rotate(45deg);
+}
+
+.shape-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.shape-square {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: currentColor;
+}
+
+/* Reveal animations */
+@keyframes reveal-bounce {
+  0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+  50% { transform: scale(1.2) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.animate-reveal {
+  animation: reveal-bounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+@keyframes slide-up-bounce {
+  0% { transform: translateY(100px); opacity: 0; }
+  60% { transform: translateY(-10px); }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slide-up-bounce 0.5s ease-out forwards;
+}
+
+/* Glow effects */
+.glow-green {
+  box-shadow: 0 0 30px rgba(38, 137, 12, 0.6), 0 0 60px rgba(38, 137, 12, 0.3);
+}
+
+.glow-red {
+  box-shadow: 0 0 30px rgba(226, 27, 60, 0.6), 0 0 60px rgba(226, 27, 60, 0.3);
+}
+
+.glow-gold {
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.3);
+}
+
+/* Podium */
+.podium-bar {
+  background: linear-gradient(180deg, #ffd700 0%, #b8860b 100%);
+  border-radius: 8px 8px 0 0;
+  position: relative;
+}
+
+.podium-bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+  border-radius: inherit;
+}
+
+/* Floating hearts animation */
+@keyframes float-heart {
   0% {
-    transform: translateY(0) rotate(0deg);
+    transform: translateY(0) scale(1) rotate(0deg);
     opacity: 1;
   }
   100% {
-    transform: translateY(100vh) rotate(720deg);
+    transform: translateY(-200px) scale(0) rotate(45deg);
     opacity: 0;
   }
 }
 
-/* Scale slider */
-input[type="range"] {
-  @apply w-full h-3 bg-white/20 rounded-full appearance-none cursor-pointer;
+.floating-heart {
+  animation: float-heart 2s ease-out forwards;
 }
 
-input[type="range"]::-webkit-slider-thumb {
-  @apply appearance-none w-8 h-8 bg-primary rounded-full cursor-pointer
-         shadow-lg border-4 border-white;
+/* Screen shake for wrong answer */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  60% { transform: translateX(-10px); }
+  80% { transform: translateX(10px); }
 }
 
-input[type="range"]::-moz-range-thumb {
-  @apply w-8 h-8 bg-primary rounded-full cursor-pointer
-         shadow-lg border-4 border-white;
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
 }
 
-/* Pulse animation for waiting */
-.pulse-ring {
-  @apply absolute rounded-full animate-ping;
+/* Loading spinner */
+.spinner {
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
-/* Touch feedback */
-.touch-feedback {
-  -webkit-tap-highlight-color: transparent;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-.touch-feedback:active {
-  transform: scale(0.98);
+/* Particle explosion */
+@keyframes particle-explode {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) scale(0);
+    opacity: 0;
+  }
 }
+
+.particle {
+  animation: particle-explode 0.8s ease-out forwards;
+}
+
+/* Text shadows */
+.text-shadow-strong {
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.3), 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.text-shadow-soft {
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Waiting dots animation */
+@keyframes waiting-dots {
+  0%, 20% { opacity: 0; }
+  40% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.waiting-dot:nth-child(1) { animation: waiting-dots 1.4s infinite 0s; }
+.waiting-dot:nth-child(2) { animation: waiting-dots 1.4s infinite 0.2s; }
+.waiting-dot:nth-child(3) { animation: waiting-dots 1.4s infinite 0.4s; }
+
+/* Category badges */
+.category-badge {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-full
+         text-sm font-bold uppercase tracking-wider
+         shadow-lg border-2;
+}
+
+/* Music bars animation */
+@keyframes music-bar {
+  0%, 100% { height: 4px; }
+  50% { height: 16px; }
+}
+
+.music-bar {
+  width: 3px;
+  background: white;
+  border-radius: 2px;
+  animation: music-bar 0.8s ease-in-out infinite;
+}
+
+.music-bar:nth-child(1) { animation-delay: 0s; }
+.music-bar:nth-child(2) { animation-delay: 0.2s; }
+.music-bar:nth-child(3) { animation-delay: 0.4s; }
+.music-bar:nth-child(4) { animation-delay: 0.6s; }

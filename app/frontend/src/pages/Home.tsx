@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
 import MuteButton from '../components/MuteButton';
-import HeartIcon from '../components/HeartIcon';
 
 type Mode = 'home' | 'create' | 'join';
 
@@ -51,161 +50,265 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-kahoot-lobby flex flex-col">
       <MuteButton />
 
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', duration: 0.5 }}
-        className="text-center mb-8"
-      >
-        <HeartIcon className="w-20 h-20 mx-auto mb-4 text-primary" />
-        <h1 className="text-4xl md:text-5xl font-display font-bold text-white mb-2">
-          Jeu Couples
-        </h1>
-        <p className="text-white/70">
-          Testez votre complicite !
-        </p>
-      </motion.div>
+      {/* Floating hearts background decoration */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute text-4xl opacity-10"
+            initial={{ y: '100vh', x: `${15 + i * 15}%` }}
+            animate={{
+              y: '-10vh',
+              rotate: [0, 20, -20, 0],
+            }}
+            transition={{
+              duration: 15 + i * 2,
+              repeat: Infinity,
+              delay: i * 2,
+              ease: 'linear',
+            }}
+          >
+            💕
+          </motion.div>
+        ))}
+      </div>
 
-      {!connected && (
+      {/* Main content */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
+        {/* Logo and title */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="bg-red-500/20 border border-red-500/50 rounded-xl px-4 py-2 mb-4"
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', damping: 15 }}
+          className="text-center mb-12"
         >
-          <p className="text-red-300 text-sm">Connexion au serveur...</p>
+          <motion.div
+            className="text-8xl mb-4"
+            animate={{
+              scale: [1, 1.1, 1],
+              rotate: [0, 5, -5, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              repeatType: 'reverse',
+            }}
+          >
+            💑
+          </motion.div>
+          <h1 className="text-5xl md:text-7xl font-black text-white text-shadow-strong mb-3">
+            Jeu Couples
+          </h1>
+          <p className="text-xl text-white/80 font-semibold">
+            Testez votre complicite !
+          </p>
         </motion.div>
-      )}
 
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-red-500/20 border border-red-500/50 rounded-xl px-4 py-2 mb-4"
-        >
-          <p className="text-red-300 text-sm">{error}</p>
-        </motion.div>
-      )}
-
-      <AnimatePresence mode="wait">
-        {mode === 'home' && (
+        {/* Connection status */}
+        {!connected && (
           <motion.div
-            key="home"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="w-full max-w-sm space-y-4"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-black/30 backdrop-blur rounded-xl px-6 py-3 mb-6 flex items-center gap-3"
           >
-            <button
-              onClick={() => switchMode('create')}
-              disabled={!connected}
-              className="btn-primary w-full text-lg disabled:opacity-50"
-            >
-              Creer une partie
-            </button>
-            <button
-              onClick={() => switchMode('join')}
-              disabled={!connected}
-              className="btn-secondary w-full text-lg disabled:opacity-50"
-            >
-              Rejoindre avec un code
-            </button>
+            <div className="spinner w-5 h-5" />
+            <p className="text-white font-semibold">Connexion au serveur...</p>
           </motion.div>
         )}
 
-        {mode === 'create' && (
+        {/* Error message */}
+        {error && (
           <motion.div
-            key="create"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="w-full max-w-sm space-y-4 card"
+            className="bg-[#e21b3c] rounded-xl px-6 py-3 mb-6 shadow-lg"
           >
-            <h2 className="text-xl font-bold text-center">Creer une partie</h2>
-            <div>
-              <label className="block text-white/70 text-sm mb-2">
-                Ton prenom
-              </label>
-              <input
-                type="text"
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                placeholder="Ex: Marie"
-                className="input-field"
-                maxLength={20}
-                autoFocus
-              />
-            </div>
-            <button
-              onClick={handleCreate}
-              disabled={!playerName.trim() || loading}
-              className="btn-primary w-full disabled:opacity-50"
-            >
-              {loading ? 'Creation...' : 'Commencer'}
-            </button>
-            <button
-              onClick={() => switchMode('home')}
-              className="w-full text-white/50 hover:text-white transition-colors py-2"
-            >
-              Retour
-            </button>
+            <p className="text-white font-bold">{error}</p>
           </motion.div>
         )}
 
-        {mode === 'join' && (
-          <motion.div
-            key="join"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="w-full max-w-sm space-y-4 card"
-          >
-            <h2 className="text-xl font-bold text-center">Rejoindre une partie</h2>
-            <div>
-              <label className="block text-white/70 text-sm mb-2">
-                Ton prenom
-              </label>
-              <input
-                type="text"
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                placeholder="Ex: Pierre"
-                className="input-field"
-                maxLength={20}
-                autoFocus
-              />
-            </div>
-            <div>
-              <label className="block text-white/70 text-sm mb-2">
-                Code du salon
-              </label>
-              <input
-                type="text"
-                value={roomCode}
-                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                placeholder="ABC123"
-                className="input-field text-center text-2xl tracking-widest font-mono"
-                maxLength={6}
-              />
-            </div>
-            <button
-              onClick={handleJoin}
-              disabled={!playerName.trim() || roomCode.length !== 6 || loading}
-              className="btn-secondary w-full disabled:opacity-50"
+        {/* Main buttons / forms */}
+        <AnimatePresence mode="wait">
+          {mode === 'home' && (
+            <motion.div
+              key="home"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30, scale: 0.95 }}
+              transition={{ type: 'spring', damping: 20 }}
+              className="w-full max-w-md space-y-4"
             >
-              {loading ? 'Connexion...' : 'Rejoindre'}
-            </button>
-            <button
-              onClick={() => switchMode('home')}
-              className="w-full text-white/50 hover:text-white transition-colors py-2"
+              <motion.button
+                onClick={() => switchMode('create')}
+                disabled={!connected}
+                className="btn-create w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className="flex items-center justify-center gap-3">
+                  <span className="text-2xl">🎮</span>
+                  Creer une partie
+                </span>
+              </motion.button>
+
+              <motion.button
+                onClick={() => switchMode('join')}
+                disabled={!connected}
+                className="btn-join w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className="flex items-center justify-center gap-3">
+                  <span className="text-2xl">🔗</span>
+                  Rejoindre avec un code
+                </span>
+              </motion.button>
+            </motion.div>
+          )}
+
+          {mode === 'create' && (
+            <motion.div
+              key="create"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30, scale: 0.95 }}
+              transition={{ type: 'spring', damping: 20 }}
+              className="w-full max-w-md"
             >
-              Retour
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <div className="bg-white rounded-2xl p-8 shadow-2xl">
+                <h2 className="text-2xl font-black text-gray-900 text-center mb-6">
+                  Creer une partie
+                </h2>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
+                      Ton prenom
+                    </label>
+                    <input
+                      type="text"
+                      value={playerName}
+                      onChange={(e) => setPlayerName(e.target.value)}
+                      placeholder="Ex: Marie"
+                      className="input-kahoot"
+                      maxLength={20}
+                      autoFocus
+                      onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                    />
+                  </div>
+
+                  <motion.button
+                    onClick={handleCreate}
+                    disabled={!playerName.trim() || loading}
+                    className="btn-create w-full disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-3">
+                        <div className="spinner w-5 h-5 border-white/30 border-t-white" />
+                        Creation...
+                      </span>
+                    ) : (
+                      "C'est parti !"
+                    )}
+                  </motion.button>
+                </div>
+              </div>
+
+              <motion.button
+                onClick={() => switchMode('home')}
+                className="w-full text-white/70 hover:text-white font-bold py-4 mt-4 transition-colors"
+                whileHover={{ scale: 1.02 }}
+              >
+                ← Retour
+              </motion.button>
+            </motion.div>
+          )}
+
+          {mode === 'join' && (
+            <motion.div
+              key="join"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30, scale: 0.95 }}
+              transition={{ type: 'spring', damping: 20 }}
+              className="w-full max-w-md"
+            >
+              <div className="bg-white rounded-2xl p-8 shadow-2xl">
+                <h2 className="text-2xl font-black text-gray-900 text-center mb-6">
+                  Rejoindre une partie
+                </h2>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
+                      Ton prenom
+                    </label>
+                    <input
+                      type="text"
+                      value={playerName}
+                      onChange={(e) => setPlayerName(e.target.value)}
+                      placeholder="Ex: Pierre"
+                      className="input-kahoot"
+                      maxLength={20}
+                      autoFocus
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
+                      Code du salon
+                    </label>
+                    <input
+                      type="text"
+                      value={roomCode}
+                      onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                      placeholder="ABC123"
+                      className="input-kahoot text-center text-3xl tracking-[0.3em] font-black"
+                      maxLength={6}
+                      onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
+                    />
+                  </div>
+
+                  <motion.button
+                    onClick={handleJoin}
+                    disabled={!playerName.trim() || roomCode.length !== 6 || loading}
+                    className="btn-join w-full disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-3">
+                        <div className="spinner w-5 h-5 border-white/30 border-t-white" />
+                        Connexion...
+                      </span>
+                    ) : (
+                      'Rejoindre'
+                    )}
+                  </motion.button>
+                </div>
+              </div>
+
+              <motion.button
+                onClick={() => switchMode('home')}
+                className="w-full text-white/70 hover:text-white font-bold py-4 mt-4 transition-colors"
+                whileHover={{ scale: 1.02 }}
+              >
+                ← Retour
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Footer */}
+      <div className="text-center py-4 text-white/40 text-sm">
+        Made with 💕
+      </div>
     </div>
   );
 }

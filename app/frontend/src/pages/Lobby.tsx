@@ -1,10 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
 import MuteButton from '../components/MuteButton';
-import HeartIcon from '../components/HeartIcon';
 
 export default function Lobby() {
   const {
@@ -17,6 +16,7 @@ export default function Lobby() {
   } = useGame();
   const { playSound, playLobbyMusic, stopLobbyMusic } = useAudio();
   const navigate = useNavigate();
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     playLobbyMusic();
@@ -55,6 +55,8 @@ export default function Lobby() {
     if (room?.code) {
       navigator.clipboard.writeText(room.code);
       playSound('click');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -64,137 +66,300 @@ export default function Lobby() {
   const bothPlayersReady = room.player1_name && room.player2_name;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-kahoot-lobby flex flex-col">
       <MuteButton />
 
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="text-center w-full max-w-md"
-      >
-        <HeartIcon className="w-16 h-16 mx-auto mb-4 text-primary" />
-
-        <h2 className="text-xl text-white/70 mb-2">Code du salon</h2>
+      {/* Animated background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          className="card mb-8 cursor-pointer"
-          onClick={copyCode}
-          whileTap={{ scale: 0.98 }}
+          className="absolute inset-0"
+          animate={{
+            background: [
+              'radial-gradient(circle at 20% 50%, rgba(123, 44, 191, 0.3) 0%, transparent 50%)',
+              'radial-gradient(circle at 80% 50%, rgba(123, 44, 191, 0.3) 0%, transparent 50%)',
+              'radial-gradient(circle at 20% 50%, rgba(123, 44, 191, 0.3) 0%, transparent 50%)',
+            ],
+          }}
+          transition={{ duration: 8, repeat: Infinity }}
+        />
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
+        {/* Header */}
+        <motion.div
+          initial={{ y: -30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="text-center mb-8"
         >
-          <p className="text-5xl font-mono font-bold tracking-[0.3em] text-primary">
-            {room.code}
+          <p className="text-white/60 font-semibold uppercase tracking-wider mb-2">
+            Code du salon
           </p>
-          <p className="text-sm text-white/50 mt-2">
-            Appuie pour copier
-          </p>
-        </motion.div>
-
-        <div className="space-y-4 mb-8">
-          <PlayerSlot
-            name={room.player1_name}
-            label="Joueur 1"
-            isYou={playerId === 1}
-            isReady={!!room.player1_name}
-          />
-          <PlayerSlot
-            name={room.player2_name}
-            label="Joueur 2"
-            isYou={playerId === 2}
-            isReady={!!room.player2_name}
-          />
-        </div>
-
-        {!bothPlayersReady && (
           <motion.div
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="text-white/70 mb-6"
-          >
-            <p>En attente de l'autre joueur...</p>
-            <p className="text-sm mt-2">
-              Partage le code <span className="font-mono font-bold text-primary">{room.code}</span> avec ton partenaire
-            </p>
-          </motion.div>
-        )}
-
-        {error && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="bg-red-500/20 border border-red-500/50 rounded-xl px-4 py-2 mb-4"
-          >
-            <p className="text-red-300 text-sm">{error}</p>
-          </motion.div>
-        )}
-
-        {isHost && bothPlayersReady && (
-          <motion.button
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            onClick={handleStart}
-            className="btn-primary w-full text-xl mb-4"
+            onClick={copyCode}
+            className="cursor-pointer group"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            Lancer la partie
-          </motion.button>
-        )}
+            <div className="bg-white rounded-2xl px-10 py-6 shadow-2xl relative overflow-hidden">
+              <motion.div
+                className="absolute inset-0 bg-[#26890c]"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: copied ? 1 : 0 }}
+                transition={{ duration: 0.3 }}
+                style={{ transformOrigin: 'left' }}
+              />
+              <p className="room-code text-[#46178f] relative z-10">
+                {copied ? '✓' : room.code}
+              </p>
+            </div>
+            <p className="text-white/50 text-sm mt-3 group-hover:text-white/70 transition-colors">
+              {copied ? 'Code copie !' : 'Clique pour copier'}
+            </p>
+          </motion.div>
+        </motion.div>
 
-        {!isHost && bothPlayersReady && (
+        {/* Music indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center gap-1 mb-8 bg-white/10 px-4 py-2 rounded-full"
+        >
+          <div className="flex items-end gap-0.5 h-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="music-bar" style={{ animationDelay: `${i * 0.15}s` }} />
+            ))}
+          </div>
+          <span className="text-white/70 text-sm ml-2">Musique d'ambiance</span>
+        </motion.div>
+
+        {/* Players */}
+        <div className="w-full max-w-lg space-y-4 mb-8">
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-white/70 mb-4"
+            initial={{ x: -50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.1 }}
           >
-            <p>En attente du lancement par l'hote...</p>
+            <PlayerCard
+              name={room.player1_name}
+              emoji="👩"
+              isYou={playerId === 1}
+              isReady={!!room.player1_name}
+              position={1}
+            />
+          </motion.div>
+
+          {/* VS separator */}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: 'spring' }}
+            className="flex items-center justify-center"
+          >
+            <div className="w-16 h-16 rounded-full bg-[#e21b3c] flex items-center justify-center shadow-lg">
+              <span className="text-2xl font-black text-white">VS</span>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ x: 50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <PlayerCard
+              name={room.player2_name}
+              emoji="👨"
+              isYou={playerId === 2}
+              isReady={!!room.player2_name}
+              position={2}
+            />
+          </motion.div>
+        </div>
+
+        {/* Status / Actions */}
+        <AnimatePresence mode="wait">
+          {!bothPlayersReady && (
+            <motion.div
+              key="waiting"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="text-center"
+            >
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <div className="spinner w-6 h-6" />
+                <span className="text-white font-semibold text-lg">
+                  En attente de ton partenaire
+                  <span className="waiting-dot">.</span>
+                  <span className="waiting-dot">.</span>
+                  <span className="waiting-dot">.</span>
+                </span>
+              </div>
+              <p className="text-white/60">
+                Partage le code <span className="font-mono font-bold text-white">{room.code}</span>
+              </p>
+            </motion.div>
+          )}
+
+          {isHost && bothPlayersReady && (
+            <motion.div
+              key="start"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="w-full max-w-md"
+            >
+              <motion.button
+                onClick={handleStart}
+                className="btn-start w-full"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                animate={{
+                  boxShadow: [
+                    '0 4px 0 0 rgba(0,0,0,0.3)',
+                    '0 4px 30px 10px rgba(38, 137, 12, 0.4)',
+                    '0 4px 0 0 rgba(0,0,0,0.3)',
+                  ],
+                }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                <span className="flex items-center justify-center gap-3">
+                  <span className="text-3xl">🚀</span>
+                  Lancer la partie !
+                </span>
+              </motion.button>
+            </motion.div>
+          )}
+
+          {!isHost && bothPlayersReady && (
+            <motion.div
+              key="waiting-host"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center gap-3 bg-white/10 rounded-xl px-6 py-4"
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                className="text-2xl"
+              >
+                ⏳
+              </motion.div>
+              <span className="text-white font-semibold">
+                {room.player1_name} va lancer la partie...
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Error */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-[#e21b3c] rounded-xl px-6 py-3 mt-4"
+          >
+            <p className="text-white font-bold">{error}</p>
           </motion.div>
         )}
 
-        <button
+        {/* Leave button */}
+        <motion.button
           onClick={handleLeave}
-          className="text-white/50 hover:text-white transition-colors py-2"
+          className="mt-8 text-white/50 hover:text-white font-semibold transition-colors"
+          whileHover={{ scale: 1.05 }}
         >
-          Quitter le salon
-        </button>
-      </motion.div>
+          ← Quitter le salon
+        </motion.button>
+      </div>
     </div>
   );
 }
 
-interface PlayerSlotProps {
+interface PlayerCardProps {
   name: string | null;
-  label: string;
+  emoji: string;
   isYou: boolean;
   isReady: boolean;
+  position: 1 | 2;
 }
 
-function PlayerSlot({ name, label, isYou, isReady }: PlayerSlotProps) {
+function PlayerCard({ name, emoji, isYou, isReady, position }: PlayerCardProps) {
   return (
     <motion.div
-      initial={{ x: -20, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
       className={`
-        card flex items-center gap-4 transition-all
-        ${isReady ? 'border-2 border-green-500/50' : 'border-2 border-white/20'}
+        relative rounded-2xl p-6 transition-all duration-300
+        ${isReady
+          ? 'bg-gradient-to-r from-[#26890c] to-[#1a6b08] shadow-lg glow-green'
+          : 'bg-white/10 border-2 border-dashed border-white/30'
+        }
       `}
+      animate={isReady ? {} : { borderColor: ['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.5)', 'rgba(255,255,255,0.3)'] }}
+      transition={{ duration: 2, repeat: Infinity }}
     >
-      <div
-        className={`
-          w-12 h-12 rounded-full flex items-center justify-center text-xl
-          ${isReady ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white/30'}
-        `}
-      >
-        {isReady ? '✓' : '?'}
+      <div className="flex items-center gap-4">
+        {/* Avatar */}
+        <motion.div
+          className={`
+            w-16 h-16 rounded-full flex items-center justify-center text-3xl
+            ${isReady ? 'bg-white/20' : 'bg-white/10'}
+          `}
+          animate={isReady ? { scale: [1, 1.1, 1] } : {}}
+          transition={{ duration: 0.5 }}
+        >
+          {isReady ? emoji : '❓'}
+        </motion.div>
+
+        {/* Info */}
+        <div className="flex-1">
+          <p className="text-white/60 text-sm font-semibold uppercase tracking-wide">
+            Joueur {position}
+          </p>
+          <p className="text-white text-xl font-bold">
+            {name || 'En attente...'}
+          </p>
+        </div>
+
+        {/* Status */}
+        <div className="flex items-center gap-2">
+          {isYou && (
+            <span className="bg-white/20 text-white px-3 py-1 rounded-full text-sm font-bold">
+              Toi
+            </span>
+          )}
+          {isReady && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="w-10 h-10 rounded-full bg-white flex items-center justify-center"
+            >
+              <span className="text-[#26890c] text-xl">✓</span>
+            </motion.div>
+          )}
+        </div>
       </div>
-      <div className="flex-1 text-left">
-        <p className="text-sm text-white/50">{label}</p>
-        <p className={`font-bold ${isReady ? 'text-white' : 'text-white/30'}`}>
-          {name || 'En attente...'}
-        </p>
-      </div>
-      {isYou && (
-        <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">
-          Toi
-        </span>
+
+      {/* Waiting animation */}
+      {!isReady && (
+        <motion.div
+          className="absolute bottom-2 right-4 flex gap-1"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              className="w-2 h-2 bg-white/50 rounded-full"
+              animate={{ y: [0, -8, 0] }}
+              transition={{
+                duration: 0.6,
+                repeat: Infinity,
+                delay: i * 0.15,
+              }}
+            />
+          ))}
+        </motion.div>
       )}
     </motion.div>
   );

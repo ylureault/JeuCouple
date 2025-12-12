@@ -19,10 +19,7 @@ export default function RevealCard({
 }: RevealCardProps) {
   const { answer1, answer2, correct, points1, points2, questionType } = revealData;
 
-  const myAnswer = playerId === 1 ? answer1 : answer2;
-  const theirAnswer = playerId === 1 ? answer2 : answer1;
   const myPoints = playerId === 1 ? points1 : points2;
-
   const showPoints = questionType !== 'C';
   const answersMatch = answer1 === answer2;
 
@@ -32,48 +29,49 @@ export default function RevealCard({
       animate={{ opacity: 1 }}
       className="space-y-6"
     >
-      {correct && showPoints && <Confetti count={20} />}
+      {correct && showPoints && <Confetti count={30} />}
 
-      {/* Result header */}
+      {/* Result banner */}
       <motion.div
-        initial={{ scale: 0.8 }}
-        animate={{ scale: 1 }}
+        initial={{ scale: 0, rotate: -10 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: 'spring', damping: 12 }}
         className={`
-          card text-center py-8
-          ${correct && showPoints ? 'bg-green-500/20 border-2 border-green-500/50' : ''}
-          ${!correct && showPoints ? 'bg-red-500/20 border-2 border-red-500/50' : ''}
-          ${!showPoints ? 'bg-purple-500/20 border-2 border-purple-500/50' : ''}
+          rounded-2xl p-8 text-center shadow-2xl
+          ${correct && showPoints ? 'bg-[#26890c] glow-green' : ''}
+          ${!correct && showPoints ? 'bg-[#e21b3c] glow-red' : ''}
+          ${!showPoints ? 'bg-[#9c27b0]' : ''}
         `}
       >
         {showPoints && (
           <>
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', delay: 0.2 }}
-              className="text-6xl mb-4"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', delay: 0.2, damping: 10 }}
+              className="text-7xl mb-4"
             >
-              {correct ? '✓' : '✗'}
+              {correct ? '🎉' : '💔'}
             </motion.div>
-            <motion.p
+            <motion.h2
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className={`text-2xl font-bold ${
-                correct ? 'text-green-400' : 'text-red-400'
-              }`}
+              className="text-3xl font-black text-white mb-2"
             >
               {answersMatch ? 'Vous pensez pareil !' : 'Pas cette fois...'}
-            </motion.p>
+            </motion.h2>
             {myPoints > 0 && (
-              <motion.p
+              <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.5, type: 'spring' }}
-                className="text-xl text-green-400 mt-2"
+                className="inline-block bg-white/20 rounded-full px-6 py-2 mt-2"
               >
-                +{myPoints} points
-              </motion.p>
+                <span className="text-2xl font-black text-white">
+                  +{myPoints} points
+                </span>
+              </motion.div>
             )}
           </>
         )}
@@ -83,39 +81,37 @@ export default function RevealCard({
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="text-6xl mb-4"
+              transition={{ type: 'spring' }}
+              className="text-7xl mb-4"
             >
               💬
             </motion.div>
-            <p className="text-xl text-purple-300">
+            <h2 className="text-2xl font-black text-white">
               Comparez vos reponses !
-            </p>
+            </h2>
           </>
         )}
       </motion.div>
 
-      {/* Question reminder */}
-      <div className="card opacity-70">
-        <p className="text-center text-white/80">{question.text}</p>
-      </div>
-
       {/* Answers comparison */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <AnswerBlock
           name={player1Name}
           answer={answer1}
           isYou={playerId === 1}
-          highlighted={answersMatch}
+          highlighted={answersMatch && showPoints}
           questionType={questionType}
           delay={0.4}
+          emoji="👩"
         />
         <AnswerBlock
           name={player2Name}
           answer={answer2}
           isYou={playerId === 2}
-          highlighted={answersMatch}
+          highlighted={answersMatch && showPoints}
           questionType={questionType}
           delay={0.5}
+          emoji="👨"
         />
       </div>
 
@@ -128,6 +124,22 @@ export default function RevealCard({
           player2Name={player2Name}
         />
       )}
+
+      {/* Next question indicator */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+        className="text-center"
+      >
+        <motion.p
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+          className="text-white/60 font-semibold"
+        >
+          Question suivante dans un instant...
+        </motion.p>
+      </motion.div>
     </motion.div>
   );
 }
@@ -139,6 +151,7 @@ interface AnswerBlockProps {
   highlighted: boolean;
   questionType: string;
   delay: number;
+  emoji: string;
 }
 
 function AnswerBlock({
@@ -147,36 +160,65 @@ function AnswerBlock({
   isYou,
   highlighted,
   questionType,
-  delay
+  delay,
+  emoji
 }: AnswerBlockProps) {
   return (
     <motion.div
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay }}
+      initial={{ y: 30, opacity: 0, scale: 0.9 }}
+      animate={{ y: 0, opacity: 1, scale: 1 }}
+      transition={{ delay, type: 'spring', damping: 15 }}
       className={`
-        card text-center
-        ${highlighted ? 'border-2 border-green-500/50' : 'border-2 border-white/20'}
+        bg-white rounded-xl p-5 shadow-lg relative overflow-hidden
+        ${highlighted ? 'ring-4 ring-[#26890c]' : ''}
       `}
     >
-      <p className="text-white/50 text-sm mb-1">
-        {name}
-        {isYou && (
-          <span className="ml-1 text-xs bg-primary/20 text-primary px-1 rounded">
-            toi
-          </span>
-        )}
-      </p>
-      <motion.p
-        initial={{ scale: 0.8 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: delay + 0.1 }}
-        className={`font-bold ${
-          questionType === 'D' ? 'text-3xl text-primary' : 'text-lg'
-        }`}
+      {/* Background decoration */}
+      {highlighted && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="absolute top-2 right-2 text-2xl"
+        >
+          ✓
+        </motion.div>
+      )}
+
+      {/* Player info */}
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-full bg-[#46178f]/10 flex items-center justify-center text-xl">
+          {emoji}
+        </div>
+        <div>
+          <p className="font-bold text-gray-900 text-sm">
+            {name}
+          </p>
+          {isYou && (
+            <span className="text-xs bg-[#46178f] text-white px-2 py-0.5 rounded-full">
+              Toi
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Answer */}
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: delay + 0.15 }}
+        className={`
+          rounded-lg p-4 text-center
+          ${answer ? 'bg-[#46178f]/10' : 'bg-gray-100'}
+        `}
       >
-        {answer || '(pas de reponse)'}
-      </motion.p>
+        <p className={`
+          font-bold
+          ${questionType === 'D' ? 'text-4xl text-[#46178f]' : 'text-lg text-gray-900'}
+          ${!answer ? 'text-gray-400 italic' : ''}
+        `}>
+          {answer || 'Pas de reponse'}
+        </p>
+      </motion.div>
     </motion.div>
   );
 }
@@ -195,57 +237,72 @@ function ScaleComparison({
   player2Name
 }: ScaleComparisonProps) {
   const diff = Math.abs(value1 - value2);
+  const getEmoji = () => {
+    if (diff === 0) return '🎯';
+    if (diff <= 2) return '👍';
+    return '🤔';
+  };
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.6 }}
-      className="card"
+      className="bg-white rounded-xl p-6 shadow-lg"
     >
-      <div className="relative h-8 bg-white/10 rounded-full overflow-hidden">
-        {/* Scale markers */}
+      <div className="flex items-center justify-center gap-2 mb-4">
+        <span className="text-2xl">{getEmoji()}</span>
+        <span className="text-gray-900 font-bold">
+          Ecart de {diff} point{diff !== 1 ? 's' : ''}
+        </span>
+      </div>
+
+      {/* Visual scale */}
+      <div className="relative h-12 bg-gradient-to-r from-[#e21b3c] via-[#d89e00] to-[#26890c] rounded-full p-1">
+        <div className="absolute inset-1 bg-white/90 rounded-full" />
+
+        {/* Markers */}
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
           <div
             key={n}
-            className="absolute top-0 bottom-0 w-px bg-white/20"
-            style={{ left: `${(n - 1) * 11.11}%` }}
-          />
+            className="absolute top-1/2 -translate-y-1/2 text-xs text-gray-400 font-bold"
+            style={{ left: `${(n - 0.5) * 10}%`, transform: 'translateX(-50%) translateY(-50%)' }}
+          >
+            {n}
+          </div>
         ))}
 
         {/* Player 1 marker */}
         <motion.div
-          initial={{ left: '0%' }}
-          animate={{ left: `${(value1 - 1) * 11.11}%` }}
-          transition={{ delay: 0.7, type: 'spring' }}
-          className="absolute top-1 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-xs font-bold shadow-lg"
+          initial={{ left: '5%', scale: 0 }}
+          animate={{ left: `${(value1 - 0.5) * 10}%`, scale: 1 }}
+          transition={{ delay: 0.7, type: 'spring', damping: 12 }}
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 bg-[#e21b3c] rounded-full flex items-center justify-center text-white font-black shadow-lg z-10"
         >
           {value1}
         </motion.div>
 
         {/* Player 2 marker */}
         <motion.div
-          initial={{ left: '0%' }}
-          animate={{ left: `${(value2 - 1) * 11.11}%` }}
-          transition={{ delay: 0.8, type: 'spring' }}
-          className="absolute top-1 w-6 h-6 bg-secondary rounded-full flex items-center justify-center text-xs font-bold shadow-lg"
+          initial={{ left: '5%', scale: 0 }}
+          animate={{ left: `${(value2 - 0.5) * 10}%`, scale: 1 }}
+          transition={{ delay: 0.8, type: 'spring', damping: 12 }}
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 bg-[#1368ce] rounded-full flex items-center justify-center text-white font-black shadow-lg z-10"
         >
           {value2}
         </motion.div>
       </div>
 
-      <div className="flex justify-between text-sm mt-2">
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 bg-primary rounded-full" />
-          {player1Name}
-        </span>
-        <span className="text-white/50">
-          Ecart: {diff} point{diff !== 1 ? 's' : ''}
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 bg-secondary rounded-full" />
-          {player2Name}
-        </span>
+      {/* Legend */}
+      <div className="flex justify-between mt-4 text-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 bg-[#e21b3c] rounded-full" />
+          <span className="text-gray-700 font-semibold">{player1Name}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 bg-[#1368ce] rounded-full" />
+          <span className="text-gray-700 font-semibold">{player2Name}</span>
+        </div>
       </div>
     </motion.div>
   );

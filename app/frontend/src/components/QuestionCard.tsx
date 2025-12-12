@@ -9,27 +9,27 @@ interface QuestionCardProps {
   selectedAnswer: string | null;
 }
 
-const buttonColors = [
-  'btn-kahoot-red',
-  'btn-kahoot-blue',
-  'btn-kahoot-yellow',
-  'btn-kahoot-green'
+const buttonStyles = [
+  { bg: 'bg-[#e21b3c]', shape: 'triangle' },
+  { bg: 'bg-[#1368ce]', shape: 'diamond' },
+  { bg: 'bg-[#d89e00]', shape: 'circle', textColor: 'text-gray-900' },
+  { bg: 'bg-[#26890c]', shape: 'square' },
 ];
 
-const shapes = [
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" key="triangle">
-    <polygon points="12,2 22,22 2,22" />
-  </svg>,
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" key="diamond">
-    <polygon points="12,2 22,12 12,22 2,12" />
-  </svg>,
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" key="circle">
-    <circle cx="12" cy="12" r="10" />
-  </svg>,
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" key="square">
-    <rect x="3" y="3" width="18" height="18" rx="2" />
-  </svg>
-];
+function Shape({ type, className = '' }: { type: string; className?: string }) {
+  switch (type) {
+    case 'triangle':
+      return <div className={`shape-triangle ${className}`} />;
+    case 'diamond':
+      return <div className={`shape-diamond ${className}`} />;
+    case 'circle':
+      return <div className={`shape-circle ${className}`} />;
+    case 'square':
+      return <div className={`shape-square ${className}`} />;
+    default:
+      return null;
+  }
+}
 
 export default function QuestionCard({
   question,
@@ -38,61 +38,89 @@ export default function QuestionCard({
   selectedAnswer
 }: QuestionCardProps) {
   const [scaleValue, setScaleValue] = useState(5);
+  const [freeText, setFreeText] = useState('');
 
   const renderTypeAB = () => (
-    <div className="grid grid-cols-2 gap-3">
-      {question.options?.map((option, index) => (
-        <motion.button
-          key={index}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.1 }}
-          onClick={() => onAnswer(option)}
-          disabled={disabled}
-          className={`
-            ${buttonColors[index % 4]}
-            ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-            ${selectedAnswer === option ? 'ring-4 ring-white' : ''}
-          `}
-          whileHover={disabled ? {} : { scale: 1.02 }}
-          whileTap={disabled ? {} : { scale: 0.98 }}
-        >
-          {shapes[index % 4]}
-          <span className="text-lg font-bold">{option}</span>
-        </motion.button>
-      ))}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {question.options?.map((option, index) => {
+        const style = buttonStyles[index % 4];
+        const isSelected = selectedAnswer === option;
+
+        return (
+          <motion.button
+            key={index}
+            initial={{ opacity: 0, y: 30, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{
+              delay: index * 0.1,
+              type: 'spring',
+              stiffness: 200,
+              damping: 15
+            }}
+            onClick={() => !disabled && onAnswer(option)}
+            disabled={disabled}
+            className={`
+              btn-answer ${style.bg} ${style.textColor || 'text-white'}
+              ${disabled && !isSelected ? 'btn-answer-disabled' : ''}
+              ${isSelected ? 'btn-answer-selected' : ''}
+            `}
+            whileHover={disabled ? {} : { scale: 1.03, y: -4 }}
+            whileTap={disabled ? {} : { scale: 0.97 }}
+          >
+            <Shape type={style.shape} className={style.textColor ? 'text-gray-900' : 'text-white'} />
+            <span className="flex-1 text-left font-bold text-lg">
+              {option}
+            </span>
+            {isSelected && (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="text-2xl"
+              >
+                ✓
+              </motion.span>
+            )}
+          </motion.button>
+        );
+      })}
     </div>
   );
 
   const renderTypeC = () => {
-    const [text, setText] = useState('');
-
     const handleSubmit = () => {
-      if (text.trim()) {
-        onAnswer(text.trim());
+      if (freeText.trim()) {
+        onAnswer(freeText.trim());
       }
     };
 
     return (
-      <div className="space-y-4">
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Ta reponse..."
-          className="input-field h-32 resize-none"
-          disabled={disabled}
-          maxLength={500}
-        />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-4"
+      >
+        <div className="bg-white rounded-xl p-1 shadow-lg">
+          <textarea
+            value={freeText}
+            onChange={(e) => setFreeText(e.target.value)}
+            placeholder="Ecris ta reponse ici..."
+            className="w-full h-32 p-4 text-gray-900 text-lg font-semibold resize-none rounded-lg
+                       focus:outline-none placeholder-gray-400"
+            disabled={disabled}
+            maxLength={500}
+          />
+        </div>
         <motion.button
           onClick={handleSubmit}
-          disabled={disabled || !text.trim()}
-          className="btn-primary w-full disabled:opacity-50"
-          whileHover={disabled ? {} : { scale: 1.02 }}
-          whileTap={disabled ? {} : { scale: 0.98 }}
+          disabled={disabled || !freeText.trim()}
+          className="btn-answer bg-[#26890c] w-full disabled:opacity-50 disabled:cursor-not-allowed"
+          whileHover={disabled || !freeText.trim() ? {} : { scale: 1.02 }}
+          whileTap={disabled || !freeText.trim() ? {} : { scale: 0.98 }}
         >
-          Valider ma reponse
+          <span className="text-xl">✓</span>
+          <span>Valider ma reponse</span>
         </motion.button>
-      </div>
+      </motion.div>
     );
   };
 
@@ -102,71 +130,72 @@ export default function QuestionCard({
     };
 
     return (
-      <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-8"
+      >
+        {/* Scale value display */}
         <div className="text-center">
-          <motion.span
+          <motion.div
             key={scaleValue}
-            initial={{ scale: 1.5 }}
-            animate={{ scale: 1 }}
-            className="text-6xl font-bold text-primary"
+            initial={{ scale: 1.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="inline-block"
           >
-            {scaleValue}
-          </motion.span>
-          <span className="text-white/50">/10</span>
+            <span className="text-8xl font-black text-white text-shadow-strong">
+              {scaleValue}
+            </span>
+          </motion.div>
+          <p className="text-white/60 text-lg mt-2">sur 10</p>
         </div>
 
+        {/* Slider */}
         <div className="px-4">
-          <input
-            type="range"
-            min="1"
-            max="10"
-            value={scaleValue}
-            onChange={(e) => setScaleValue(parseInt(e.target.value))}
-            disabled={disabled}
-            className="w-full"
-          />
-          <div className="flex justify-between text-white/50 text-sm mt-2">
-            <span>1</span>
-            <span>5</span>
-            <span>10</span>
+          <div className="relative">
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value={scaleValue}
+              onChange={(e) => setScaleValue(parseInt(e.target.value))}
+              disabled={disabled}
+              className="w-full h-4 rounded-full cursor-pointer"
+            />
+          </div>
+          <div className="flex justify-between text-white/70 font-bold mt-4">
+            <span className="flex flex-col items-center">
+              <span className="text-2xl">😢</span>
+              <span>1</span>
+            </span>
+            <span className="flex flex-col items-center">
+              <span className="text-2xl">😐</span>
+              <span>5</span>
+            </span>
+            <span className="flex flex-col items-center">
+              <span className="text-2xl">😍</span>
+              <span>10</span>
+            </span>
           </div>
         </div>
 
+        {/* Submit button */}
         <motion.button
           onClick={handleSubmit}
           disabled={disabled}
-          className="btn-primary w-full disabled:opacity-50"
+          className="btn-answer bg-[#26890c] w-full disabled:opacity-50"
           whileHover={disabled ? {} : { scale: 1.02 }}
           whileTap={disabled ? {} : { scale: 0.98 }}
         >
-          Valider
+          <span className="text-xl">✓</span>
+          <span>Valider</span>
         </motion.button>
-      </div>
+      </motion.div>
     );
   };
 
   return (
-    <div className="space-y-6">
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="card text-center"
-      >
-        <p className="text-xl md:text-2xl font-bold text-white">
-          {question.text}
-        </p>
-        {question.type === 'A' && (
-          <p className="text-white/50 text-sm mt-2">
-            Devine ce que ton/ta partenaire va repondre !
-          </p>
-        )}
-        {question.type === 'B' && (
-          <p className="text-white/50 text-sm mt-2">
-            Repondez tous les deux - point si vos reponses concordent !
-          </p>
-        )}
-      </motion.div>
-
+    <div className="space-y-6 w-full max-w-2xl mx-auto">
       {(question.type === 'A' || question.type === 'B') && renderTypeAB()}
       {question.type === 'C' && renderTypeC()}
       {question.type === 'D' && renderTypeD()}
