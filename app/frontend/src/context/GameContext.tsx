@@ -1,0 +1,365 @@
+import {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  useCallback,
+  type ReactNode
+} from 'react';
+import { io, Socket } from 'socket.io-client';
+import type {
+  Room,
+  Question,
+  ServerToClientEvents,
+  ClientToServerEvents,
+  GameRevealData,
+  GameFinishedData
+} from '../../../shared/types';
+
+interface GameState {
+  socket: Socket<ServerToClientEvents, ClientToServerEvents> | null;
+  connected: boolean;
+  room: Room | null;
+  playerId: 1 | 2 | null;
+  playerName: string;
+  gameId: number | null;
+  currentQuestion: Question | null;
+  questionNumber: number;
+  totalQuestions: number;
+  phase: 'idle' | 'lobby' | 'question' | 'waiting' | 'reveal' | 'finished';
+  myAnswer: string | null;
+  otherAnswered: boolean;
+  revealData: GameRevealData | null;
+  scores: { player1: number; player2: number };
+  finalResults: GameFinishedData | null;
+  error: string | null;
+}
+
+type GameAction =
+  | { type: 'SET_SOCKET'; socket: Socket<ServerToClientEvents, ClientToServerEvents> }
+  | { type: 'SET_CONNECTED'; connected: boolean }
+  | { type: 'JOIN_ROOM'; room: Room; playerId: 1 | 2; playerName: string }
+  | { type: 'PLAYER_JOINED'; playerName: string; playerId: 1 | 2 }
+  | { type: 'PLAYER_LEFT'; playerId: 1 | 2 }
+  | { type: 'GAME_STARTED'; gameId: number }
+  | { type: 'SET_QUESTION'; question: Question; questionNumber: number; totalQuestions: number }
+  | { type: 'SET_MY_ANSWER'; answer: string }
+  | { type: 'OTHER_ANSWERED' }
+  | { type: 'SET_REVEAL'; data: GameRevealData }
+  | { type: 'UPDATE_SCORES'; scores: { player1: number; player2: number } }
+  | { type: 'GAME_FINISHED'; data: GameFinishedData }
+  | { type: 'SET_ERROR'; error: string }
+  | { type: 'CLEAR_ERROR' }
+  | { type: 'RESET' };
+
+const initialState: GameState = {
+  socket: null,
+  connected: false,
+  room: null,
+  playerId: null,
+  playerName: '',
+  gameId: null,
+  currentQuestion: null,
+  questionNumber: 0,
+  totalQuestions: 0,
+  phase: 'idle',
+  myAnswer: null,
+  otherAnswered: false,
+  revealData: null,
+  scores: { player1: 0, player2: 0 },
+  finalResults: null,
+  error: null
+};
+
+function gameReducer(state: GameState, action: GameAction): GameState {
+  switch (action.type) {
+    case 'SET_SOCKET':
+      return { ...state, socket: action.socket };
+
+    case 'SET_CONNECTED':
+      return { ...state, connected: action.connected };
+
+    case 'JOIN_ROOM':
+      return {
+        ...state,
+        room: action.room,
+        playerId: action.playerId,
+        playerName: action.playerName,
+        phase: 'lobby',
+        error: null
+      };
+
+    case 'PLAYER_JOINED':
+      if (!state.room) return state;
+      return {
+        ...state,
+        room: {
+          ...state.room,
+          [action.playerId === 1 ? 'player1_name' : 'player2_name']: action.playerName
+        }
+      };
+
+    case 'PLAYER_LEFT':
+      if (!state.room) return state;
+      return {
+        ...state,
+        room: {
+          ...state.room,
+          [action.playerId === 1 ? 'player1_name' : 'player2_name']: null
+        }
+      };
+
+    case 'GAME_STARTED':
+      return {
+        ...state,
+        gameId: action.gameId,
+        phase: 'question',
+        scores: { player1: 0, player2: 0 }
+      };
+
+    case 'SET_QUESTION':
+      return {
+        ...state,
+        currentQuestion: action.question,
+        questionNumber: action.questionNumber,
+        totalQuestions: action.totalQuestions,
+        phase: 'question',
+        myAnswer: null,
+        otherAnswered: false,
+        revealData: null
+      };
+
+    case 'SET_MY_ANSWER':
+      return {
+        ...state,
+        myAnswer: action.answer,
+        phase: state.otherAnswered ? 'reveal' : 'waiting'
+      };
+
+    case 'OTHER_ANSWERED':
+      return {
+        ...state,
+        otherAnswered: true,
+        phase: state.myAnswer ? 'reveal' : state.phase
+      };
+
+    case 'SET_REVEAL':
+      return {
+        ...state,
+        revealData: action.data,
+        phase: 'reveal'
+      };
+
+    case 'UPDATE_SCORES':
+      return {
+        ...state,
+        scores: { player1: action.scores.score1, player2: action.scores.score2 }
+      };
+
+    case 'GAME_FINISHED':
+      return {
+        ...state,
+        finalResults: action.data,
+        phase: 'finished'
+      };
+
+    case 'SET_ERROR':
+      return { ...state, error: action.error };
+
+    case 'CLEAR_ERROR':
+      return { ...state, error: null };
+
+    case 'RESET':
+      return {
+        ...initialState,
+        socket: state.socket,
+        connected: state.connected
+      };
+
+    default:
+      return state;
+  }
+}
+
+interface GameContextType extends GameState {
+  createRoom: (playerName: string) => Promise<void>;
+  joinRoom: (code: string, playerName: string) => Promise<void>;
+  startGame: () => Promise<void>;
+  submitAnswer: (answer: string) => void;
+  leaveRoom: () => void;
+  resetGame: () => void;
+}
+
+const GameContext = createContext<GameContextType | null>(null);
+
+export function GameProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(gameReducer, initialState);
+
+  // Initialize socket connection
+  useEffect(() => {
+    const socketUrl = import.meta.env.DEV
+      ? 'http://localhost:3004'
+      : window.location.origin;
+
+    const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(socketUrl, {
+      transports: ['websocket', 'polling'],
+      timeout: 20000
+    });
+
+    socket.on('connect', () => {
+      console.log('Connected to server');
+      dispatch({ type: 'SET_CONNECTED', connected: true });
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Disconnected from server');
+      dispatch({ type: 'SET_CONNECTED', connected: false });
+    });
+
+    socket.on('room:player-joined', (data) => {
+      dispatch({ type: 'PLAYER_JOINED', playerName: data.playerName, playerId: data.playerId });
+    });
+
+    socket.on('room:player-left', (data) => {
+      dispatch({ type: 'PLAYER_LEFT', playerId: data.playerId });
+    });
+
+    socket.on('game:started', (data) => {
+      dispatch({ type: 'GAME_STARTED', gameId: data.gameId });
+    });
+
+    socket.on('game:question', (data) => {
+      dispatch({
+        type: 'SET_QUESTION',
+        question: data.question,
+        questionNumber: data.questionNumber,
+        totalQuestions: data.totalQuestions
+      });
+    });
+
+    socket.on('game:player-answered', () => {
+      dispatch({ type: 'OTHER_ANSWERED' });
+    });
+
+    socket.on('game:reveal', (data) => {
+      dispatch({ type: 'SET_REVEAL', data });
+    });
+
+    socket.on('game:score-update', (data) => {
+      dispatch({ type: 'UPDATE_SCORES', scores: data });
+    });
+
+    socket.on('game:finished', (data) => {
+      dispatch({ type: 'GAME_FINISHED', data });
+    });
+
+    socket.on('error', (data) => {
+      dispatch({ type: 'SET_ERROR', error: data.message });
+    });
+
+    dispatch({ type: 'SET_SOCKET', socket });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  const createRoom = useCallback(async (playerName: string) => {
+    if (!state.socket) return;
+
+    return new Promise<void>((resolve, reject) => {
+      state.socket!.emit('room:create', { playerName }, (response) => {
+        if (response.success && response.room && response.playerId) {
+          dispatch({
+            type: 'JOIN_ROOM',
+            room: response.room,
+            playerId: response.playerId,
+            playerName
+          });
+          resolve();
+        } else {
+          dispatch({ type: 'SET_ERROR', error: response.error || 'Failed to create room' });
+          reject(new Error(response.error));
+        }
+      });
+    });
+  }, [state.socket]);
+
+  const joinRoom = useCallback(async (code: string, playerName: string) => {
+    if (!state.socket) return;
+
+    return new Promise<void>((resolve, reject) => {
+      state.socket!.emit('room:join', { code: code.toUpperCase(), playerName }, (response) => {
+        if (response.success && response.room && response.playerId) {
+          dispatch({
+            type: 'JOIN_ROOM',
+            room: response.room,
+            playerId: response.playerId,
+            playerName
+          });
+          resolve();
+        } else {
+          dispatch({ type: 'SET_ERROR', error: response.error || 'Failed to join room' });
+          reject(new Error(response.error));
+        }
+      });
+    });
+  }, [state.socket]);
+
+  const startGame = useCallback(async () => {
+    if (!state.socket) return;
+
+    return new Promise<void>((resolve, reject) => {
+      state.socket!.emit('game:start', (response) => {
+        if (response.success) {
+          resolve();
+        } else {
+          dispatch({ type: 'SET_ERROR', error: response.error || 'Failed to start game' });
+          reject(new Error(response.error));
+        }
+      });
+    });
+  }, [state.socket]);
+
+  const submitAnswer = useCallback((answer: string) => {
+    if (!state.socket || state.myAnswer) return;
+
+    state.socket.emit('game:answer', { answer });
+    dispatch({ type: 'SET_MY_ANSWER', answer });
+  }, [state.socket, state.myAnswer]);
+
+  const leaveRoom = useCallback(() => {
+    if (state.socket) {
+      state.socket.emit('room:leave');
+    }
+    dispatch({ type: 'RESET' });
+  }, [state.socket]);
+
+  const resetGame = useCallback(() => {
+    dispatch({ type: 'RESET' });
+  }, []);
+
+  return (
+    <GameContext.Provider
+      value={{
+        ...state,
+        createRoom,
+        joinRoom,
+        startGame,
+        submitAnswer,
+        leaveRoom,
+        resetGame
+      }}
+    >
+      {children}
+    </GameContext.Provider>
+  );
+}
+
+export function useGame() {
+  const context = useContext(GameContext);
+  if (!context) {
+    throw new Error('useGame must be used within a GameProvider');
+  }
+  return context;
+}

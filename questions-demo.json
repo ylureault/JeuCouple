@@ -1,0 +1,169 @@
+{
+  "questions": [
+    {
+      "type": "A",
+      "category": "habitudes",
+      "text": "Quel est son plat prefere ?",
+      "options": ["Pizza", "Sushi", "Burger", "Pates"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "couple",
+      "text": "Quelle est sa plus grande peur ?",
+      "options": ["Les araignees", "L'avion", "Etre seul(e)", "L'echec"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "habitudes",
+      "text": "Quel cote du lit prefere-t-il/elle ?",
+      "options": ["Gauche", "Droite", "Ca change", "Au milieu"],
+      "timer": 15
+    },
+    {
+      "type": "A",
+      "category": "couple",
+      "text": "Quelle est sa qualite preferee chez toi ?",
+      "options": ["Ton humour", "Ta gentillesse", "Ton intelligence", "Ta beaute"],
+      "timer": 20
+    },
+    {
+      "type": "B",
+      "category": "habitudes",
+      "text": "Qui fait le plus souvent la vaisselle ?",
+      "options": ["Lui", "Elle", "Les deux", "Personne (on a un lave-vaisselle!)"],
+      "timer": 15
+    },
+    {
+      "type": "B",
+      "category": "habitudes",
+      "text": "Qui monopolise la couette la nuit ?",
+      "options": ["Lui", "Elle", "Les deux", "Aucun des deux"],
+      "timer": 15
+    },
+    {
+      "type": "B",
+      "category": "couple",
+      "text": "Qui a dit 'je t'aime' en premier ?",
+      "options": ["Lui", "Elle", "En meme temps", "On ne sait plus"],
+      "timer": 15
+    },
+    {
+      "type": "B",
+      "category": "habitudes",
+      "text": "Qui est le plus tetu(e) ?",
+      "options": ["Lui", "Elle", "Les deux", "Aucun des deux"],
+      "timer": 15
+    },
+    {
+      "type": "B",
+      "category": "couple",
+      "text": "Qui a fait le premier pas ?",
+      "options": ["Lui", "Elle", "C'etait mutuel", "On ne sait plus"],
+      "timer": 15
+    },
+    {
+      "type": "C",
+      "category": "souvenirs",
+      "text": "Quel est ton meilleur souvenir de vacances ensemble ?",
+      "timer": 45
+    },
+    {
+      "type": "C",
+      "category": "souvenirs",
+      "text": "Decris le moment ou tu as su que c'etait lui/elle.",
+      "timer": 45
+    },
+    {
+      "type": "C",
+      "category": "projets",
+      "text": "Ou vous voyez-vous dans 5 ans ?",
+      "timer": 45
+    },
+    {
+      "type": "C",
+      "category": "couple",
+      "text": "Qu'est-ce que tu aimes le plus chez ton/ta partenaire ?",
+      "timer": 45
+    },
+    {
+      "type": "D",
+      "category": "communication",
+      "text": "A quel point etes-vous satisfait(e) de votre communication ?",
+      "timer": 20
+    },
+    {
+      "type": "D",
+      "category": "couple",
+      "text": "A quel point vous faites-vous confiance mutuellement ?",
+      "timer": 20
+    },
+    {
+      "type": "D",
+      "category": "sexy",
+      "text": "A quel point etes-vous satisfait(e) de votre vie intime ?",
+      "timer": 20
+    },
+    {
+      "type": "D",
+      "category": "couple",
+      "text": "A quel point vous sentez-vous ecoute(e) par votre partenaire ?",
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "sexy",
+      "text": "Quel est son fantasme secret ?",
+      "options": ["Jeux de role", "Lieu insolite", "Accessoires", "Surprise romantique"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "coquin",
+      "text": "Ou aime-t-il/elle etre embrasse(e) ?",
+      "options": ["Le cou", "Les levres", "Le front", "Dans le dos"],
+      "timer": 15
+    },
+    {
+      "type": "B",
+      "category": "sexy",
+      "text": "Qui initie le plus souvent les calins ?",
+      "options": ["Lui", "Elle", "Les deux egalement", "Ca depend"],
+      "timer": 15
+    },
+    {
+      "type": "B",
+      "category": "coquin",
+      "text": "Qui est le plus romantique ?",
+      "options": ["Lui", "Elle", "Les deux", "Aucun des deux"],
+      "timer": 15
+    },
+    {
+      "type": "A",
+      "category": "couple",
+      "text": "Quelle serie Netflix regarderait-il/elle en boucle ?",
+      "options": ["Une serie romantique", "Du thriller", "De la comedie", "Un documentaire"],
+      "timer": 20
+    },
+    {
+      "type": "C",
+      "category": "coquin",
+      "text": "Decris votre premier baiser.",
+      "timer": 45
+    },
+    {
+      "type": "D",
+      "category": "projets",
+      "text": "A quel point souhaitez-vous fonder une famille ensemble ?",
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "habitudes",
+      "text": "Quelle est sa manie la plus agacante ?",
+      "options": ["Ronger ses ongles", "Laisser trainer ses affaires", "Etre en retard", "Parler trop fort"],
+      "timer": 20
+    }
+  ]
+}
