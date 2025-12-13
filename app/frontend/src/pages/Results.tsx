@@ -92,7 +92,7 @@ function CategoryBar({ category, delay = 0 }: { category: CategoryScore; delay?:
 }
 
 export default function Results() {
-  const { room, playerId, finalResults, resetGame } = useGame();
+  const { room, playerId, finalResults, restartGame } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
   const [showPodium, setShowPodium] = useState(false);
@@ -126,10 +126,14 @@ export default function Results() {
     };
   }, [finalResults, room, navigate, playSound]);
 
-  const handlePlayAgain = () => {
+  const handlePlayAgain = async () => {
     playSound('click');
-    resetGame();
-    navigate('/');
+    try {
+      await restartGame();
+      navigate('/game');
+    } catch (error) {
+      console.error('Failed to restart game:', error);
+    }
   };
 
   if (!finalResults || !room) return null;

@@ -85,6 +85,7 @@ export interface ServerToClientEvents {
   'game:reveal': (data: GameRevealData) => void;
   'game:score-update': (data: { score1: number; score2: number }) => void;
   'game:finished': (data: GameFinishedData) => void;
+  'game:restarted': () => void;
   'error': (data: { message: string }) => void;
 }
 
@@ -94,6 +95,7 @@ export interface ClientToServerEvents {
   'room:leave': () => void;
   'game:start': (callback: (response: { success: boolean; error?: string }) => void) => void;
   'game:answer': (data: { answer: string }) => void;
+  'game:restart': (callback: (response: { success: boolean; error?: string }) => void) => void;
   'room:reconnect': (data: { code: string; playerId: 1 | 2 }, callback: (response: RoomResponse) => void) => void;
 }
 

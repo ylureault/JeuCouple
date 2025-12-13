@@ -270,6 +270,32 @@ export function setupSocketHandlers(
       }
     });
 
+    // Restart game (same players, new questions)
+    socket.on('game:restart', (callback) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) {
+        callback({ success: false, error: 'Not in a room' });
+        return;
+      }
+
+      const room = roomModel.getRoomByCode(connection.roomCode);
+      if (!room) {
+        callback({ success: false, error: 'Room not found' });
+        return;
+      }
+
+      // Reset room status to waiting (ready to play again)
+      roomModel.updateRoomStatus(room.id, 'waiting');
+
+      // Clean up any existing game state for this room
+      activeGames.delete(connection.roomCode);
+
+      // Notify both players to go back to lobby
+      io.to(connection.roomCode).emit('game:restarted');
+
+      callback({ success: true });
+    });
+
     // Handle disconnect
     socket.on('disconnect', () => {
       handleDisconnect(socket, io);

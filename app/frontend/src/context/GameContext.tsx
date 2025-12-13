@@ -48,6 +48,7 @@ type GameAction =
   | { type: 'SET_REVEAL'; data: GameRevealData }
   | { type: 'UPDATE_SCORES'; scores: { score1: number; score2: number } }
   | { type: 'GAME_FINISHED'; data: GameFinishedData }
+  | { type: 'GAME_RESTARTED' }
   | { type: 'SET_ERROR'; error: string }
   | { type: 'CLEAR_ERROR' }
   | { type: 'RESET' };
@@ -163,6 +164,22 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         phase: 'finished'
       };
 
+    case 'GAME_RESTARTED':
+      return {
+        ...state,
+        gameId: null,
+        currentQuestion: null,
+        questionNumber: 0,
+        totalQuestions: 0,
+        phase: 'lobby',
+        myAnswer: null,
+        otherAnswered: false,
+        revealData: null,
+        scores: { player1: 0, player2: 0 },
+        finalResults: null,
+        error: null
+      };
+
     case 'SET_ERROR':
       return { ...state, error: action.error };
 
@@ -188,6 +205,7 @@ interface GameContextType extends GameState {
   submitAnswer: (answer: string) => void;
   leaveRoom: () => void;
   resetGame: () => void;
+  restartGame: () => Promise<void>;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -251,6 +269,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     socket.on('game:finished', (data) => {
       dispatch({ type: 'GAME_FINISHED', data });
+    });
+
+    socket.on('game:restarted', () => {
+      dispatch({ type: 'GAME_RESTARTED' });
     });
 
     socket.on('error', (data) => {
@@ -339,6 +361,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'RESET' });
   }, []);
 
+  const restartGame = useCallback(async () => {
+    if (!state.socket) return;
+
+    return new Promise<void>((resolve, reject) => {
+      state.socket!.emit('game:restart', (response) => {
+        if (response.success) {
+          resolve();
+        } else {
+          dispatch({ type: 'SET_ERROR', error: response.error || 'Failed to restart game' });
+          reject(new Error(response.error));
+        }
+      });
+    });
+  }, [state.socket]);
+
   return (
     <GameContext.Provider
       value={{
@@ -348,7 +385,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         startGame,
         submitAnswer,
         leaveRoom,
-        resetGame
+        resetGame,
+        restartGame
       }}
     >
       {children}

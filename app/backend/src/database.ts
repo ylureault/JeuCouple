@@ -862,7 +862,180 @@ function initDefaultQuestions() {
     { type: 'E', category: 'couple', text: 'On est plutot...', option_a: 'Fusionnels', option_b: 'Independants', timer: 10 },
     { type: 'E', category: 'couple', text: 'Dans les disputes on est plutot...', option_a: 'Expressifs', option_b: 'Silencieux', timer: 10 },
     { type: 'E', category: 'couple', text: 'Notre amour est plutot...', option_a: 'Demontre', option_b: 'Silencieux mais fort', timer: 10 },
-    { type: 'E', category: 'couple', text: 'On prefere...', option_a: 'Se voir tous les jours', option_b: 'Se manquer un peu', timer: 10 }
+    { type: 'E', category: 'couple', text: 'On prefere...', option_a: 'Se voir tous les jours', option_b: 'Se manquer un peu', timer: 10 },
+
+    // === 150 QUESTIONS SUPPLEMENTAIRES BIEN MELANGEES ===
+    // Fun et legeres
+    { type: 'F', category: 'fun', text: 'Qui mange le plus de snacks en cachette ?', timer: 15 },
+    { type: 'A', category: 'fun', text: 'Mon film prefere a revoir ensemble c\'est...', options: JSON.stringify(['Une comedie', 'Un thriller', 'Une romance', 'Un film d\'action']), timer: 15 },
+    { type: 'E', category: 'fun', text: 'Pour une soiree ideale tu preferes...', option_a: 'Netflix & chill', option_b: 'Sortir entre amis', timer: 10 },
+    { type: 'B', category: 'fun', text: 'Notre chanson c\'est plutot...', options: JSON.stringify(['Un slow romantique', 'Un tube dansant', 'Une vieille chanson', 'Un hit recent']), timer: 15 },
+    { type: 'C', category: 'fun', text: 'Raconte notre moment le plus drole ensemble ?', timer: 30 },
+    { type: 'F', category: 'fun', text: 'Qui fait les meilleures blagues ?', timer: 15 },
+    { type: 'A', category: 'fun', text: 'Mon emoji prefere pour toi c\'est...', options: JSON.stringify(['❤️', '😍', '🔥', '😘']), timer: 15 },
+    { type: 'E', category: 'fun', text: 'Tu preferes...', option_a: 'Karaoke', option_b: 'Bowling', timer: 10 },
+    { type: 'B', category: 'fun', text: 'Notre serie a binger c\'est...', options: JSON.stringify(['Comedie', 'Drame', 'Thriller', 'Telerealite']), timer: 15 },
+    { type: 'F', category: 'fun', text: 'Qui a le rire le plus contagieux ?', timer: 15 },
+
+    // Habitudes quotidiennes
+    { type: 'A', category: 'habitudes', text: 'Mon rituel prefere du matin c\'est...', options: JSON.stringify(['Cafe au lit', 'Sport', 'Trainer', 'Petit-dej elabore']), timer: 15 },
+    { type: 'E', category: 'habitudes', text: 'Pour le rangement tu es plutot...', option_a: 'Maniaque', option_b: 'Bordel organise', timer: 10 },
+    { type: 'F', category: 'habitudes', text: 'Qui laisse trainer ses affaires ?', timer: 15 },
+    { type: 'B', category: 'habitudes', text: 'Notre moment prefere de la journee c\'est...', options: JSON.stringify(['Le matin', 'Le midi', 'L\'apres-midi', 'Le soir']), timer: 15 },
+    { type: 'C', category: 'habitudes', text: 'Quelle habitude de l\'autre t\'agace mais que tu trouves mignonne ?', timer: 25 },
+    { type: 'A', category: 'habitudes', text: 'Ma boisson preferee c\'est...', options: JSON.stringify(['Cafe', 'The', 'Jus', 'Eau']), timer: 15 },
+    { type: 'E', category: 'habitudes', text: 'Le weekend tu preferes...', option_a: 'Grasse matinee', option_b: 'Se lever tot pour profiter', timer: 10 },
+    { type: 'F', category: 'habitudes', text: 'Qui passe le plus de temps aux toilettes ?', timer: 15 },
+    { type: 'B', category: 'habitudes', text: 'Notre repas prefere ensemble c\'est...', options: JSON.stringify(['Petit-dej', 'Dejeuner', 'Diner', 'Brunch']), timer: 15 },
+    { type: 'A', category: 'habitudes', text: 'Mon moment de la journee le plus productif c\'est...', options: JSON.stringify(['Tot le matin', 'En fin de matinee', 'L\'apres-midi', 'Le soir tard']), timer: 15 },
+
+    // Preferences personnelles
+    { type: 'E', category: 'preferences', text: 'Tu preferes...', option_a: 'Ete', option_b: 'Hiver', timer: 10 },
+    { type: 'A', category: 'preferences', text: 'Ma cuisine preferee c\'est...', options: JSON.stringify(['Italienne', 'Japonaise', 'Francaise', 'Mexicaine']), timer: 15 },
+    { type: 'B', category: 'preferences', text: 'Notre destination de reve c\'est...', options: JSON.stringify(['Plage paradisiaque', 'Grande ville', 'Montagne', 'Road trip']), timer: 15 },
+    { type: 'F', category: 'preferences', text: 'Qui a les meilleurs gouts musicaux ?', timer: 15 },
+    { type: 'C', category: 'preferences', text: 'Decris ta journee parfaite avec moi ?', timer: 30 },
+    { type: 'E', category: 'preferences', text: 'Tu preferes...', option_a: 'Sucre', option_b: 'Sale', timer: 10 },
+    { type: 'A', category: 'preferences', text: 'Mon style vestimentaire prefere sur toi c\'est...', options: JSON.stringify(['Decontracte', 'Classe', 'Sportif', 'Original']), timer: 15 },
+    { type: 'B', category: 'preferences', text: 'Notre animal de compagnie ideal c\'est...', options: JSON.stringify(['Chien', 'Chat', 'Aucun', 'Autre']), timer: 15 },
+    { type: 'F', category: 'preferences', text: 'Qui choisirait le meilleur film ce soir ?', timer: 15 },
+    { type: 'E', category: 'preferences', text: 'Tu preferes...', option_a: 'Campagne', option_b: 'Grande ville', timer: 10 },
+
+    // Souvenirs ensemble
+    { type: 'C', category: 'souvenirs', text: 'Quel est notre meilleur souvenir de vacances ?', timer: 30 },
+    { type: 'A', category: 'souvenirs', text: 'Notre premier rendez-vous etait...', options: JSON.stringify(['Parfait', 'Genant', 'Surprenant', 'Inoubliable']), timer: 15 },
+    { type: 'B', category: 'souvenirs', text: 'Le moment ou on a su que c\'etait serieux...', options: JSON.stringify(['Premier mois', 'Premiers mois', 'Premier voyage', 'Une situation difficile']), timer: 15 },
+    { type: 'F', category: 'souvenirs', text: 'Qui a fait le premier pas ?', timer: 15 },
+    { type: 'C', category: 'souvenirs', text: 'Qu\'est-ce qui t\'a fait craquer sur moi au debut ?', timer: 25 },
+    { type: 'E', category: 'souvenirs', text: 'Notre premiere dispute etait...', option_a: 'Ridicule', option_b: 'Serieuse', timer: 10 },
+    { type: 'A', category: 'souvenirs', text: 'Ma premiere impression de toi c\'etait...', options: JSON.stringify(['Waouh', 'Interessant', 'Timide', 'Drole']), timer: 15 },
+    { type: 'B', category: 'souvenirs', text: 'Notre meilleure annee ensemble c\'etait...', options: JSON.stringify(['La premiere', 'La plus recente', 'Celle d\'un voyage', 'Toutes']), timer: 15 },
+    { type: 'F', category: 'souvenirs', text: 'Qui a dit je t\'aime en premier ?', timer: 15 },
+    { type: 'C', category: 'souvenirs', text: 'Quel moment de notre relation tu voudrais revivre ?', timer: 30 },
+
+    // Projets futurs
+    { type: 'B', category: 'projets', text: 'Notre prochain gros projet c\'est...', options: JSON.stringify(['Voyager', 'Emmenager ensemble', 'Se marier', 'Avoir des enfants']), timer: 15 },
+    { type: 'E', category: 'projets', text: 'Pour le mariage tu es plutot...', option_a: 'Grande fete', option_b: 'Intime', timer: 10 },
+    { type: 'A', category: 'projets', text: 'Mon reve pour nous c\'est...', options: JSON.stringify(['Une grande maison', 'Voyager le monde', 'Reussir ensemble', 'Fonder une famille']), timer: 15 },
+    { type: 'F', category: 'projets', text: 'Qui sera le plus cool comme parent ?', timer: 15 },
+    { type: 'C', category: 'projets', text: 'Comment tu nous imagines dans 20 ans ?', timer: 30 },
+    { type: 'B', category: 'projets', text: 'Le nombre ideal d\'enfants c\'est...', options: JSON.stringify(['0', '1', '2', '3 ou plus']), timer: 15 },
+    { type: 'E', category: 'projets', text: 'Pour vivre a l\'etranger tu es...', option_a: 'Partant', option_b: 'Non merci', timer: 10 },
+    { type: 'A', category: 'projets', text: 'Ma priorite pour notre futur c\'est...', options: JSON.stringify(['La stabilite', 'L\'aventure', 'La famille', 'La carriere']), timer: 15 },
+    { type: 'F', category: 'projets', text: 'Qui va planifier notre prochain voyage ?', timer: 15 },
+    { type: 'C', category: 'projets', text: 'Quel projet fou tu voudrais qu\'on realise ensemble ?', timer: 30 },
+
+    // Couple et relation
+    { type: 'D', category: 'couple', text: 'A quel point tu te sens aime(e) par moi ? (1-10)', timer: 15 },
+    { type: 'F', category: 'couple', text: 'Qui est le plus romantique au quotidien ?', timer: 15 },
+    { type: 'A', category: 'couple', text: 'Ce que j\'aime le plus chez toi c\'est...', options: JSON.stringify(['Ton humour', 'Ta gentillesse', 'Ton intelligence', 'Ton physique']), timer: 15 },
+    { type: 'B', category: 'couple', text: 'Notre force c\'est...', options: JSON.stringify(['La communication', 'La confiance', 'Le rire', 'La passion']), timer: 15 },
+    { type: 'E', category: 'couple', text: 'Tu preferes...', option_a: 'Gros calins', option_b: 'Mots doux', timer: 10 },
+    { type: 'C', category: 'couple', text: 'Qu\'est-ce que je fais qui te rend le plus heureux ?', timer: 25 },
+    { type: 'D', category: 'couple', text: 'A quel point tu as confiance en nous ? (1-10)', timer: 15 },
+    { type: 'F', category: 'couple', text: 'Qui fait le plus d\'efforts ?', timer: 15 },
+    { type: 'A', category: 'couple', text: 'Notre couple en un mot c\'est...', options: JSON.stringify(['Complicite', 'Passion', 'Amour', 'Fun']), timer: 15 },
+    { type: 'B', category: 'couple', text: 'Ce qu\'on fait de mieux ensemble c\'est...', options: JSON.stringify(['Rire', 'Voyager', 'Discuter', 'S\'aimer']), timer: 15 },
+
+    // Coquin et intimite
+    { type: 'E', category: 'coquin', text: 'Tu preferes...', option_a: 'Matin calins', option_b: 'Soiree passion', timer: 10 },
+    { type: 'F', category: 'coquin', text: 'Qui initie le plus souvent ?', timer: 15 },
+    { type: 'A', category: 'coquin', text: 'Ce qui m\'excite le plus chez toi c\'est...', options: JSON.stringify(['Ton regard', 'Tes mains', 'Ta voix', 'Ton odeur']), timer: 15 },
+    { type: 'B', category: 'coquin', text: 'Notre moment prefere c\'est...', options: JSON.stringify(['Apres une dispute', 'Au reveil', 'Apres une soiree', 'Spontanement']), timer: 15 },
+    { type: 'C', category: 'coquin', text: 'Decris ton fantasme avec moi sans tabou...', timer: 30 },
+    { type: 'D', category: 'coquin', text: 'A quel point tu es satisfait(e) de notre vie intime ? (1-10)', timer: 15 },
+    { type: 'E', category: 'coquin', text: 'Tu preferes...', option_a: 'Long et tendre', option_b: 'Rapide et intense', timer: 10 },
+    { type: 'F', category: 'coquin', text: 'Qui est le plus aventureux au lit ?', timer: 15 },
+    { type: 'A', category: 'coquin', text: 'L\'endroit le plus excitant pour moi serait...', options: JSON.stringify(['Un hotel', 'La nature', 'Un lieu interdit', 'Chez nous']), timer: 15 },
+    { type: 'B', category: 'coquin', text: 'Ce qu\'on devrait essayer c\'est...', options: JSON.stringify(['Jeux de role', 'Nouveaux endroits', 'Accessoires', 'Massages']), timer: 15 },
+
+    // Plus de fun
+    { type: 'F', category: 'fun', text: 'Qui gagnerait a un concours de danse ?', timer: 15 },
+    { type: 'E', category: 'fun', text: 'Pour un deguisement de couple tu preferes...', option_a: 'Drole', option_b: 'Sexy', timer: 10 },
+    { type: 'A', category: 'fun', text: 'Mon surnom prefere pour toi c\'est...', options: JSON.stringify(['Mon coeur', 'Bebe', 'Mon amour', 'Un truc perso']), timer: 15 },
+    { type: 'B', category: 'fun', text: 'Notre jeu de societe prefere c\'est...', options: JSON.stringify(['Cartes', 'Plateau', 'Video', 'Questions']), timer: 15 },
+    { type: 'C', category: 'fun', text: 'Invente un nouveau surnom ridicule pour moi', timer: 20 },
+    { type: 'F', category: 'fun', text: 'Qui ferait le meilleur influenceur ?', timer: 15 },
+    { type: 'E', category: 'fun', text: 'Tu preferes...', option_a: 'Parc d\'attractions', option_b: 'Spa detente', timer: 10 },
+    { type: 'A', category: 'fun', text: 'Mon activite preferee avec toi c\'est...', options: JSON.stringify(['Cuisiner', 'Regarder des films', 'Se balader', 'Trainer']), timer: 15 },
+    { type: 'B', category: 'fun', text: 'On est le couple de...', options: JSON.stringify(['La comedie romantique', 'L\'aventure', 'Le drame', 'La sitcom']), timer: 15 },
+    { type: 'F', category: 'fun', text: 'Qui est le plus enfantin ?', timer: 15 },
+
+    // Plus d'habitudes
+    { type: 'A', category: 'habitudes', text: 'Ma manie la plus bizarre c\'est...', options: JSON.stringify(['Ranger tout', 'Verifier 3 fois', 'Parler seul', 'Grignoter']), timer: 15 },
+    { type: 'E', category: 'habitudes', text: 'Pour le sport tu es plutot...', option_a: 'Motive', option_b: 'Flemme', timer: 10 },
+    { type: 'F', category: 'habitudes', text: 'Qui est le plus accro a son telephone ?', timer: 15 },
+    { type: 'B', category: 'habitudes', text: 'Notre tradition preferee c\'est...', options: JSON.stringify(['Petit-dej du dimanche', 'Soiree film', 'Appel quotidien', 'Sortie hebdo']), timer: 15 },
+    { type: 'C', category: 'habitudes', text: 'Quelle nouvelle habitude tu voudrais qu\'on adopte ?', timer: 25 },
+    { type: 'A', category: 'habitudes', text: 'Mon peche mignon c\'est...', options: JSON.stringify(['Le sucre', 'Les series', 'Les reseaux', 'Le shopping']), timer: 15 },
+    { type: 'E', category: 'habitudes', text: 'Tu es plutot...', option_a: 'Douche rapide', option_b: 'Bain relaxant', timer: 10 },
+    { type: 'F', category: 'habitudes', text: 'Qui est le plus bordélique en cuisine ?', timer: 15 },
+    { type: 'B', category: 'habitudes', text: 'Notre facon de se detendre c\'est...', options: JSON.stringify(['Regarder des series', 'Sortir', 'Faire du sport', 'Ne rien faire']), timer: 15 },
+    { type: 'A', category: 'habitudes', text: 'Ce que je fais quand je suis seul(e) c\'est...', options: JSON.stringify(['Series', 'Musique fort', 'Cuisine', 'Gaming']), timer: 15 },
+
+    // Plus de couple profond
+    { type: 'D', category: 'couple', text: 'A quel point tu te sens libre d\'etre toi-meme avec moi ? (1-10)', timer: 15 },
+    { type: 'C', category: 'couple', text: 'Qu\'est-ce que tu admires le plus chez moi ?', timer: 25 },
+    { type: 'F', category: 'couple', text: 'Qui s\'excuse en premier apres une dispute ?', timer: 15 },
+    { type: 'A', category: 'couple', text: 'Ce qui me rassure le plus chez toi c\'est...', options: JSON.stringify(['Ta fidelite', 'Ton amour', 'Ta presence', 'Ta patience']), timer: 15 },
+    { type: 'B', category: 'couple', text: 'Notre facon de regler les conflits c\'est...', options: JSON.stringify(['Discuter calmement', 'Prendre du recul', 'S\'engueuler puis se reconcilier', 'Eviter le sujet']), timer: 15 },
+    { type: 'E', category: 'couple', text: 'Dans notre couple tu te sens...', option_a: 'Le protecteur', option_b: 'Le protege', timer: 10 },
+    { type: 'D', category: 'couple', text: 'A quel point tu penses qu\'on se comprend ? (1-10)', timer: 15 },
+    { type: 'C', category: 'couple', text: 'Quelle est la chose la plus importante que je t\'ai apprise ?', timer: 30 },
+    { type: 'F', category: 'couple', text: 'Qui connait le mieux les secrets de l\'autre ?', timer: 15 },
+    { type: 'A', category: 'couple', text: 'Le mot qui nous decrit le mieux c\'est...', options: JSON.stringify(['Complices', 'Passionnes', 'Fous', 'Amoureux']), timer: 15 },
+
+    // Plus de coquin
+    { type: 'C', category: 'coquin', text: 'Quel est le truc le plus fou qu\'on a fait ensemble ?', timer: 30 },
+    { type: 'F', category: 'coquin', text: 'Qui est le plus bruyant ?', timer: 15 },
+    { type: 'A', category: 'coquin', text: 'Mon moment prefere c\'est quand tu...', options: JSON.stringify(['M\'embrasses', 'Me deshabilles', 'Me regardes', 'Me parles']), timer: 15 },
+    { type: 'B', category: 'coquin', text: 'L\'ambiance parfaite c\'est...', options: JSON.stringify(['Bougies', 'Musique', 'Silence', 'Spontane']), timer: 15 },
+    { type: 'E', category: 'coquin', text: 'Tu preferes...', option_a: 'Dominer', option_b: 'Te laisser faire', timer: 10 },
+    { type: 'D', category: 'coquin', text: 'A quel point tu te sens desire(e) ? (1-10)', timer: 15 },
+    { type: 'C', category: 'coquin', text: 'Qu\'est-ce que tu voudrais qu\'on fasse ce soir ?', timer: 25 },
+    { type: 'F', category: 'coquin', text: 'Qui a les meilleures idees au lit ?', timer: 15 },
+    { type: 'A', category: 'coquin', text: 'Ce qui me rend fou/folle c\'est...', options: JSON.stringify(['Tes baisers', 'Tes caresses', 'Tes mots', 'Ton corps']), timer: 15 },
+    { type: 'B', category: 'coquin', text: 'Notre frequence ideale c\'est...', options: JSON.stringify(['Tous les jours', 'Plusieurs fois par semaine', 'Une fois par semaine', 'Quand on veut']), timer: 15 },
+
+    // Encore plus de diversite
+    { type: 'F', category: 'fun', text: 'Qui serait le plus mauvais perdant ?', timer: 15 },
+    { type: 'E', category: 'preferences', text: 'Tu preferes...', option_a: 'Lever du soleil', option_b: 'Coucher de soleil', timer: 10 },
+    { type: 'A', category: 'couple', text: 'Ce qui me fait le plus rire chez toi c\'est...', options: JSON.stringify(['Tes blagues', 'Tes gaffes', 'Ton rire', 'Tes grimaces']), timer: 15 },
+    { type: 'B', category: 'habitudes', text: 'Notre routine preferee c\'est...', options: JSON.stringify(['Le reveil ensemble', 'Le repas du soir', 'Le coucher', 'Le weekend']), timer: 15 },
+    { type: 'C', category: 'souvenirs', text: 'Quel est le meilleur cadeau que je t\'ai fait ?', timer: 25 },
+    { type: 'D', category: 'couple', text: 'A quel point tu es heureux/heureuse avec moi ? (1-10)', timer: 15 },
+    { type: 'F', category: 'couple', text: 'Qui est le plus attentionne ?', timer: 15 },
+    { type: 'E', category: 'projets', text: 'Pour la retraite tu imagines plutot...', option_a: 'Plage', option_b: 'Campagne', timer: 10 },
+    { type: 'A', category: 'preferences', text: 'Mon moment prefere de l\'annee c\'est...', options: JSON.stringify(['Noel', 'Ete', 'Anniversaires', 'Vacances']), timer: 15 },
+    { type: 'B', category: 'couple', text: 'Ce qu\'on devrait faire plus souvent c\'est...', options: JSON.stringify(['Sortir', 'Voyager', 'Parler', 'Rien, c\'est parfait']), timer: 15 },
+
+    // Questions ouvertes profondes supplementaires
+    { type: 'C', category: 'couple', text: 'Si tu pouvais me dire une chose que tu n\'as jamais osee, ce serait quoi ?', timer: 30 },
+    { type: 'C', category: 'couple', text: 'Quel est ton plus beau souvenir de nous cette annee ?', timer: 30 },
+    { type: 'C', category: 'projets', text: 'Qu\'est-ce que tu esperes qu\'on construise ensemble ?', timer: 30 },
+    { type: 'C', category: 'couple', text: 'Comment tu sais que je t\'aime ?', timer: 25 },
+    { type: 'C', category: 'preferences', text: 'Qu\'est-ce qui te rend unique a mes yeux selon toi ?', timer: 25 },
+
+    // Echelles supplementaires
+    { type: 'D', category: 'couple', text: 'A quel point notre relation te rend meilleur(e) ? (1-10)', timer: 15 },
+    { type: 'D', category: 'couple', text: 'A quel point tu te projettes avec moi ? (1-10)', timer: 15 },
+    { type: 'D', category: 'coquin', text: 'A quel point l\'attirance est toujours la ? (1-10)', timer: 15 },
+    { type: 'D', category: 'couple', text: 'A quel point tu te sens soutenu(e) ? (1-10)', timer: 15 },
+    { type: 'D', category: 'couple', text: 'A quel point tu me fais confiance ? (1-10)', timer: 15 },
+
+    // Qui de nous deux supplementaires
+    { type: 'F', category: 'couple', text: 'Qui ferait le plus de sacrifices pour l\'autre ?', timer: 15 },
+    { type: 'F', category: 'fun', text: 'Qui survivrait le plus longtemps sur une ile deserte ?', timer: 15 },
+    { type: 'F', category: 'habitudes', text: 'Qui fait le meilleur cafe/the ?', timer: 15 },
+    { type: 'F', category: 'couple', text: 'Qui est le plus expressif avec ses emotions ?', timer: 15 },
+    { type: 'F', category: 'fun', text: 'Qui aurait le plus de succes en politique ?', timer: 15 },
+
+    // Plutot supplementaires
+    { type: 'E', category: 'preferences', text: 'Tu es plutot...', option_a: 'Chien', option_b: 'Chat', timer: 10 },
+    { type: 'E', category: 'fun', text: 'Tu preferes...', option_a: 'Concert', option_b: 'Festival', timer: 10 },
+    { type: 'E', category: 'habitudes', text: 'Le matin tu es...', option_a: 'De bonne humeur', option_b: 'Grognon', timer: 10 },
+    { type: 'E', category: 'couple', text: 'En public on est plutot...', option_a: 'Demonstratifs', option_b: 'Discrets', timer: 10 },
+    { type: 'E', category: 'preferences', text: 'Tu preferes...', option_a: 'Mer', option_b: 'Montagne', timer: 10 }
   ];
 
   const insert = db.prepare(`
