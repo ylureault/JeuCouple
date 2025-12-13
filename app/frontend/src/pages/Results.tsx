@@ -5,6 +5,19 @@ import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
 import MuteButton from '../components/MuteButton';
 import Confetti from '../components/Confetti';
+import type { CategoryScore } from '../../../shared/types';
+
+// Category icons mapping
+const CATEGORY_ICONS: Record<string, string> = {
+  couple: '❤️',
+  preferences: '⭐',
+  habitudes: '🏠',
+  souvenirs: '📸',
+  projets: '🚀',
+  sexy: '🔥',
+  coquin: '😈',
+  fun: '🎉'
+};
 
 // Firework burst component
 function Firework({ x, y, delay = 0 }: { x: number; y: number; delay?: number }) {
@@ -45,6 +58,39 @@ function Firework({ x, y, delay = 0 }: { x: number; y: number; delay?: number })
   );
 }
 
+// Category breakdown bar component
+function CategoryBar({ category, delay = 0 }: { category: CategoryScore; delay?: number }) {
+  const icon = CATEGORY_ICONS[category.category] || '📌';
+  const compatColor = category.compatibility >= 80 ? 'bg-green-500' :
+                      category.compatibility >= 60 ? 'bg-yellow-500' :
+                      category.compatibility >= 40 ? 'bg-orange-500' : 'bg-red-500';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay }}
+      className="flex items-center gap-3"
+    >
+      <span className="text-xl w-8">{icon}</span>
+      <div className="flex-1">
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-sm font-semibold text-gray-700 capitalize">{category.category}</span>
+          <span className="text-sm font-bold text-[#46178f]">{category.compatibility}%</span>
+        </div>
+        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${category.compatibility}%` }}
+            transition={{ delay: delay + 0.2, duration: 0.8, ease: 'easeOut' }}
+            className={`h-full ${compatColor} rounded-full`}
+          />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function Results() {
   const { room, playerId, finalResults, resetGame } = useGame();
   const { playSound } = useAudio();
@@ -53,6 +99,7 @@ export default function Results() {
   const [showStats, setShowStats] = useState(false);
   const [showFireworks, setShowFireworks] = useState(false);
   const [drumroll, setDrumroll] = useState(true);
+  const [showCategories, setShowCategories] = useState(false);
 
   useEffect(() => {
     if (!finalResults || !room) {
@@ -68,12 +115,14 @@ export default function Results() {
       playSound('fanfare');
     }, 2500);
     const timer3 = setTimeout(() => setShowStats(true), 3000);
+    const timer4 = setTimeout(() => setShowCategories(true), 3500);
 
     return () => {
       clearTimeout(timer0);
       clearTimeout(timer1);
       clearTimeout(timer2);
       clearTimeout(timer3);
+      clearTimeout(timer4);
     };
   }, [finalResults, room, navigate, playSound]);
 
@@ -97,6 +146,11 @@ export default function Results() {
   const totalPoints = finalResults.score1 + finalResults.score2;
   const maxPoints = finalResults.totalQuestions * 200;
   const compatibility = Math.round((totalPoints / maxPoints) * 100);
+
+  // Gamification stats
+  const myMaxStreak = playerId === 1 ? finalResults.maxStreak1 : finalResults.maxStreak2;
+  const mySpeedBonus = playerId === 1 ? finalResults.speedBonusTotal1 : finalResults.speedBonusTotal2;
+  const bestCategory = finalResults.categoryScores?.[0];
 
   const getHeadline = () => {
     if (isTie) return { emoji: '🤝', text: 'Egalite parfaite !' };
@@ -189,13 +243,13 @@ export default function Results() {
         initial={{ y: -200, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 1.6, type: 'spring', damping: 15 }}
-        className="text-center pt-8 pb-4 relative z-10"
+        className="text-center pt-6 pb-2 relative z-10"
       >
         <motion.div
           initial={{ scale: 0, rotate: -720 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ delay: 1.8, type: 'spring', damping: 8, stiffness: 80 }}
-          className="text-9xl mb-4"
+          className="text-7xl mb-2"
         >
           <motion.span
             animate={{
@@ -211,14 +265,14 @@ export default function Results() {
           initial={{ opacity: 0, y: 50, scale: 0.5 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ delay: 2.2, type: 'spring', damping: 15 }}
-          className="text-5xl md:text-6xl font-black text-white text-shadow-strong"
+          className="text-4xl md:text-5xl font-black text-white text-shadow-strong"
         >
           {headline.text}
         </motion.h1>
       </motion.div>
 
       {/* Podium */}
-      <div className="flex-1 flex items-end justify-center px-4 pb-6">
+      <div className="flex-1 flex items-end justify-center px-4 pb-4">
         <AnimatePresence>
           {showPodium && (
             <motion.div
@@ -243,7 +297,7 @@ export default function Results() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.5, type: 'spring' }}
-                className="pb-20 text-white/30 text-2xl font-black"
+                className="pb-16 text-white/30 text-2xl font-black"
               >
                 VS
               </motion.div>
@@ -271,7 +325,7 @@ export default function Results() {
             initial={{ y: 200 }}
             animate={{ y: 0 }}
             transition={{ type: 'spring', damping: 20 }}
-            className="bg-white rounded-t-3xl p-6 md:p-8"
+            className="bg-white rounded-t-3xl p-5 md:p-6 max-h-[60vh] overflow-y-auto"
           >
             <div className="max-w-lg mx-auto">
               {/* Compatibility score */}
@@ -279,26 +333,50 @@ export default function Results() {
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="text-center mb-6"
+                className="text-center mb-4"
               >
-                <div className="inline-flex items-center gap-3 bg-[#46178f]/10 rounded-full px-6 py-3">
-                  <span className="text-3xl">{compatMessage.emoji}</span>
+                <div className="inline-flex items-center gap-3 bg-[#46178f]/10 rounded-full px-5 py-2">
+                  <span className="text-2xl">{compatMessage.emoji}</span>
                   <div className="text-left">
-                    <p className="text-[#46178f] font-black text-3xl">
+                    <p className="text-[#46178f] font-black text-2xl">
                       {compatibility}%
                     </p>
-                    <p className="text-gray-600 font-semibold text-sm">
+                    <p className="text-gray-600 font-semibold text-xs">
                       de compatibilite
                     </p>
                   </div>
                 </div>
-                <p className="text-gray-500 mt-3 font-semibold">
+                <p className="text-gray-500 mt-2 font-semibold text-sm">
                   {compatMessage.text}
                 </p>
               </motion.div>
 
+              {/* Gamification highlights */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="flex flex-wrap justify-center gap-2 mb-4"
+              >
+                {myMaxStreak >= 2 && (
+                  <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 rounded-full px-3 py-1 text-sm font-bold">
+                    🔥 Serie max: {myMaxStreak}
+                  </span>
+                )}
+                {mySpeedBonus > 0 && (
+                  <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 rounded-full px-3 py-1 text-sm font-bold">
+                    ⚡ Bonus rapidite: +{mySpeedBonus}
+                  </span>
+                )}
+                {finalResults.perfectMatches > 0 && (
+                  <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 rounded-full px-3 py-1 text-sm font-bold">
+                    🎯 Parfaits: {finalResults.perfectMatches}
+                  </span>
+                )}
+              </motion.div>
+
               {/* Stats grid */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-3 gap-3 mb-4">
                 <StatBox
                   value={finalResults.totalQuestions}
                   label="Questions"
@@ -307,17 +385,46 @@ export default function Results() {
                 />
                 <StatBox
                   value={finalResults.score1 + finalResults.score2}
-                  label="Points totaux"
+                  label="Points"
                   emoji="⭐"
                   delay={0.2}
                 />
                 <StatBox
-                  value={isTie ? 2 : 1}
-                  label={isTie ? 'Gagnants' : 'Gagnant'}
-                  emoji="🏆"
+                  value={finalResults.correctAnswers1}
+                  label="Matches"
+                  emoji="🤝"
                   delay={0.3}
                 />
               </div>
+
+              {/* Category breakdown */}
+              {showCategories && finalResults.categoryScores && finalResults.categoryScores.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  transition={{ delay: 0.2 }}
+                  className="mb-4"
+                >
+                  <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3 text-center">
+                    Compatibilite par categorie
+                  </h3>
+                  <div className="space-y-3 bg-gray-50 rounded-xl p-4">
+                    {finalResults.categoryScores.slice(0, 5).map((cat, idx) => (
+                      <CategoryBar key={cat.category} category={cat} delay={0.1 * idx} />
+                    ))}
+                  </div>
+                  {bestCategory && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.8 }}
+                      className="text-center mt-3 text-sm text-[#46178f] font-semibold"
+                    >
+                      {CATEGORY_ICONS[bestCategory.category] || '💡'} Votre force : <span className="capitalize">{bestCategory.category}</span> ({bestCategory.compatibility}%)
+                    </motion.p>
+                  )}
+                </motion.div>
+              )}
 
               {/* Play again button */}
               <motion.button
@@ -325,7 +432,7 @@ export default function Results() {
                 animate={{ y: 0, opacity: 1, scale: 1 }}
                 transition={{ delay: 0.5, type: 'spring', stiffness: 200 }}
                 onClick={handlePlayAgain}
-                className="btn-create w-full text-xl relative overflow-hidden group"
+                className="btn-create w-full text-lg relative overflow-hidden group"
                 whileHover={{ scale: 1.03, y: -3 }}
                 whileTap={{ scale: 0.97 }}
               >
@@ -337,7 +444,7 @@ export default function Results() {
                   transition={{ duration: 0.6 }}
                 />
                 <span className="flex items-center justify-center gap-3 relative z-10">
-                  <span className="text-2xl">🔄</span>
+                  <span className="text-xl">🔄</span>
                   Rejouer
                 </span>
               </motion.button>
@@ -370,7 +477,7 @@ function PodiumColumn({
   delay,
   emoji
 }: PodiumColumnProps) {
-  const height = isWinner || isTie ? 200 : 150;
+  const height = isWinner || isTie ? 160 : 120;
   const bgGradient = isWinner || isTie
     ? 'from-[#ffd700] via-[#ffec8b] to-[#b8860b]'
     : 'from-[#c0c0c0] via-[#e8e8e8] to-[#a0a0a0]';
@@ -380,7 +487,7 @@ function PodiumColumn({
       initial={{ y: 300, opacity: 0, scale: 0.5 }}
       animate={{ y: 0, opacity: 1, scale: 1 }}
       transition={{ delay, type: 'spring', damping: 12, stiffness: 100 }}
-      className="flex flex-col items-center flex-1 max-w-[160px] relative"
+      className="flex flex-col items-center flex-1 max-w-[140px] relative"
     >
       {/* Glow effect for winner */}
       {(isWinner || isTie) && (
@@ -400,11 +507,11 @@ function PodiumColumn({
           initial={{ y: -100, opacity: 0, scale: 0, rotate: -180 }}
           animate={{ y: 0, opacity: 1, scale: 1, rotate: 0 }}
           transition={{ delay: delay + 0.5, type: 'spring', stiffness: 200, damping: 10 }}
-          className="text-5xl mb-2 relative z-10"
+          className="text-4xl mb-1 relative z-10"
         >
           <motion.span
             animate={{
-              y: [0, -10, 0],
+              y: [0, -8, 0],
               rotate: [0, 10, -10, 0]
             }}
             transition={{ duration: 1.5, repeat: Infinity }}
@@ -420,7 +527,7 @@ function PodiumColumn({
         animate={{ scale: 1, rotate: 0 }}
         transition={{ delay: delay + 0.2, type: 'spring', stiffness: 150 }}
         className={`
-          w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-2 relative z-10
+          w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-1 relative z-10
           shadow-2xl border-4
           ${isWinner || isTie ? 'bg-gradient-to-br from-[#ffd700] to-[#ff8c00] border-white' : 'bg-gradient-to-br from-[#9ca3af] to-[#6b7280] border-white/50'}
         `}
@@ -441,8 +548,8 @@ function PodiumColumn({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: delay + 0.3 }}
         className={`
-          font-bold text-center mb-1 truncate w-full relative z-10
-          ${isWinner || isTie ? 'text-yellow-200 text-lg' : 'text-white'}
+          font-bold text-center mb-1 truncate w-full relative z-10 text-sm
+          ${isWinner || isTie ? 'text-yellow-200' : 'text-white'}
         `}
       >
         {name}
@@ -452,7 +559,7 @@ function PodiumColumn({
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: delay + 0.4, type: 'spring' }}
-          className="text-xs bg-white/30 text-white px-3 py-1 rounded-full mb-2 font-bold relative z-10"
+          className="text-xs bg-white/30 text-white px-2 py-0.5 rounded-full mb-1 font-bold relative z-10"
         >
           Toi
         </motion.span>
@@ -465,7 +572,7 @@ function PodiumColumn({
         transition={{ delay: delay + 0.3, duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
         className={`
           w-full bg-gradient-to-t ${bgGradient} rounded-t-2xl
-          flex flex-col items-center justify-start pt-4 relative overflow-hidden
+          flex flex-col items-center justify-start pt-3 relative overflow-hidden
           shadow-2xl
         `}
       >
@@ -477,37 +584,13 @@ function PodiumColumn({
           transition={{ delay: delay + 1, duration: 1, repeat: Infinity, repeatDelay: 3 }}
         />
 
-        {/* Sparkle particles */}
-        {(isWinner || isTie) && [...Array(5)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute text-lg"
-            style={{
-              left: `${20 + Math.random() * 60}%`,
-              top: `${20 + Math.random() * 60}%`
-            }}
-            animate={{
-              opacity: [0, 1, 0],
-              scale: [0, 1, 0],
-              rotate: [0, 180]
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              delay: delay + 0.5 + i * 0.3
-            }}
-          >
-            ✨
-          </motion.div>
-        ))}
-
         {/* Rank with pop effect */}
         <motion.span
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: delay + 0.6, type: 'spring', stiffness: 200 }}
           className={`
-            text-5xl font-black drop-shadow-lg relative z-10
+            text-4xl font-black drop-shadow-lg relative z-10
             ${isWinner || isTie ? 'text-white' : 'text-white/80'}
           `}
         >
@@ -520,18 +603,18 @@ function PodiumColumn({
           animate={{ scale: 1, y: 0 }}
           transition={{ delay: delay + 0.8, type: 'spring', stiffness: 200 }}
           className={`
-            mt-3 rounded-xl px-5 py-2 relative z-10
+            mt-2 rounded-xl px-4 py-1 relative z-10
             ${isWinner || isTie ? 'bg-black/30' : 'bg-white/20'}
           `}
         >
           <motion.span
-            className="text-3xl font-black text-white"
+            className="text-2xl font-black text-white"
             animate={score > 0 ? { scale: [1, 1.1, 1] } : {}}
             transition={{ duration: 0.3 }}
           >
             <AnimatedCounter value={score} duration={1500} />
           </motion.span>
-          <span className="text-white/60 text-sm ml-1 font-bold">pts</span>
+          <span className="text-white/60 text-xs ml-1 font-bold">pts</span>
         </motion.div>
       </motion.div>
     </motion.div>
@@ -574,8 +657,8 @@ function StatBox({ value, label, emoji, delay = 0 }: StatBoxProps) {
       initial={{ scale: 0, rotate: -10 }}
       animate={{ scale: 1, rotate: 0 }}
       transition={{ delay, type: 'spring', stiffness: 200, damping: 15 }}
-      whileHover={{ scale: 1.05, y: -5 }}
-      className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 text-center shadow-lg relative overflow-hidden"
+      whileHover={{ scale: 1.05, y: -3 }}
+      className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-3 text-center shadow-lg relative overflow-hidden"
     >
       {/* Shine effect */}
       <motion.div
@@ -588,7 +671,7 @@ function StatBox({ value, label, emoji, delay = 0 }: StatBoxProps) {
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: delay + 0.1, type: 'spring' }}
-        className="text-3xl block"
+        className="text-2xl block"
       >
         {emoji}
       </motion.span>
@@ -596,7 +679,7 @@ function StatBox({ value, label, emoji, delay = 0 }: StatBoxProps) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: delay + 0.2 }}
-        className="text-3xl font-black text-[#46178f] mt-1"
+        className="text-2xl font-black text-[#46178f] mt-1"
       >
         <AnimatedCounter value={value} duration={1200} />
       </motion.p>

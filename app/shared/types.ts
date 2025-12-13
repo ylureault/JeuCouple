@@ -112,6 +112,17 @@ export interface GameRevealData {
   points1: number;
   points2: number;
   questionType: QuestionType;
+  // Gamification data
+  basePoints: number;
+  speedBonus1: number;
+  speedBonus2: number;
+  streakBonus1: number;
+  streakBonus2: number;
+  streak1: number;
+  streak2: number;
+  answerTime1: number | null;
+  answerTime2: number | null;
+  category: string;
 }
 
 export interface GameFinishedData {
@@ -121,6 +132,21 @@ export interface GameFinishedData {
   totalQuestions: number;
   correctAnswers1: number;
   correctAnswers2: number;
+  // Category breakdown
+  categoryScores: CategoryScore[];
+  maxStreak1: number;
+  maxStreak2: number;
+  speedBonusTotal1: number;
+  speedBonusTotal2: number;
+  perfectMatches: number;
+}
+
+export interface CategoryScore {
+  category: string;
+  questionsAnswered: number;
+  pointsEarned: number;
+  maxPoints: number;
+  compatibility: number;
 }
 
 // Admin types

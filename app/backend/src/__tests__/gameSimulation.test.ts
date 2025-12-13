@@ -493,7 +493,17 @@ function revealAnswers(roomCode: string, gameState: GameState): void {
     correct,
     points1,
     points2,
-    questionType: question.type
+    questionType: question.type,
+    basePoints: points1,
+    speedBonus1: 0,
+    speedBonus2: 0,
+    streakBonus1: 0,
+    streakBonus2: 0,
+    streak1: 0,
+    streak2: 0,
+    answerTime1: null,
+    answerTime2: null,
+    category: question.category
   };
 
   io.to(roomCode).emit('game:reveal', revealData);
@@ -535,7 +545,13 @@ function finishGame(roomCode: string, gameState: GameState): void {
     winner,
     totalQuestions: gameState.questions.length,
     correctAnswers1: 0,
-    correctAnswers2: 0
+    correctAnswers2: 0,
+    categoryScores: [],
+    maxStreak1: 0,
+    maxStreak2: 0,
+    speedBonusTotal1: 0,
+    speedBonusTotal2: 0,
+    perfectMatches: 0
   };
 
   io.to(roomCode).emit('game:finished', finishedData);

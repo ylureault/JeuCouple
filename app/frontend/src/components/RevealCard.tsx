@@ -42,27 +42,106 @@ function FlyingEmojis({ emojis, count = 8 }: { emojis: string[]; count?: number 
   );
 }
 
+// Streak badge component
+function StreakBadge({ streak }: { streak: number }) {
+  if (streak < 2) return null;
+
+  const getStreakEmoji = () => {
+    if (streak >= 5) return '💎';
+    if (streak >= 4) return '🔥';
+    if (streak >= 3) return '⚡';
+    return '⭐';
+  };
+
+  const getMultiplier = () => {
+    if (streak >= 5) return 'x2.0';
+    if (streak >= 4) return 'x1.75';
+    if (streak >= 3) return 'x1.5';
+    return 'x1.2';
+  };
+
+  return (
+    <motion.div
+      initial={{ scale: 0, rotate: -180 }}
+      animate={{ scale: 1, rotate: 0 }}
+      transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
+      className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-full px-4 py-2 shadow-lg"
+    >
+      <motion.span
+        animate={{ scale: [1, 1.3, 1], rotate: [0, 10, -10, 0] }}
+        transition={{ duration: 0.6, repeat: Infinity }}
+        className="text-2xl"
+      >
+        {getStreakEmoji()}
+      </motion.span>
+      <span className="font-black text-white">
+        Serie de {streak} !
+      </span>
+      <span className="bg-white/30 rounded-full px-2 py-0.5 text-white font-bold text-sm">
+        {getMultiplier()}
+      </span>
+    </motion.div>
+  );
+}
+
+// Speed bonus badge
+function SpeedBonusBadge({ bonus, time }: { bonus: number; time: number | null }) {
+  if (bonus <= 0 || !time) return null;
+
+  const isFast = time <= 5;
+
+  return (
+    <motion.div
+      initial={{ x: 50, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ delay: 0.5, type: 'spring' }}
+      className={`
+        inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-bold
+        ${isFast ? 'bg-yellow-400 text-yellow-900' : 'bg-blue-400 text-blue-900'}
+      `}
+    >
+      <motion.span
+        animate={{ x: [0, 5, 0] }}
+        transition={{ duration: 0.3, repeat: 3 }}
+      >
+        ⚡
+      </motion.span>
+      <span>RAPIDE +{bonus}</span>
+    </motion.div>
+  );
+}
+
 export default function RevealCard({
   revealData,
   player1Name,
   player2Name,
   playerId
 }: RevealCardProps) {
-  const { answer1, answer2, correct, points1, points2, questionType } = revealData;
+  const {
+    answer1, answer2, correct, points1, points2, questionType,
+    basePoints, speedBonus1, speedBonus2, streakBonus1, streakBonus2,
+    streak1, streak2, answerTime1, answerTime2
+  } = revealData;
   const [showFlash, setShowFlash] = useState(false);
   const [countedPoints, setCountedPoints] = useState(0);
 
   const myPoints = playerId === 1 ? points1 : points2;
-  const showPoints = questionType !== 'C';
+  const myStreak = playerId === 1 ? streak1 : streak2;
+  const mySpeedBonus = playerId === 1 ? speedBonus1 : speedBonus2;
+  const myStreakBonus = playerId === 1 ? streakBonus1 : streakBonus2;
+  const myAnswerTime = playerId === 1 ? answerTime1 : answerTime2;
+
+  const showPoints = questionType !== 'C' || basePoints > 0;
   const answersMatch = answer1 === answer2;
+  const hasBonus = mySpeedBonus > 0 || myStreakBonus > 0;
 
   // Lightning flash on reveal
   useEffect(() => {
-    if (showPoints) {
+    if (showPoints && correct) {
       setShowFlash(true);
       setTimeout(() => setShowFlash(false), 200);
     }
-  }, [showPoints]);
+  }, [showPoints, correct]);
 
   // Animated point counter
   useEffect(() => {
@@ -103,16 +182,23 @@ export default function RevealCard({
       </AnimatePresence>
 
       {/* Flying emojis for correct answers */}
-      {correct && showPoints && (
+      {correct && showPoints && myPoints > 0 && (
         <>
           <Confetti count={50} />
           <FlyingEmojis emojis={['💖', '✨', '🌟', '💕', '🎊', '💫']} count={12} />
         </>
       )}
 
+      {/* Streak badge at top */}
+      {myStreak >= 2 && correct && (
+        <div className="flex justify-center mb-4">
+          <StreakBadge streak={myStreak} />
+        </div>
+      )}
+
       {/* Wrong answer shake effect - applies to container */}
       <motion.div
-        animate={!correct && showPoints ? {
+        animate={!correct && questionType !== 'C' ? {
           x: [0, -15, 15, -10, 10, -5, 5, 0],
           transition: { duration: 0.5 }
         } : {}}
@@ -124,9 +210,9 @@ export default function RevealCard({
           transition={{ type: 'spring', damping: 12, stiffness: 100 }}
           className={`
             rounded-2xl p-8 text-center shadow-2xl relative overflow-hidden
-            ${correct && showPoints ? 'bg-gradient-to-br from-[#26890c] to-[#1a5e08] glow-green' : ''}
-            ${!correct && showPoints ? 'bg-gradient-to-br from-[#e21b3c] to-[#9c1229] glow-red' : ''}
-            ${!showPoints ? 'bg-gradient-to-br from-[#9c27b0] to-[#6a1b7a]' : ''}
+            ${correct && showPoints && myPoints > 0 ? 'bg-gradient-to-br from-[#26890c] to-[#1a5e08] glow-green' : ''}
+            ${!correct && questionType !== 'C' ? 'bg-gradient-to-br from-[#e21b3c] to-[#9c1229] glow-red' : ''}
+            ${questionType === 'C' ? 'bg-gradient-to-br from-[#9c27b0] to-[#6a1b7a]' : ''}
           `}
         >
           {/* Animated background shimmer */}
@@ -136,7 +222,7 @@ export default function RevealCard({
             transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
           />
 
-          {showPoints && (
+          {questionType !== 'C' && (
             <div className="relative z-10">
               {/* Main emoji with dramatic entrance */}
               <motion.div
@@ -226,10 +312,32 @@ export default function RevealCard({
                   ))}
                 </motion.div>
               )}
+
+              {/* Bonus breakdown */}
+              {hasBonus && myPoints > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1 }}
+                  className="flex flex-wrap justify-center gap-2 mt-4"
+                >
+                  <span className="bg-white/20 rounded-full px-3 py-1 text-white/80 text-sm font-semibold">
+                    Base: {basePoints}
+                  </span>
+                  {mySpeedBonus > 0 && (
+                    <SpeedBonusBadge bonus={mySpeedBonus} time={myAnswerTime} />
+                  )}
+                  {myStreakBonus > 0 && (
+                    <span className="bg-orange-500/80 rounded-full px-3 py-1 text-white text-sm font-bold">
+                      🔥 Serie: +{myStreakBonus}
+                    </span>
+                  )}
+                </motion.div>
+              )}
             </div>
           )}
 
-          {!showPoints && (
+          {questionType === 'C' && (
             <div className="relative z-10">
               <motion.div
                 initial={{ scale: 0, rotate: -180 }}
@@ -247,6 +355,16 @@ export default function RevealCard({
               >
                 Comparez vos reponses !
               </motion.h2>
+              {basePoints > 0 && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-white/80 mt-2"
+                >
+                  +{basePoints} points pour vos reponses reflechies !
+                </motion.p>
+              )}
             </div>
           )}
         </motion.div>
@@ -258,19 +376,23 @@ export default function RevealCard({
           name={player1Name}
           answer={answer1}
           isYou={playerId === 1}
-          highlighted={answersMatch && showPoints}
+          highlighted={answersMatch && questionType !== 'C'}
           questionType={questionType}
           delay={0.4}
           emoji="👩"
+          answerTime={answerTime1}
+          speedBonus={speedBonus1}
         />
         <AnswerBlock
           name={player2Name}
           answer={answer2}
           isYou={playerId === 2}
-          highlighted={answersMatch && showPoints}
+          highlighted={answersMatch && questionType !== 'C'}
           questionType={questionType}
           delay={0.5}
           emoji="👨"
+          answerTime={answerTime2}
+          speedBonus={speedBonus2}
         />
       </div>
 
@@ -311,6 +433,8 @@ interface AnswerBlockProps {
   questionType: string;
   delay: number;
   emoji: string;
+  answerTime: number | null;
+  speedBonus: number;
 }
 
 function AnswerBlock({
@@ -320,7 +444,9 @@ function AnswerBlock({
   highlighted,
   questionType,
   delay,
-  emoji
+  emoji,
+  answerTime,
+  speedBonus
 }: AnswerBlockProps) {
   return (
     <motion.div
@@ -345,6 +471,19 @@ function AnswerBlock({
         } : {}}
         transition={{ duration: 2, repeat: Infinity }}
       />
+
+      {/* Speed indicator */}
+      {speedBonus > 0 && answerTime && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: delay + 0.4, type: 'spring' }}
+          className="absolute top-2 left-2 bg-yellow-400 rounded-full px-2 py-0.5 flex items-center gap-1"
+        >
+          <span className="text-xs">⚡</span>
+          <span className="text-xs font-bold text-yellow-900">{answerTime.toFixed(1)}s</span>
+        </motion.div>
+      )}
 
       {/* Checkmark for highlighted */}
       {highlighted && (
@@ -417,6 +556,7 @@ function AnswerBlock({
           className={`
             font-bold relative z-10
             ${questionType === 'D' ? 'text-5xl text-[#46178f]' : 'text-xl text-gray-900'}
+            ${questionType === 'C' ? 'text-base text-gray-800' : ''}
             ${!answer ? 'text-gray-400 italic' : ''}
           `}
         >
