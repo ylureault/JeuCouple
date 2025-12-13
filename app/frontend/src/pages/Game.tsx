@@ -8,6 +8,7 @@ import Countdown from '../components/Countdown';
 import QuestionCard from '../components/QuestionCard';
 import RevealCard from '../components/RevealCard';
 import CategoryBadge from '../components/CategoryBadge';
+import Lobby from './Lobby';
 
 export default function Game() {
   const {
@@ -97,7 +98,22 @@ export default function Game() {
     submitAnswer(answer);
   };
 
-  if (!room || !currentQuestion) {
+  // No room - redirect to home
+  if (!room) {
+    return (
+      <div className="min-h-screen bg-[#46178f] flex items-center justify-center">
+        <div className="spinner w-16 h-16" />
+      </div>
+    );
+  }
+
+  // Lobby phase - show lobby screen
+  if (phase === 'lobby') {
+    return <Lobby />;
+  }
+
+  // Game started but no question yet - loading
+  if (!currentQuestion) {
     return (
       <div className="min-h-screen bg-[#46178f] flex items-center justify-center">
         <div className="spinner w-16 h-16" />
