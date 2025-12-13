@@ -1,6 +1,38 @@
 // Types partagés entre frontend et backend
 
-export type QuestionType = 'A' | 'B' | 'C' | 'D';
+// Extended question types: A, B, C, D + new E (binary choice) and F (who of us)
+export type QuestionType = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
+
+// Scoring modes for question types
+export type ScoringMode = 'match' | 'consensus' | 'proximity' | 'none';
+
+// Input types for questions
+export type InputType = 'options' | 'binary' | 'scale' | 'text' | 'who';
+
+// Question Type Configuration (administrable)
+export interface QuestionTypeConfig {
+  id: number;
+  code: string;
+  name: string;
+  description: string;
+  scoring_mode: ScoringMode;
+  input_type: InputType;
+  icon: string;
+  color: string;
+  active: boolean;
+}
+
+// Category (administrable)
+export interface Category {
+  id: number;
+  code: string;
+  name: string;
+  icon: string;
+  color: string;
+  description: string;
+  active: boolean;
+  sort_order: number;
+}
 
 export interface Question {
   id: number;
@@ -8,6 +40,8 @@ export interface Question {
   category: string;
   text: string;
   options?: string[];
+  option_a?: string;  // For type E (binary choice)
+  option_b?: string;  // For type E (binary choice)
   timer: number;
   active: boolean;
 }

@@ -7,14 +7,22 @@ interface QuestionRow {
   category: string;
   text: string;
   options: string | null;
+  option_a: string | null;
+  option_b: string | null;
   timer: number;
   active: number;
 }
 
 function rowToQuestion(row: QuestionRow): Question {
   return {
-    ...row,
+    id: row.id,
+    type: row.type,
+    category: row.category,
+    text: row.text,
     options: row.options ? JSON.parse(row.options) : undefined,
+    option_a: row.option_a || undefined,
+    option_b: row.option_b || undefined,
+    timer: row.timer,
     active: Boolean(row.active)
   };
 }
@@ -46,13 +54,15 @@ export function getRandomQuestions(count: number): Question[] {
 
 export function createQuestion(question: Omit<Question, 'id' | 'active'>): Question {
   const result = db.prepare(`
-    INSERT INTO questions (type, category, text, options, timer, active)
-    VALUES (?, ?, ?, ?, ?, 1)
+    INSERT INTO questions (type, category, text, options, option_a, option_b, timer, active)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 1)
   `).run(
     question.type,
     question.category,
     question.text,
     question.options ? JSON.stringify(question.options) : null,
+    question.option_a || null,
+    question.option_b || null,
     question.timer || 20
   );
 
@@ -82,6 +92,14 @@ export function updateQuestion(id: number, question: Partial<Omit<Question, 'id'
     updates.push('options = ?');
     values.push(JSON.stringify(question.options));
   }
+  if (question.option_a !== undefined) {
+    updates.push('option_a = ?');
+    values.push(question.option_a);
+  }
+  if (question.option_b !== undefined) {
+    updates.push('option_b = ?');
+    values.push(question.option_b);
+  }
   if (question.timer !== undefined) {
     updates.push('timer = ?');
     values.push(question.timer);
@@ -106,8 +124,8 @@ export function deleteQuestion(id: number): boolean {
 
 export function importQuestions(data: QuestionImport): number {
   const insert = db.prepare(`
-    INSERT INTO questions (type, category, text, options, timer, active)
-    VALUES (?, ?, ?, ?, ?, 1)
+    INSERT INTO questions (type, category, text, options, option_a, option_b, timer, active)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 1)
   `);
 
   let imported = 0;
@@ -118,6 +136,8 @@ export function importQuestions(data: QuestionImport): number {
         q.category,
         q.text,
         q.options ? JSON.stringify(q.options) : null,
+        q.option_a || null,
+        q.option_b || null,
         q.timer || 20
       );
       imported++;
@@ -143,7 +163,7 @@ export function getQuestionStats(): Record<QuestionType, number> {
     GROUP BY type
   `).all() as { type: QuestionType; count: number }[];
 
-  const stats: Record<QuestionType, number> = { A: 0, B: 0, C: 0, D: 0 };
+  const stats: Record<QuestionType, number> = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0 };
   for (const row of rows) {
     stats[row.type] = row.count;
   }

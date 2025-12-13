@@ -7,6 +7,9 @@ interface QuestionCardProps {
   onAnswer: (answer: string) => void;
   disabled: boolean;
   selectedAnswer: string | null;
+  player1Name?: string;
+  player2Name?: string;
+  playerId?: 1 | 2;
 }
 
 const buttonStyles = [
@@ -35,7 +38,10 @@ export default function QuestionCard({
   question,
   onAnswer,
   disabled,
-  selectedAnswer
+  selectedAnswer,
+  player1Name = 'Joueur 1',
+  player2Name = 'Joueur 2',
+  playerId = 1
 }: QuestionCardProps) {
   const [scaleValue, setScaleValue] = useState(5);
   const [freeText, setFreeText] = useState('');
@@ -194,11 +200,187 @@ export default function QuestionCard({
     );
   };
 
+  // Type E: "Tu es plutot..." - Binary choice between two options
+  const renderTypeE = () => {
+    const optionA = question.option_a || 'Option A';
+    const optionB = question.option_b || 'Option B';
+
+    return (
+      <div className="grid grid-cols-2 gap-4">
+        {/* Option A */}
+        <motion.button
+          initial={{ opacity: 0, x: -50, scale: 0.8 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+          onClick={() => !disabled && onAnswer('A')}
+          disabled={disabled}
+          className={`
+            relative overflow-hidden rounded-2xl p-6 min-h-[140px]
+            bg-gradient-to-br from-[#9b59b6] to-[#8e44ad]
+            ${disabled && selectedAnswer !== 'A' ? 'opacity-50' : ''}
+            ${selectedAnswer === 'A' ? 'ring-4 ring-white ring-offset-2 ring-offset-transparent scale-105' : ''}
+            shadow-[0_8px_0_0_rgba(0,0,0,0.3)] hover:shadow-[0_6px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[6px]
+            transition-all duration-100
+          `}
+          whileHover={disabled ? {} : { scale: 1.05, y: -4 }}
+          whileTap={disabled ? {} : { scale: 0.98 }}
+        >
+          <div className="absolute top-2 left-2 text-3xl">⬅️</div>
+          <div className="flex flex-col items-center justify-center h-full">
+            <span className="text-white font-extrabold text-xl md:text-2xl text-center leading-tight">
+              {optionA}
+            </span>
+          </div>
+          {selectedAnswer === 'A' && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute bottom-2 right-2 text-3xl"
+            >
+              ✓
+            </motion.div>
+          )}
+        </motion.button>
+
+        {/* Option B */}
+        <motion.button
+          initial={{ opacity: 0, x: 50, scale: 0.8 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+          onClick={() => !disabled && onAnswer('B')}
+          disabled={disabled}
+          className={`
+            relative overflow-hidden rounded-2xl p-6 min-h-[140px]
+            bg-gradient-to-br from-[#e91e63] to-[#c2185b]
+            ${disabled && selectedAnswer !== 'B' ? 'opacity-50' : ''}
+            ${selectedAnswer === 'B' ? 'ring-4 ring-white ring-offset-2 ring-offset-transparent scale-105' : ''}
+            shadow-[0_8px_0_0_rgba(0,0,0,0.3)] hover:shadow-[0_6px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[6px]
+            transition-all duration-100
+          `}
+          whileHover={disabled ? {} : { scale: 1.05, y: -4 }}
+          whileTap={disabled ? {} : { scale: 0.98 }}
+        >
+          <div className="absolute top-2 right-2 text-3xl">➡️</div>
+          <div className="flex flex-col items-center justify-center h-full">
+            <span className="text-white font-extrabold text-xl md:text-2xl text-center leading-tight">
+              {optionB}
+            </span>
+          </div>
+          {selectedAnswer === 'B' && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute bottom-2 left-2 text-3xl"
+            >
+              ✓
+            </motion.div>
+          )}
+        </motion.button>
+      </div>
+    );
+  };
+
+  // Type F: "Qui de nous deux..." - Choose which player
+  const renderTypeF = () => {
+    const myName = playerId === 1 ? player1Name : player2Name;
+    const theirName = playerId === 1 ? player2Name : player1Name;
+
+    return (
+      <div className="grid grid-cols-2 gap-4">
+        {/* Moi */}
+        <motion.button
+          initial={{ opacity: 0, y: 50, scale: 0.8 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+          onClick={() => !disabled && onAnswer(playerId === 1 ? 'player1' : 'player2')}
+          disabled={disabled}
+          className={`
+            relative overflow-hidden rounded-2xl p-6 min-h-[160px]
+            bg-gradient-to-br from-[#00bcd4] to-[#0097a7]
+            ${disabled && selectedAnswer !== (playerId === 1 ? 'player1' : 'player2') ? 'opacity-50' : ''}
+            ${selectedAnswer === (playerId === 1 ? 'player1' : 'player2') ? 'ring-4 ring-white ring-offset-2 scale-105' : ''}
+            shadow-[0_8px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[6px]
+            transition-all duration-100
+          `}
+          whileHover={disabled ? {} : { scale: 1.05, y: -4 }}
+          whileTap={disabled ? {} : { scale: 0.98 }}
+        >
+          <div className="flex flex-col items-center justify-center h-full gap-3">
+            <motion.span
+              className="text-6xl"
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+            >
+              🙋
+            </motion.span>
+            <span className="text-white font-extrabold text-xl">MOI</span>
+            <span className="text-white/70 text-sm">({myName})</span>
+          </div>
+          {selectedAnswer === (playerId === 1 ? 'player1' : 'player2') && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute top-2 right-2 text-3xl"
+            >
+              ✓
+            </motion.div>
+          )}
+        </motion.button>
+
+        {/* Lui/Elle */}
+        <motion.button
+          initial={{ opacity: 0, y: 50, scale: 0.8 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+          onClick={() => !disabled && onAnswer(playerId === 1 ? 'player2' : 'player1')}
+          disabled={disabled}
+          className={`
+            relative overflow-hidden rounded-2xl p-6 min-h-[160px]
+            bg-gradient-to-br from-[#ff5722] to-[#e64a19]
+            ${disabled && selectedAnswer !== (playerId === 1 ? 'player2' : 'player1') ? 'opacity-50' : ''}
+            ${selectedAnswer === (playerId === 1 ? 'player2' : 'player1') ? 'ring-4 ring-white ring-offset-2 scale-105' : ''}
+            shadow-[0_8px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[6px]
+            transition-all duration-100
+          `}
+          whileHover={disabled ? {} : { scale: 1.05, y: -4 }}
+          whileTap={disabled ? {} : { scale: 0.98 }}
+        >
+          <div className="flex flex-col items-center justify-center h-full gap-3">
+            <motion.span
+              className="text-6xl"
+              animate={{ rotate: [0, -10, 10, 0] }}
+              transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+            >
+              💑
+            </motion.span>
+            <span className="text-white font-extrabold text-xl">LUI/ELLE</span>
+            <span className="text-white/70 text-sm">({theirName})</span>
+          </div>
+          {selectedAnswer === (playerId === 1 ? 'player2' : 'player1') && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute top-2 left-2 text-3xl"
+            >
+              ✓
+            </motion.div>
+          )}
+        </motion.button>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6 w-full max-w-2xl mx-auto">
       {(question.type === 'A' || question.type === 'B') && renderTypeAB()}
       {question.type === 'C' && renderTypeC()}
       {question.type === 'D' && renderTypeD()}
+      {question.type === 'E' && renderTypeE()}
+      {question.type === 'F' && renderTypeF()}
     </div>
   );
 }

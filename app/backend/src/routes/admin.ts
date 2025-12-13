@@ -4,6 +4,8 @@ import * as adminModel from '../models/admin.js';
 import * as questionModel from '../models/question.js';
 import * as roomModel from '../models/room.js';
 import * as gameModel from '../models/game.js';
+import * as questionTypeModel from '../models/questionType.js';
+import * as categoryModel from '../models/category.js';
 import type { AdminStats, QuestionImport } from '../../../shared/types.js';
 
 const router = Router();
@@ -129,6 +131,206 @@ router.delete('/rooms/:id', (req: AuthRequest, res: Response) => {
   const id = parseInt(req.params.id, 10);
   roomModel.deleteRoom(id);
   res.status(204).send();
+});
+
+// ==========================================
+// Question Types CRUD
+// ==========================================
+
+router.get('/question-types', (_req: AuthRequest, res: Response) => {
+  const types = questionTypeModel.getAllQuestionTypes();
+  res.json(types);
+});
+
+router.get('/question-types/active', (_req: AuthRequest, res: Response) => {
+  const types = questionTypeModel.getActiveQuestionTypes();
+  res.json(types);
+});
+
+router.get('/question-types/:id', (req: AuthRequest, res: Response) => {
+  const id = parseInt(req.params.id, 10);
+  const type = questionTypeModel.getQuestionTypeById(id);
+  if (!type) {
+    res.status(404).json({ error: 'Question type not found' });
+    return;
+  }
+  res.json(type);
+});
+
+router.post('/question-types', (req: AuthRequest, res: Response) => {
+  const { code, name, description, scoring_mode, input_type, icon, color } = req.body;
+
+  if (!code || !name || !scoring_mode || !input_type) {
+    res.status(400).json({ error: 'code, name, scoring_mode, and input_type are required' });
+    return;
+  }
+
+  try {
+    const type = questionTypeModel.createQuestionType({
+      code,
+      name,
+      description: description || '',
+      scoring_mode,
+      input_type,
+      icon: icon || '',
+      color: color || '#666666'
+    });
+    res.status(201).json(type);
+  } catch (error) {
+    res.status(400).json({ error: 'Code already exists' });
+  }
+});
+
+router.put('/question-types/:id', (req: AuthRequest, res: Response) => {
+  const id = parseInt(req.params.id, 10);
+  const type = questionTypeModel.updateQuestionType(id, req.body);
+
+  if (!type) {
+    res.status(404).json({ error: 'Question type not found' });
+    return;
+  }
+
+  res.json(type);
+});
+
+router.delete('/question-types/:id', (req: AuthRequest, res: Response) => {
+  const id = parseInt(req.params.id, 10);
+  const deleted = questionTypeModel.deleteQuestionType(id);
+
+  if (!deleted) {
+    res.status(404).json({ error: 'Question type not found' });
+    return;
+  }
+
+  res.status(204).send();
+});
+
+// ==========================================
+// Categories CRUD
+// ==========================================
+
+router.get('/categories', (_req: AuthRequest, res: Response) => {
+  const categories = categoryModel.getAllCategories();
+  res.json(categories);
+});
+
+router.get('/categories/active', (_req: AuthRequest, res: Response) => {
+  const categories = categoryModel.getActiveCategories();
+  res.json(categories);
+});
+
+router.get('/categories/stats', (_req: AuthRequest, res: Response) => {
+  const stats = categoryModel.getCategoryStats();
+  res.json(stats);
+});
+
+router.get('/categories/:id', (req: AuthRequest, res: Response) => {
+  const id = parseInt(req.params.id, 10);
+  const category = categoryModel.getCategoryById(id);
+  if (!category) {
+    res.status(404).json({ error: 'Category not found' });
+    return;
+  }
+  res.json(category);
+});
+
+router.post('/categories', (req: AuthRequest, res: Response) => {
+  const { code, name, icon, color, description, sort_order } = req.body;
+
+  if (!code || !name) {
+    res.status(400).json({ error: 'code and name are required' });
+    return;
+  }
+
+  try {
+    const category = categoryModel.createCategory({
+      code,
+      name,
+      icon: icon || '',
+      color: color || '#666666',
+      description: description || '',
+      sort_order: sort_order || 0
+    });
+    res.status(201).json(category);
+  } catch (error) {
+    res.status(400).json({ error: 'Code already exists' });
+  }
+});
+
+router.put('/categories/:id', (req: AuthRequest, res: Response) => {
+  const id = parseInt(req.params.id, 10);
+  const category = categoryModel.updateCategory(id, req.body);
+
+  if (!category) {
+    res.status(404).json({ error: 'Category not found' });
+    return;
+  }
+
+  res.json(category);
+});
+
+router.delete('/categories/:id', (req: AuthRequest, res: Response) => {
+  const id = parseInt(req.params.id, 10);
+  const deleted = categoryModel.deleteCategory(id);
+
+  if (!deleted) {
+    res.status(404).json({ error: 'Category not found' });
+    return;
+  }
+
+  res.status(204).send();
+});
+
+// ==========================================
+// Sample JSON for import
+// ==========================================
+
+router.get('/questions/sample-json', (_req: AuthRequest, res: Response) => {
+  const sampleJson = {
+    questions: [
+      {
+        type: 'A',
+        category: 'couple',
+        text: "Quel est le plat prefere de ton/ta partenaire?",
+        options: ["Pizza", "Sushi", "Burger", "Salade"],
+        timer: 20
+      },
+      {
+        type: 'B',
+        category: 'preferences',
+        text: "Quelle est votre serie preferee en commun?",
+        options: ["Netflix Original", "HBO", "Disney+", "Autre"],
+        timer: 20
+      },
+      {
+        type: 'C',
+        category: 'souvenirs',
+        text: "Decris votre premier baiser en un mot",
+        timer: 30
+      },
+      {
+        type: 'D',
+        category: 'couple',
+        text: "Sur une echelle de 1 a 10, a quel point es-tu romantique?",
+        timer: 15
+      },
+      {
+        type: 'E',
+        category: 'preferences',
+        text: "Tu es plutot...",
+        option_a: "Matin calme",
+        option_b: "Nuit animee",
+        timer: 15
+      },
+      {
+        type: 'F',
+        category: 'couple',
+        text: "Qui de vous deux est le plus jaloux?",
+        timer: 15
+      }
+    ]
+  };
+  res.json(sampleJson);
 });
 
 export default router;

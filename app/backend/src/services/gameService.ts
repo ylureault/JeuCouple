@@ -383,6 +383,27 @@ function calculatePoints(
         }
       }
       break;
+
+    case 'E':
+      // Type E: "Tu es plutot..." - Binary choice
+      // Both players should choose the same option (about themselves)
+      if (answer1 === answer2) {
+        points1 = 100;
+        points2 = 100;
+        correct = true;
+      }
+      break;
+
+    case 'F':
+      // Type F: "Qui de nous deux" - Consensus required
+      // Both players must agree on who fits the description
+      // answer format: "player1" or "player2"
+      if (answer1 === answer2) {
+        points1 = 100;
+        points2 = 100;
+        correct = true;
+      }
+      break;
   }
 
   return { points1, points2, correct };

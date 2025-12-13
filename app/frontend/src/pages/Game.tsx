@@ -273,6 +273,9 @@ export default function Game() {
                 onAnswer={handleAnswer}
                 disabled={!!myAnswer}
                 selectedAnswer={myAnswer}
+                player1Name={player1Name}
+                player2Name={player2Name}
+                playerId={playerId!}
               />
 
               {/* Other player status */}
