@@ -46,7 +46,7 @@ type GameAction =
   | { type: 'SET_MY_ANSWER'; answer: string }
   | { type: 'OTHER_ANSWERED' }
   | { type: 'SET_REVEAL'; data: GameRevealData }
-  | { type: 'UPDATE_SCORES'; scores: { player1: number; player2: number } }
+  | { type: 'UPDATE_SCORES'; scores: { score1: number; score2: number } }
   | { type: 'GAME_FINISHED'; data: GameFinishedData }
   | { type: 'SET_ERROR'; error: string }
   | { type: 'CLEAR_ERROR' }

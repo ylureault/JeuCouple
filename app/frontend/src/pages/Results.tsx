@@ -6,12 +6,53 @@ import { useAudio } from '../context/AudioContext';
 import MuteButton from '../components/MuteButton';
 import Confetti from '../components/Confetti';
 
+// Firework burst component
+function Firework({ x, y, delay = 0 }: { x: number; y: number; delay?: number }) {
+  const colors = ['#ff0000', '#ffd700', '#00ff00', '#00bfff', '#ff1493', '#ff8c00'];
+  const particles = 12;
+
+  return (
+    <motion.div
+      className="absolute pointer-events-none"
+      style={{ left: `${x}%`, top: `${y}%` }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay }}
+    >
+      {[...Array(particles)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-3 h-3 rounded-full"
+          style={{
+            backgroundColor: colors[i % colors.length],
+            boxShadow: `0 0 6px ${colors[i % colors.length]}`
+          }}
+          initial={{ scale: 0, x: 0, y: 0 }}
+          animate={{
+            scale: [0, 1, 0],
+            x: Math.cos((i * 360 / particles) * Math.PI / 180) * 80,
+            y: Math.sin((i * 360 / particles) * Math.PI / 180) * 80,
+            opacity: [1, 1, 0]
+          }}
+          transition={{
+            delay: delay,
+            duration: 1,
+            ease: 'easeOut'
+          }}
+        />
+      ))}
+    </motion.div>
+  );
+}
+
 export default function Results() {
   const { room, playerId, finalResults, resetGame } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
   const [showPodium, setShowPodium] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showFireworks, setShowFireworks] = useState(false);
+  const [drumroll, setDrumroll] = useState(true);
 
   useEffect(() => {
     if (!finalResults || !room) {
@@ -19,16 +60,20 @@ export default function Results() {
       return;
     }
 
-    // Staggered reveal
-    const timer1 = setTimeout(() => setShowPodium(true), 500);
+    // Dramatic reveal sequence
+    const timer0 = setTimeout(() => setDrumroll(false), 1500);
+    const timer1 = setTimeout(() => setShowPodium(true), 1600);
     const timer2 = setTimeout(() => {
-      setShowStats(true);
+      setShowFireworks(true);
       playSound('fanfare');
-    }, 1500);
+    }, 2500);
+    const timer3 = setTimeout(() => setShowStats(true), 3000);
 
     return () => {
+      clearTimeout(timer0);
       clearTimeout(timer1);
       clearTimeout(timer2);
+      clearTimeout(timer3);
     };
   }, [finalResults, room, navigate, playSound]);
 
@@ -70,31 +115,103 @@ export default function Results() {
   const compatMessage = getCompatibilityMessage();
 
   return (
-    <div className="min-h-screen bg-[#46178f] flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-[#1a0a2e] via-[#46178f] to-[#7b2cbf] flex flex-col overflow-hidden relative">
       <MuteButton />
 
-      {showStats && <Confetti count={50} />}
+      {/* Animated background particles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-2 h-2 bg-white/20 rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [0, -30, 0],
+              opacity: [0.2, 0.5, 0.2],
+              scale: [1, 1.5, 1]
+            }}
+            transition={{
+              duration: 3 + Math.random() * 2,
+              repeat: Infinity,
+              delay: Math.random() * 2
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Fireworks layer */}
+      {showFireworks && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <Confetti count={80} />
+          <Firework x={20} y={20} delay={0} />
+          <Firework x={80} y={25} delay={0.3} />
+          <Firework x={50} y={15} delay={0.6} />
+          <Firework x={30} y={35} delay={0.9} />
+          <Firework x={70} y={40} delay={1.2} />
+        </div>
+      )}
+
+      {/* Drumroll overlay */}
+      <AnimatePresence>
+        {drumroll && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 2 }}
+            transition={{ duration: 0.5 }}
+            className="fixed inset-0 z-50 bg-[#1a0a2e] flex items-center justify-center"
+          >
+            <motion.div
+              animate={{
+                scale: [1, 1.2, 1],
+                rotate: [0, 5, -5, 0]
+              }}
+              transition={{ duration: 0.5, repeat: Infinity }}
+              className="text-center"
+            >
+              <motion.div className="text-8xl mb-4">🥁</motion.div>
+              <motion.p
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 0.8, repeat: Infinity }}
+                className="text-3xl font-black text-white"
+              >
+                Les resultats arrivent...
+              </motion.p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Header */}
       <motion.div
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ type: 'spring', damping: 20 }}
-        className="text-center pt-8 pb-4"
+        initial={{ y: -200, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 1.6, type: 'spring', damping: 15 }}
+        className="text-center pt-8 pb-4 relative z-10"
       >
         <motion.div
-          initial={{ scale: 0, rotate: -180 }}
+          initial={{ scale: 0, rotate: -720 }}
           animate={{ scale: 1, rotate: 0 }}
-          transition={{ delay: 0.2, type: 'spring', damping: 12 }}
-          className="text-8xl mb-4"
+          transition={{ delay: 1.8, type: 'spring', damping: 8, stiffness: 80 }}
+          className="text-9xl mb-4"
         >
-          {headline.emoji}
+          <motion.span
+            animate={{
+              scale: [1, 1.2, 1],
+              rotate: [0, 10, -10, 0]
+            }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+          >
+            {headline.emoji}
+          </motion.span>
         </motion.div>
         <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="text-4xl md:text-5xl font-black text-white text-shadow-strong"
+          initial={{ opacity: 0, y: 50, scale: 0.5 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: 2.2, type: 'spring', damping: 15 }}
+          className="text-5xl md:text-6xl font-black text-white text-shadow-strong"
         >
           {headline.text}
         </motion.h1>
@@ -181,40 +298,45 @@ export default function Results() {
               </motion.div>
 
               {/* Stats grid */}
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="grid grid-cols-3 gap-4 mb-6"
-              >
+              <div className="grid grid-cols-3 gap-4 mb-6">
                 <StatBox
                   value={finalResults.totalQuestions}
                   label="Questions"
                   emoji="❓"
+                  delay={0.1}
                 />
                 <StatBox
                   value={finalResults.score1 + finalResults.score2}
                   label="Points totaux"
                   emoji="⭐"
+                  delay={0.2}
                 />
                 <StatBox
                   value={isTie ? 2 : 1}
                   label={isTie ? 'Gagnants' : 'Gagnant'}
                   emoji="🏆"
+                  delay={0.3}
                 />
-              </motion.div>
+              </div>
 
               {/* Play again button */}
               <motion.button
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
+                initial={{ y: 50, opacity: 0, scale: 0.8 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5, type: 'spring', stiffness: 200 }}
                 onClick={handlePlayAgain}
-                className="btn-create w-full text-xl"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                className="btn-create w-full text-xl relative overflow-hidden group"
+                whileHover={{ scale: 1.03, y: -3 }}
+                whileTap={{ scale: 0.97 }}
               >
-                <span className="flex items-center justify-center gap-3">
+                {/* Button shine effect */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                  initial={{ x: '-100%' }}
+                  whileHover={{ x: '200%' }}
+                  transition={{ duration: 0.6 }}
+                />
+                <span className="flex items-center justify-center gap-3 relative z-10">
                   <span className="text-2xl">🔄</span>
                   Rejouer
                 </span>
@@ -248,100 +370,244 @@ function PodiumColumn({
   delay,
   emoji
 }: PodiumColumnProps) {
-  const height = isWinner || isTie ? 180 : 140;
+  const height = isWinner || isTie ? 200 : 150;
   const bgGradient = isWinner || isTie
-    ? 'from-[#ffd700] to-[#b8860b]'
-    : 'from-[#c0c0c0] to-[#a0a0a0]';
+    ? 'from-[#ffd700] via-[#ffec8b] to-[#b8860b]'
+    : 'from-[#c0c0c0] via-[#e8e8e8] to-[#a0a0a0]';
 
   return (
     <motion.div
-      initial={{ y: 100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay, type: 'spring', damping: 15 }}
-      className="flex flex-col items-center flex-1 max-w-[140px]"
+      initial={{ y: 300, opacity: 0, scale: 0.5 }}
+      animate={{ y: 0, opacity: 1, scale: 1 }}
+      transition={{ delay, type: 'spring', damping: 12, stiffness: 100 }}
+      className="flex flex-col items-center flex-1 max-w-[160px] relative"
     >
-      {/* Crown for winner */}
+      {/* Glow effect for winner */}
       {(isWinner || isTie) && (
         <motion.div
-          initial={{ y: -20, opacity: 0, scale: 0 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
-          transition={{ delay: delay + 0.3, type: 'spring' }}
-          className="text-4xl mb-2"
+          className="absolute -inset-4 rounded-full bg-yellow-400/20 blur-xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.6, 0.3]
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+      )}
+
+      {/* Crown for winner with bounce */}
+      {(isWinner || isTie) && (
+        <motion.div
+          initial={{ y: -100, opacity: 0, scale: 0, rotate: -180 }}
+          animate={{ y: 0, opacity: 1, scale: 1, rotate: 0 }}
+          transition={{ delay: delay + 0.5, type: 'spring', stiffness: 200, damping: 10 }}
+          className="text-5xl mb-2 relative z-10"
         >
-          👑
+          <motion.span
+            animate={{
+              y: [0, -10, 0],
+              rotate: [0, 10, -10, 0]
+            }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            👑
+          </motion.span>
         </motion.div>
       )}
 
-      {/* Avatar */}
+      {/* Avatar with glow */}
       <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: delay + 0.1, type: 'spring' }}
+        initial={{ scale: 0, rotate: -360 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ delay: delay + 0.2, type: 'spring', stiffness: 150 }}
         className={`
-          w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-2
-          ${isWinner || isTie ? 'bg-[#ffd700]/20' : 'bg-white/20'}
+          w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-2 relative z-10
+          shadow-2xl border-4
+          ${isWinner || isTie ? 'bg-gradient-to-br from-[#ffd700] to-[#ff8c00] border-white' : 'bg-gradient-to-br from-[#9ca3af] to-[#6b7280] border-white/50'}
         `}
       >
-        {emoji}
+        <motion.span
+          animate={(isWinner || isTie) ? {
+            scale: [1, 1.1, 1]
+          } : {}}
+          transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1 }}
+        >
+          {emoji}
+        </motion.span>
       </motion.div>
 
-      {/* Name */}
-      <p className="text-white font-bold text-center mb-1 truncate w-full">
-        {name}
-      </p>
-      {isYou && (
-        <span className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full mb-2">
-          Toi
-        </span>
-      )}
-
-      {/* Podium bar */}
-      <motion.div
-        initial={{ height: 0 }}
-        animate={{ height }}
-        transition={{ delay: delay + 0.2, duration: 0.5, ease: 'easeOut' }}
+      {/* Name with emphasis */}
+      <motion.p
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: delay + 0.3 }}
         className={`
-          w-full bg-gradient-to-t ${bgGradient} rounded-t-xl
-          flex flex-col items-center justify-start pt-4 relative overflow-hidden
+          font-bold text-center mb-1 truncate w-full relative z-10
+          ${isWinner || isTie ? 'text-yellow-200 text-lg' : 'text-white'}
         `}
       >
-        {/* Shine effect */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
-        {/* Rank */}
-        <span className="text-4xl font-black text-white/80 drop-shadow-lg">
-          #{rank}
-        </span>
-
-        {/* Score */}
-        <motion.div
+        {name}
+      </motion.p>
+      {isYou && (
+        <motion.span
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          transition={{ delay: delay + 0.5, type: 'spring' }}
-          className="mt-2 bg-white/20 rounded-lg px-4 py-2"
+          transition={{ delay: delay + 0.4, type: 'spring' }}
+          className="text-xs bg-white/30 text-white px-3 py-1 rounded-full mb-2 font-bold relative z-10"
         >
-          <span className="text-2xl font-black text-white">
-            {score}
-          </span>
-          <span className="text-white/60 text-sm ml-1">pts</span>
+          Toi
+        </motion.span>
+      )}
+
+      {/* Podium bar with dramatic rise */}
+      <motion.div
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ height, opacity: 1 }}
+        transition={{ delay: delay + 0.3, duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
+        className={`
+          w-full bg-gradient-to-t ${bgGradient} rounded-t-2xl
+          flex flex-col items-center justify-start pt-4 relative overflow-hidden
+          shadow-2xl
+        `}
+      >
+        {/* Animated shine sweep */}
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+          initial={{ x: '-100%' }}
+          animate={{ x: '200%' }}
+          transition={{ delay: delay + 1, duration: 1, repeat: Infinity, repeatDelay: 3 }}
+        />
+
+        {/* Sparkle particles */}
+        {(isWinner || isTie) && [...Array(5)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute text-lg"
+            style={{
+              left: `${20 + Math.random() * 60}%`,
+              top: `${20 + Math.random() * 60}%`
+            }}
+            animate={{
+              opacity: [0, 1, 0],
+              scale: [0, 1, 0],
+              rotate: [0, 180]
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              delay: delay + 0.5 + i * 0.3
+            }}
+          >
+            ✨
+          </motion.div>
+        ))}
+
+        {/* Rank with pop effect */}
+        <motion.span
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: delay + 0.6, type: 'spring', stiffness: 200 }}
+          className={`
+            text-5xl font-black drop-shadow-lg relative z-10
+            ${isWinner || isTie ? 'text-white' : 'text-white/80'}
+          `}
+        >
+          #{rank}
+        </motion.span>
+
+        {/* Score with counter animation */}
+        <motion.div
+          initial={{ scale: 0, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          transition={{ delay: delay + 0.8, type: 'spring', stiffness: 200 }}
+          className={`
+            mt-3 rounded-xl px-5 py-2 relative z-10
+            ${isWinner || isTie ? 'bg-black/30' : 'bg-white/20'}
+          `}
+        >
+          <motion.span
+            className="text-3xl font-black text-white"
+            animate={score > 0 ? { scale: [1, 1.1, 1] } : {}}
+            transition={{ duration: 0.3 }}
+          >
+            <AnimatedCounter value={score} duration={1500} />
+          </motion.span>
+          <span className="text-white/60 text-sm ml-1 font-bold">pts</span>
         </motion.div>
       </motion.div>
     </motion.div>
   );
 }
 
+// AnimatedCounter used in PodiumColumn
+function AnimatedCounter({ value, duration = 1000 }: { value: number; duration?: number }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const steps = 30;
+    const increment = value / steps;
+    let current = 0;
+    const interval = setInterval(() => {
+      current += increment;
+      if (current >= value) {
+        setCount(value);
+        clearInterval(interval);
+      } else {
+        setCount(Math.floor(current));
+      }
+    }, duration / steps);
+    return () => clearInterval(interval);
+  }, [value, duration]);
+
+  return <>{count}</>;
+}
+
 interface StatBoxProps {
   value: number;
   label: string;
   emoji: string;
+  delay?: number;
 }
 
-function StatBox({ value, label, emoji }: StatBoxProps) {
+function StatBox({ value, label, emoji, delay = 0 }: StatBoxProps) {
   return (
-    <div className="bg-gray-100 rounded-xl p-4 text-center">
-      <span className="text-2xl">{emoji}</span>
-      <p className="text-2xl font-black text-gray-900 mt-1">{value}</p>
-      <p className="text-gray-500 text-xs font-semibold uppercase">{label}</p>
-    </div>
+    <motion.div
+      initial={{ scale: 0, rotate: -10 }}
+      animate={{ scale: 1, rotate: 0 }}
+      transition={{ delay, type: 'spring', stiffness: 200, damping: 15 }}
+      whileHover={{ scale: 1.05, y: -5 }}
+      className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 text-center shadow-lg relative overflow-hidden"
+    >
+      {/* Shine effect */}
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent"
+        initial={{ x: '-100%' }}
+        animate={{ x: '200%' }}
+        transition={{ delay: delay + 0.5, duration: 0.8 }}
+      />
+      <motion.span
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: delay + 0.1, type: 'spring' }}
+        className="text-3xl block"
+      >
+        {emoji}
+      </motion.span>
+      <motion.p
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: delay + 0.2 }}
+        className="text-3xl font-black text-[#46178f] mt-1"
+      >
+        <AnimatedCounter value={value} duration={1200} />
+      </motion.p>
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: delay + 0.3 }}
+        className="text-gray-500 text-xs font-bold uppercase tracking-wide"
+      >
+        {label}
+      </motion.p>
+    </motion.div>
   );
 }
