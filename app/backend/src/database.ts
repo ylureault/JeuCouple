@@ -115,6 +115,7 @@ export function initDatabase() {
   // Insert default question types if not exists
   initDefaultQuestionTypes();
   initDefaultCategories();
+  initDefaultQuestions();
 
   console.log('Database initialized successfully');
 }
@@ -207,6 +208,111 @@ function initDefaultCategories() {
   for (const cat of categories) {
     insert.run(cat.code, cat.name, cat.icon, cat.color, cat.description, cat.sort_order);
   }
+}
+
+function initDefaultQuestions() {
+  // Check if questions already exist
+  const count = db.prepare('SELECT COUNT(*) as count FROM questions').get() as { count: number };
+  if (count.count > 0) return;
+
+  const questions = [
+    // === TYPE A - Devine sa réponse ===
+    { type: 'A', category: 'couple', text: 'Quel est mon reve secret que je n\'ai jamais realise ?', options: JSON.stringify(['Voyager seul(e)', 'Changer de metier', 'Vivre a l\'etranger', 'Apprendre un instrument']), timer: 20 },
+    { type: 'A', category: 'couple', text: 'Qu\'est-ce qui me met vraiment en colere ?', options: JSON.stringify(['Le mensonge', 'L\'injustice', 'Le manque de respect', 'Etre ignore(e)']), timer: 20 },
+    { type: 'A', category: 'couple', text: 'Si je pouvais avoir un superpouvoir, ce serait...', options: JSON.stringify(['Lire les pensees', 'Voler', 'Etre invisible', 'Teleportation']), timer: 20 },
+    { type: 'A', category: 'preferences', text: 'Quelle est la chose qui me fait le plus rire ?', options: JSON.stringify(['Blagues absurdes', 'Fails videos', 'Situations gênantes', 'Sarcasme']), timer: 20 },
+    { type: 'A', category: 'habitudes', text: 'Qu\'est-ce que je fais en premier le matin ?', options: JSON.stringify(['Regarder mon tel', 'Cafe/The', 'Douche', 'Rester au lit']), timer: 20 },
+    { type: 'A', category: 'souvenirs', text: 'Quel moment de notre relation m\'a le plus marque ?', options: JSON.stringify(['Notre rencontre', 'Premier voyage', 'Une surprise', 'Une dispute resolue']), timer: 25 },
+    { type: 'A', category: 'preferences', text: 'Quel est le cadeau qui me ferait le plus plaisir ?', options: JSON.stringify(['Experience/Voyage', 'Objet utile', 'Quelque chose fait main', 'Une surprise']), timer: 20 },
+    { type: 'A', category: 'couple', text: 'Qu\'est-ce qui m\'attire le plus chez toi ?', options: JSON.stringify(['Ton humour', 'Ton intelligence', 'Ta gentillesse', 'Ton physique']), timer: 20 },
+
+    // === TYPE B - Répondez pareil ===
+    { type: 'B', category: 'couple', text: 'Si on gagnait au loto, on ferait quoi en premier ?', options: JSON.stringify(['Tour du monde', 'Acheter une maison', 'Investir', 'Tout claquer en folie']), timer: 20 },
+    { type: 'B', category: 'couple', text: 'Notre chanson de couple serait plutot...', options: JSON.stringify(['Romantique', 'Festive', 'Nostalgique', 'On n\'en a pas']), timer: 20 },
+    { type: 'B', category: 'projets', text: 'La maison ideale pour nous serait...', options: JSON.stringify(['Appartement en ville', 'Maison campagne', 'Loft moderne', 'Tiny house']), timer: 20 },
+    { type: 'B', category: 'couple', text: 'Notre plus grande force en tant que couple ?', options: JSON.stringify(['Communication', 'Humour', 'Complicite', 'Confiance']), timer: 20 },
+    { type: 'B', category: 'habitudes', text: 'La soiree parfaite pour nous c\'est...', options: JSON.stringify(['Netflix & chill', 'Sortie entre amis', 'Restaurant chic', 'Jeux de societe']), timer: 20 },
+    { type: 'B', category: 'projets', text: 'Dans 10 ans, on sera...', options: JSON.stringify(['Parents epanouis', 'Expatries', 'Memes qu\'aujourd\'hui', 'Millionnaires']), timer: 20 },
+    { type: 'B', category: 'fun', text: 'Si on etait un duo celebre, on serait...', options: JSON.stringify(['Bonnie & Clyde', 'Romeo & Juliette', 'Shrek & Fiona', 'Autre']), timer: 15 },
+    { type: 'B', category: 'sexy', text: 'L\'endroit le plus insolite ou on aimerait s\'embrasser ?', options: JSON.stringify(['Sous la pluie', 'Au sommet d\'une montagne', 'Dans un avion', 'Sous l\'eau']), timer: 20 },
+
+    // === TYPE C - Questions ouvertes ===
+    { type: 'C', category: 'couple', text: 'Quelle est la chose la plus folle que tu ferais pour moi ?', timer: 30 },
+    { type: 'C', category: 'couple', text: 'Qu\'est-ce que tu n\'as jamais ose me dire ?', timer: 30 },
+    { type: 'C', category: 'souvenirs', text: 'Decris notre premier baiser en 3 mots', timer: 25 },
+    { type: 'C', category: 'couple', text: 'Si tu devais me decrire a un inconnu, tu dirais quoi ?', timer: 30 },
+    { type: 'C', category: 'projets', text: 'Quel pays on doit absolument visiter ensemble ?', timer: 20 },
+    { type: 'C', category: 'couple', text: 'Quelle habitude de moi t\'agace (secretement) ?', timer: 25 },
+    { type: 'C', category: 'souvenirs', text: 'Quel est le moment ou tu as su que c\'etait serieux entre nous ?', timer: 30 },
+    { type: 'C', category: 'fun', text: 'Si on devait ouvrir un business ensemble, ce serait quoi ?', timer: 25 },
+    { type: 'C', category: 'sexy', text: 'Quel est ton fantasme inavoue ?', timer: 30 },
+    { type: 'C', category: 'couple', text: 'Qu\'est-ce que tu voudrais qu\'on fasse plus souvent ?', timer: 25 },
+
+    // === TYPE D - Échelle 1-10 ===
+    { type: 'D', category: 'couple', text: 'A quel point tu me fais confiance ? (1-10)', timer: 15 },
+    { type: 'D', category: 'couple', text: 'A quel point notre relation est passionnee ? (1-10)', timer: 15 },
+    { type: 'D', category: 'habitudes', text: 'A quel point tu es bordélique ? (1-10)', timer: 15 },
+    { type: 'D', category: 'couple', text: 'A quel point tu as besoin de ton espace perso ? (1-10)', timer: 15 },
+    { type: 'D', category: 'sexy', text: 'A quel point tu es ouvert(e) aux nouvelles experiences ? (1-10)', timer: 15 },
+    { type: 'D', category: 'couple', text: 'A quel point tu es pret(e) a faire des compromis ? (1-10)', timer: 15 },
+    { type: 'D', category: 'fun', text: 'A quel point tu es competitif/competitive ? (1-10)', timer: 15 },
+    { type: 'D', category: 'couple', text: 'A quel point tu exprimes tes emotions ? (1-10)', timer: 15 },
+
+    // === TYPE E - Tu es plutôt... ===
+    { type: 'E', category: 'couple', text: 'En vacances, tu es plutot...', option_a: 'Planification', option_b: 'Improvisation', timer: 10 },
+    { type: 'E', category: 'couple', text: 'Apres une dispute, tu es plutot...', option_a: 'Besoin d\'en parler', option_b: 'Besoin de temps', timer: 10 },
+    { type: 'E', category: 'sexy', text: 'Au lit, tu es plutot...', option_a: 'Dominant(e)', option_b: 'Soumis(e)', timer: 10 },
+    { type: 'E', category: 'preferences', text: 'Pour exprimer l\'amour, tu es plutot...', option_a: 'Mots doux', option_b: 'Gestes/Actions', timer: 10 },
+    { type: 'E', category: 'habitudes', text: 'Le dimanche, tu es plutot...', option_a: 'Grasse mat\'', option_b: 'Leve-tot productif', timer: 10 },
+    { type: 'E', category: 'fun', text: 'En soiree, tu es plutot...', option_a: 'Vie de la fete', option_b: 'Petit comite', timer: 10 },
+    { type: 'E', category: 'couple', text: 'Pour les decisions importantes, tu es plutot...', option_a: 'Tete', option_b: 'Coeur', timer: 10 },
+    { type: 'E', category: 'preferences', text: 'Pour un cadeau, tu preferes...', option_a: 'Surprise', option_b: 'Choisir toi-meme', timer: 10 },
+
+    // === TYPE F - Qui de nous deux ===
+    { type: 'F', category: 'couple', text: 'Qui craque en premier apres une dispute ?', timer: 15 },
+    { type: 'F', category: 'couple', text: 'Qui est le/la plus possessif/possessive ?', timer: 15 },
+    { type: 'F', category: 'habitudes', text: 'Qui passe le plus de temps sur son telephone ?', timer: 15 },
+    { type: 'F', category: 'couple', text: 'Qui est le/la plus romantique au quotidien ?', timer: 15 },
+    { type: 'F', category: 'fun', text: 'Qui survivrait le plus longtemps sur une ile deserte ?', timer: 15 },
+    { type: 'F', category: 'sexy', text: 'Qui initie le plus souvent les calins ?', timer: 15 },
+    { type: 'F', category: 'habitudes', text: 'Qui est le/la plus depensier/depensiere ?', timer: 15 },
+    { type: 'F', category: 'couple', text: 'Qui serait le plus triste si on se separait ?', timer: 15 },
+    { type: 'F', category: 'fun', text: 'Qui est le/la meilleur(e) menteur/menteuse ?', timer: 15 },
+    { type: 'F', category: 'couple', text: 'Qui est le/la plus attentionne(e) ?', timer: 15 },
+    { type: 'F', category: 'habitudes', text: 'Qui oublie le plus souvent les dates importantes ?', timer: 15 },
+    { type: 'F', category: 'sexy', text: 'Qui a le plus d\'imagination au lit ?', timer: 15 },
+
+    // === Questions bonus originales ===
+    { type: 'A', category: 'couple', text: 'Quelle serie Netflix je pourrais binge-watcher en un weekend ?', options: JSON.stringify(['Thriller', 'Comedie', 'Drame', 'Documentaire']), timer: 20 },
+    { type: 'B', category: 'couple', text: 'Notre probleme principal a resoudre c\'est...', options: JSON.stringify(['La communication', 'Le temps ensemble', 'Les taches menageres', 'Rien de grave']), timer: 25 },
+    { type: 'A', category: 'preferences', text: 'Mon langage de l\'amour principal c\'est...', options: JSON.stringify(['Paroles valorisantes', 'Moments de qualite', 'Cadeaux', 'Toucher physique']), timer: 20 },
+    { type: 'B', category: 'coquin', text: 'Un fantasme qu\'on pourrait realiser ensemble ?', options: JSON.stringify(['Role play', 'Nouveau lieu', 'Jouets', 'On en parle apres']), timer: 25 },
+    { type: 'C', category: 'couple', text: 'Ecris une chose que tu aimes chez moi que je ne soupconnee pas', timer: 30 },
+    { type: 'F', category: 'fun', text: 'Qui ferait le meilleur parent ?', timer: 15 },
+    { type: 'E', category: 'couple', text: 'Pour les retrouvailles apres une absence, tu preferes...', option_a: 'Calin intense', option_b: 'Discussion rattrapage', timer: 10 },
+    { type: 'D', category: 'couple', text: 'A quel point notre vie sexuelle te satisfait ? (1-10)', timer: 15 },
+    { type: 'B', category: 'projets', text: 'Le prochain gros achat ensemble ?', options: JSON.stringify(['Voyage', 'Meuble/Deco', 'Tech', 'Experience']), timer: 20 },
+    { type: 'A', category: 'couple', text: 'Ce qui me ferait le plus plaisir la maintenant ?', options: JSON.stringify(['Un massage', 'Un compliment', 'Du temps seul(e)', 'Une sortie']), timer: 20 }
+  ];
+
+  const insert = db.prepare(`
+    INSERT INTO questions (type, category, text, options, option_a, option_b, timer, active)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+  `);
+
+  for (const q of questions) {
+    insert.run(
+      q.type,
+      q.category,
+      q.text,
+      q.options || null,
+      q.option_a || null,
+      q.option_b || null,
+      q.timer
+    );
+  }
+
+  console.log(`Inserted ${questions.length} default questions`);
 }
 
 export function cleanupExpiredRooms() {
