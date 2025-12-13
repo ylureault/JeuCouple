@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { Howl, Howler } from 'howler';
 
-interface AudioContextType {
+interface SoundContextType {
   isMuted: boolean;
   toggleMute: () => void;
   playSound: (sound: SoundType) => void;
@@ -18,7 +18,10 @@ interface AudioContextType {
 
 type SoundType = 'click' | 'correct' | 'wrong' | 'tick' | 'reveal' | 'fanfare' | 'countdown';
 
-const AudioContext = createContext<AudioContextType | null>(null);
+// Web Audio API type
+type WebAudioContext = typeof window.AudioContext;
+
+const SoundContext = createContext<SoundContextType | null>(null);
 
 // Simple sound effects using Web Audio API (no external files needed)
 function createOscillatorSound(
@@ -29,21 +32,21 @@ function createOscillatorSound(
 ): () => void {
   return () => {
     try {
-      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+      const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: WebAudioContext }).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
 
       oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+      gainNode.connect(audioCtx.destination);
 
       oscillator.type = type;
-      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
 
-      gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+      gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
 
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + duration);
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + duration);
     } catch {
       // Audio not supported
     }
@@ -57,24 +60,24 @@ function createClickSound(): () => void {
 function createCorrectSound(): () => void {
   return () => {
     try {
-      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: WebAudioContext }).webkitAudioContext)();
       const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
 
       notes.forEach((freq, i) => {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
 
         oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+        gainNode.connect(audioCtx.destination);
 
         oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + i * 0.1);
+        oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.1);
 
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime + i * 0.1);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.1 + 0.3);
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime + i * 0.1);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.3);
 
-        oscillator.start(audioContext.currentTime + i * 0.1);
-        oscillator.stop(audioContext.currentTime + i * 0.1 + 0.3);
+        oscillator.start(audioCtx.currentTime + i * 0.1);
+        oscillator.stop(audioCtx.currentTime + i * 0.1 + 0.3);
       });
     } catch {
       // Audio not supported
@@ -85,22 +88,22 @@ function createCorrectSound(): () => void {
 function createWrongSound(): () => void {
   return () => {
     try {
-      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+      const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: WebAudioContext }).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
 
       oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+      gainNode.connect(audioCtx.destination);
 
       oscillator.type = 'sawtooth';
-      oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
-      oscillator.frequency.linearRampToValueAtTime(100, audioContext.currentTime + 0.3);
+      oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+      oscillator.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
 
-      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
 
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.3);
     } catch {
       // Audio not supported
     }
@@ -114,22 +117,22 @@ function createTickSound(): () => void {
 function createRevealSound(): () => void {
   return () => {
     try {
-      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+      const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: WebAudioContext }).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
 
       oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+      gainNode.connect(audioCtx.destination);
 
       oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
-      oscillator.frequency.linearRampToValueAtTime(800, audioContext.currentTime + 0.2);
+      oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+      oscillator.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.2);
 
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
 
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.3);
     } catch {
       // Audio not supported
     }
@@ -139,24 +142,24 @@ function createRevealSound(): () => void {
 function createFanfareSound(): () => void {
   return () => {
     try {
-      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: WebAudioContext }).webkitAudioContext)();
       const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
 
       notes.forEach((freq, i) => {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
 
         oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+        gainNode.connect(audioCtx.destination);
 
         oscillator.type = 'triangle';
-        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + i * 0.15);
+        oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.15);
 
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + i * 0.15);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.15 + 0.4);
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime + i * 0.15);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.15 + 0.4);
 
-        oscillator.start(audioContext.currentTime + i * 0.15);
-        oscillator.stop(audioContext.currentTime + i * 0.15 + 0.4);
+        oscillator.start(audioCtx.currentTime + i * 0.15);
+        oscillator.stop(audioCtx.currentTime + i * 0.15 + 0.4);
       });
     } catch {
       // Audio not supported
@@ -220,7 +223,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   }, [lobbyMusic]);
 
   return (
-    <AudioContext.Provider
+    <SoundContext.Provider
       value={{
         isMuted,
         toggleMute,
@@ -230,12 +233,12 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-    </AudioContext.Provider>
+    </SoundContext.Provider>
   );
 }
 
 export function useAudio() {
-  const context = useContext(AudioContext);
+  const context = useContext(SoundContext);
   if (!context) {
     throw new Error('useAudio must be used within an AudioProvider');
   }
