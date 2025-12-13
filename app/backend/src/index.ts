@@ -14,7 +14,7 @@ import adminRouter from './routes/admin.js';
 import type {
   ServerToClientEvents,
   ClientToServerEvents
-} from '../../shared/types.js';
+} from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

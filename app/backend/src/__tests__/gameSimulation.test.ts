@@ -18,7 +18,7 @@ import type {
   QuestionType,
   GameRevealData,
   GameFinishedData
-} from '../../../shared/types.js';
+} from '../types.js';
 
 // Socket client type - use ReturnType to get the type from the default export
 type ClientSocket = ReturnType<typeof SocketIOClient>;

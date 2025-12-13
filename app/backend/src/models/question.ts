@@ -1,5 +1,5 @@
 import { db } from '../database.js';
-import type { Question, QuestionType, QuestionImport } from '../../../shared/types.js';
+import type { Question, QuestionType, QuestionImport } from '../types.js';
 
 interface QuestionRow {
   id: number;

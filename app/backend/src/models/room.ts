@@ -1,5 +1,5 @@
 import { db } from '../database.js';
-import type { Room } from '../../../shared/types.js';
+import type { Room } from '../types.js';
 
 function generateCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluded confusing chars

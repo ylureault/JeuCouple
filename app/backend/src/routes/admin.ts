@@ -6,7 +6,7 @@ import * as roomModel from '../models/room.js';
 import * as gameModel from '../models/game.js';
 import * as questionTypeModel from '../models/questionType.js';
 import * as categoryModel from '../models/category.js';
-import type { AdminStats, QuestionImport } from '../../../shared/types.js';
+import type { AdminStats, QuestionImport } from '../types.js';
 
 const router = Router();
 

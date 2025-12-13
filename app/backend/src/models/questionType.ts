@@ -1,5 +1,5 @@
 import { db } from '../database.js';
-import type { QuestionTypeConfig, ScoringMode, InputType } from '../../../shared/types.js';
+import type { QuestionTypeConfig, ScoringMode, InputType } from '../types.js';
 
 interface QuestionTypeRow {
   id: number;

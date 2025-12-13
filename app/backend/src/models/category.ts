@@ -1,5 +1,5 @@
 import { db } from '../database.js';
-import type { Category } from '../../../shared/types.js';
+import type { Category } from '../types.js';
 
 interface CategoryRow {
   id: number;

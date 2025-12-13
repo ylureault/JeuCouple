@@ -7,7 +7,7 @@ import type {
   ClientToServerEvents,
   GameRevealData,
   GameFinishedData
-} from '../../../shared/types.js';
+} from '../types.js';
 import * as roomModel from '../models/room.js';
 import * as gameModel from '../models/game.js';
 import * as questionModel from '../models/question.js';

@@ -1,6 +1,7 @@
 {
   "name": "jeu-couples-backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Backend pour le jeu de couples en temps réel",
   "main": "dist/index.js",
   "scripts": {

@@ -1,5 +1,5 @@
 import { db } from '../database.js';
-import type { Game, Answer } from '../../../shared/types.js';
+import type { Game, Answer } from '../types.js';
 
 export function createGame(roomId: number): Game {
   const result = db.prepare(`
