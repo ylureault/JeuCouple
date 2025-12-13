@@ -6,7 +6,6 @@ import {
   useEffect,
   type ReactNode
 } from 'react';
-import { Howl, Howler } from 'howler';
 
 interface SoundContextType {
   isMuted: boolean;
@@ -177,29 +176,90 @@ const sounds: Record<SoundType, () => void> = {
   countdown: createTickSound()
 };
 
+// Procedural ambient music generator using Web Audio API
+let ambientAudioContext: AudioContext | null = null;
+let ambientGainNode: GainNode | null = null;
+let ambientOscillators: OscillatorNode[] = [];
+let isAmbientPlaying = false;
+
+function startAmbientMusic(volume: number = 0.08) {
+  if (isAmbientPlaying) return;
+
+  try {
+    ambientAudioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    ambientGainNode = ambientAudioContext.createGain();
+    ambientGainNode.gain.setValueAtTime(volume, ambientAudioContext.currentTime);
+    ambientGainNode.connect(ambientAudioContext.destination);
+
+    // Create multiple oscillators for a rich ambient pad
+    const baseFreqs = [65.41, 82.41, 98.00, 130.81]; // C2, E2, G2, C3 - ambient chord
+
+    baseFreqs.forEach((freq, i) => {
+      const osc = ambientAudioContext!.createOscillator();
+      const oscGain = ambientAudioContext!.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ambientAudioContext!.currentTime);
+
+      // Subtle LFO for movement
+      const lfo = ambientAudioContext!.createOscillator();
+      const lfoGain = ambientAudioContext!.createGain();
+      lfo.type = 'sine';
+      lfo.frequency.setValueAtTime(0.1 + i * 0.05, ambientAudioContext!.currentTime);
+      lfoGain.gain.setValueAtTime(2, ambientAudioContext!.currentTime);
+      lfo.connect(lfoGain);
+      lfoGain.connect(osc.frequency);
+      lfo.start();
+
+      oscGain.gain.setValueAtTime(0.15 - i * 0.02, ambientAudioContext!.currentTime);
+      osc.connect(oscGain);
+      oscGain.connect(ambientGainNode!);
+      osc.start();
+
+      ambientOscillators.push(osc, lfo);
+    });
+
+    isAmbientPlaying = true;
+  } catch {
+    // Audio not supported
+  }
+}
+
+function stopAmbientMusic() {
+  if (!isAmbientPlaying) return;
+
+  try {
+    ambientOscillators.forEach(osc => {
+      try { osc.stop(); } catch { /* ignore */ }
+    });
+    ambientOscillators = [];
+
+    if (ambientAudioContext) {
+      ambientAudioContext.close();
+      ambientAudioContext = null;
+    }
+    ambientGainNode = null;
+    isAmbientPlaying = false;
+  } catch {
+    // Ignore cleanup errors
+  }
+}
+
 export function AudioProvider({ children }: { children: ReactNode }) {
   const [isMuted, setIsMuted] = useState(false);
-  const [lobbyMusic, setLobbyMusic] = useState<Howl | null>(null);
 
   useEffect(() => {
-    // Create a simple ambient loop for lobby
-    const music = new Howl({
-      src: ['data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBQBdncH/6bQ3CgAAQrPg/8qTKQAAAC+qx+Wjaz0AAABQV7S0eD8AAAAwW5KcbkQAAAA/bpuohGVJAAAARXeRlXhaTQAAAFJ+jo56X1MAAABVY4yJfGFYAAAAXWSPiH5mXQAAAGVukIaAamMAAA=='],
-      loop: true,
-      volume: 0.1,
-      html5: true
-    });
-    setLobbyMusic(music);
-
     return () => {
-      music.unload();
+      stopAmbientMusic();
     };
   }, []);
 
   const toggleMute = useCallback(() => {
     setIsMuted((prev) => {
       const newMuted = !prev;
-      Howler.mute(newMuted);
+      if (newMuted) {
+        stopAmbientMusic();
+      }
       return newMuted;
     });
   }, []);
@@ -211,16 +271,14 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   }, [isMuted]);
 
   const playLobbyMusic = useCallback(() => {
-    if (lobbyMusic && !isMuted) {
-      lobbyMusic.play();
+    if (!isMuted) {
+      startAmbientMusic(0.08);
     }
-  }, [lobbyMusic, isMuted]);
+  }, [isMuted]);
 
   const stopLobbyMusic = useCallback(() => {
-    if (lobbyMusic) {
-      lobbyMusic.stop();
-    }
-  }, [lobbyMusic]);
+    stopAmbientMusic();
+  }, []);
 
   return (
     <SoundContext.Provider
