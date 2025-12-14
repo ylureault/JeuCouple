@@ -115,12 +115,40 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_question_types_active ON question_types(active);
   `);
 
+  // Run migrations for existing databases
+  runMigrations();
+
   // Insert default question types if not exists
   initDefaultQuestionTypes();
   initDefaultCategories();
   initDefaultQuestions();
 
   console.log('Database initialized successfully');
+}
+
+function runMigrations() {
+  // Check if columns exist by querying table info
+  const roomColumns = db.prepare("PRAGMA table_info(rooms)").all() as { name: string }[];
+  const roomColumnNames = roomColumns.map(c => c.name);
+
+  // Migration: Add gender columns to rooms table
+  if (!roomColumnNames.includes('player1_gender')) {
+    db.exec("ALTER TABLE rooms ADD COLUMN player1_gender TEXT CHECK(player1_gender IN ('M', 'F'))");
+    console.log('Migration: Added player1_gender column to rooms');
+  }
+  if (!roomColumnNames.includes('player2_gender')) {
+    db.exec("ALTER TABLE rooms ADD COLUMN player2_gender TEXT CHECK(player2_gender IN ('M', 'F'))");
+    console.log('Migration: Added player2_gender column to rooms');
+  }
+
+  // Check questions table for correct_answer column
+  const questionColumns = db.prepare("PRAGMA table_info(questions)").all() as { name: string }[];
+  const questionColumnNames = questionColumns.map(c => c.name);
+
+  if (!questionColumnNames.includes('correct_answer')) {
+    db.exec("ALTER TABLE questions ADD COLUMN correct_answer TEXT");
+    console.log('Migration: Added correct_answer column to questions');
+  }
 }
 
 function initDefaultQuestionTypes() {
