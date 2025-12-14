@@ -1,7 +1,7 @@
 // Types partagés entre frontend et backend
 
-// Extended question types: A, B, C, D + new E (binary choice) and F (who of us)
-export type QuestionType = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
+// Extended question types: A, B, C, D + new E (binary choice), F (who of us), G (vrai ou faux about player)
+export type QuestionType = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
 
 // Scoring modes for question types
 export type ScoringMode = 'match' | 'consensus' | 'proximity' | 'none';
@@ -42,6 +42,7 @@ export interface Question {
   options?: string[];
   option_a?: string;  // For type E (binary choice)
   option_b?: string;  // For type E (binary choice)
+  target_player?: 1 | 2;  // For type G (vrai ou faux about a specific player)
   timer: number;
   active: boolean;
 }
@@ -90,7 +91,7 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  'room:create': (data: { playerName: string }, callback: (response: RoomResponse) => void) => void;
+  'room:create': (data: { playerName: string; questionCount?: number }, callback: (response: RoomResponse) => void) => void;
   'room:join': (data: { code: string; playerName: string }, callback: (response: RoomResponse) => void) => void;
   'room:leave': () => void;
   'game:start': (callback: (response: { success: boolean; error?: string }) => void) => void;

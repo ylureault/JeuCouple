@@ -173,7 +173,7 @@ export default function Results() {
   const compatMessage = getCompatibilityMessage();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1a0a2e] via-[#46178f] to-[#7b2cbf] flex flex-col overflow-hidden relative">
+    <div className="h-screen bg-gradient-to-b from-[#1a0a2e] via-[#46178f] to-[#7b2cbf] flex flex-col overflow-hidden relative">
       <MuteButton />
 
       {/* Animated background particles */}
@@ -329,7 +329,7 @@ export default function Results() {
             initial={{ y: 200 }}
             animate={{ y: 0 }}
             transition={{ type: 'spring', damping: 20 }}
-            className="bg-white rounded-t-3xl p-5 md:p-6 max-h-[60vh] overflow-y-auto"
+            className="bg-white rounded-t-3xl p-4 md:p-5 max-h-[50vh] overflow-y-auto"
           >
             <div className="max-w-lg mx-auto">
               {/* Compatibility score */}

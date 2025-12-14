@@ -128,7 +128,7 @@ export default function Game() {
   const theirName = playerId === 1 ? player2Name : player1Name;
 
   return (
-    <div className="min-h-screen bg-[#46178f] flex flex-col">
+    <div className="h-screen bg-[#46178f] flex flex-col overflow-hidden">
       <MuteButton />
 
       {/* Top bar */}
@@ -270,6 +270,11 @@ export default function Game() {
                   {currentQuestion.type === 'B' && (
                     <p className="text-gray-500 text-sm mt-3">
                       Points si vos reponses concordent !
+                    </p>
+                  )}
+                  {currentQuestion.type === 'G' && (
+                    <p className="text-gray-500 text-sm mt-3">
+                      Vrai ou Faux ? Points si vos reponses concordent !
                     </p>
                   )}
                 </div>

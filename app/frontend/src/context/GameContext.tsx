@@ -199,7 +199,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 }
 
 interface GameContextType extends GameState {
-  createRoom: (playerName: string) => Promise<void>;
+  createRoom: (playerName: string, questionCount?: number) => Promise<void>;
   joinRoom: (code: string, playerName: string) => Promise<void>;
   startGame: () => Promise<void>;
   submitAnswer: (answer: string) => void;
@@ -286,11 +286,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const createRoom = useCallback(async (playerName: string) => {
+  const createRoom = useCallback(async (playerName: string, questionCount?: number) => {
     if (!state.socket) return;
 
     return new Promise<void>((resolve, reject) => {
-      state.socket!.emit('room:create', { playerName }, (response) => {
+      state.socket!.emit('room:create', { playerName, questionCount }, (response) => {
         if (response.success && response.room && response.playerId) {
           dispatch({
             type: 'JOIN_ROOM',

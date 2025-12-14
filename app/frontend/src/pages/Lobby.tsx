@@ -66,7 +66,7 @@ export default function Lobby() {
   const bothPlayersReady = room.player1_name && room.player2_name;
 
   return (
-    <div className="min-h-screen bg-kahoot-lobby flex flex-col">
+    <div className="h-screen bg-kahoot-lobby flex flex-col overflow-hidden">
       <MuteButton />
 
       {/* Animated background */}
@@ -85,12 +85,12 @@ export default function Lobby() {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 relative z-10">
         {/* Header */}
         <motion.div
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="text-center mb-8"
+          className="text-center mb-4"
         >
           <p className="text-white/60 font-semibold uppercase tracking-wider mb-2">
             Code du salon
@@ -101,7 +101,7 @@ export default function Lobby() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <div className="bg-white rounded-2xl px-10 py-6 shadow-2xl relative overflow-hidden">
+            <div className="bg-white rounded-xl px-8 py-4 shadow-2xl relative overflow-hidden">
               <motion.div
                 className="absolute inset-0 bg-[#26890c]"
                 initial={{ scaleX: 0 }}
@@ -109,7 +109,7 @@ export default function Lobby() {
                 transition={{ duration: 0.3 }}
                 style={{ transformOrigin: 'left' }}
               />
-              <p className="room-code text-[#46178f] relative z-10">
+              <p className="text-4xl md:text-5xl font-black tracking-[0.2em] text-[#46178f] relative z-10">
                 {copied ? '✓' : room.code}
               </p>
             </div>
@@ -123,7 +123,7 @@ export default function Lobby() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex items-center gap-1 mb-8 bg-white/10 px-4 py-2 rounded-full"
+          className="flex items-center gap-1 mb-4 bg-white/10 px-3 py-1.5 rounded-full"
         >
           <div className="flex items-end gap-0.5 h-4">
             {[...Array(4)].map((_, i) => (
@@ -134,7 +134,7 @@ export default function Lobby() {
         </motion.div>
 
         {/* Players */}
-        <div className="w-full max-w-lg space-y-4 mb-8">
+        <div className="w-full max-w-lg space-y-3 mb-4">
           <motion.div
             initial={{ x: -50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -267,7 +267,7 @@ export default function Lobby() {
         {/* Leave button */}
         <motion.button
           onClick={handleLeave}
-          className="mt-8 text-white/50 hover:text-white font-semibold transition-colors"
+          className="mt-4 text-white/50 hover:text-white font-semibold text-sm transition-colors"
           whileHover={{ scale: 1.05 }}
         >
           ← Quitter le salon
@@ -289,7 +289,7 @@ function PlayerCard({ name, emoji, isYou, isReady, position }: PlayerCardProps) 
   return (
     <motion.div
       className={`
-        relative rounded-2xl p-6 transition-all duration-300
+        relative rounded-xl p-4 transition-all duration-300
         ${isReady
           ? 'bg-gradient-to-r from-[#26890c] to-[#1a6b08] shadow-lg glow-green'
           : 'bg-white/10 border-2 border-dashed border-white/30'
@@ -298,11 +298,11 @@ function PlayerCard({ name, emoji, isYou, isReady, position }: PlayerCardProps) 
       animate={isReady ? {} : { borderColor: ['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.5)', 'rgba(255,255,255,0.3)'] }}
       transition={{ duration: 2, repeat: Infinity }}
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {/* Avatar */}
         <motion.div
           className={`
-            w-16 h-16 rounded-full flex items-center justify-center text-3xl
+            w-12 h-12 rounded-full flex items-center justify-center text-2xl
             ${isReady ? 'bg-white/20' : 'bg-white/10'}
           `}
           animate={isReady ? { scale: [1, 1.1, 1] } : {}}

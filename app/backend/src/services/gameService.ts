@@ -52,6 +52,9 @@ interface PlayerConnection {
 
 const activeGames = new Map<string, GameState>();
 const playerConnections = new Map<string, PlayerConnection>();
+const roomSettings = new Map<string, { questionCount: number }>();
+
+const DEFAULT_QUESTION_COUNT = 10;
 
 // Constants for gamification
 const BASE_POINTS = 100;
@@ -84,6 +87,12 @@ export function setupSocketHandlers(
           roomCode: room.code,
           playerId: 1
         });
+
+        // Store room settings (question count)
+        const questionCount = data.questionCount && data.questionCount >= 5 && data.questionCount <= 50
+          ? data.questionCount
+          : DEFAULT_QUESTION_COUNT;
+        roomSettings.set(room.code, { questionCount });
 
         callback({ success: true, room, playerId: 1 });
       } catch (error) {
@@ -177,8 +186,10 @@ export function setupSocketHandlers(
         return;
       }
 
-      // Get random questions
-      const questions = questionModel.getRandomQuestions(10);
+      // Get random questions based on room settings
+      const settings = roomSettings.get(connection.roomCode);
+      const questionCount = settings?.questionCount || DEFAULT_QUESTION_COUNT;
+      const questions = questionModel.getRandomQuestions(questionCount);
       if (questions.length === 0) {
         callback({ success: false, error: 'No questions available' });
         return;
@@ -327,9 +338,21 @@ function sendQuestion(
   roomCode: string,
   gameState: GameState
 ) {
-  const question = gameState.questions[gameState.currentQuestionIndex];
+  const question = { ...gameState.questions[gameState.currentQuestionIndex] };
   gameState.phase = 'question';
   gameState.questionStartTime = Date.now();
+
+  // For Type G, assign a random target player and substitute {player} in the text
+  if (question.type === 'G') {
+    const room = roomModel.getRoomByCode(roomCode);
+    if (room) {
+      // Randomly pick player 1 or 2
+      question.target_player = Math.random() < 0.5 ? 1 : 2;
+      const targetName = question.target_player === 1 ? room.player1_name : room.player2_name;
+      // Substitute {player} in the question text
+      question.text = question.text.replace(/\{player\}/gi, targetName || 'Joueur');
+    }
+  }
 
   io.to(roomCode).emit('game:question', {
     question,
@@ -527,6 +550,7 @@ function calculateBasePoints(
     case 'B':
     case 'E':
     case 'F':
+    case 'G':
       if (answer1 === answer2) {
         basePoints = BASE_POINTS;
         correct = true;

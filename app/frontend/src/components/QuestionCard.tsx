@@ -374,6 +374,97 @@ export default function QuestionCard({
     );
   };
 
+  // Type G: "Vrai ou Faux" - True or false about a specific player
+  const renderTypeG = () => {
+    return (
+      <div className="grid grid-cols-2 gap-4">
+        {/* Vrai */}
+        <motion.button
+          initial={{ opacity: 0, x: -50, scale: 0.8 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+          onClick={() => !disabled && onAnswer('vrai')}
+          disabled={disabled}
+          className={`
+            relative overflow-hidden rounded-2xl p-6 min-h-[140px]
+            bg-gradient-to-br from-[#26890c] to-[#1a6b08]
+            ${disabled && selectedAnswer !== 'vrai' ? 'opacity-50' : ''}
+            ${selectedAnswer === 'vrai' ? 'ring-4 ring-white ring-offset-2 ring-offset-transparent scale-105' : ''}
+            shadow-[0_8px_0_0_rgba(0,0,0,0.3)] hover:shadow-[0_6px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[6px]
+            transition-all duration-100
+          `}
+          whileHover={disabled ? {} : { scale: 1.05, y: -4 }}
+          whileTap={disabled ? {} : { scale: 0.98 }}
+        >
+          <div className="flex flex-col items-center justify-center h-full gap-2">
+            <motion.span
+              className="text-5xl"
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 1, repeat: Infinity }}
+            >
+              ✅
+            </motion.span>
+            <span className="text-white font-extrabold text-2xl">
+              VRAI
+            </span>
+          </div>
+          {selectedAnswer === 'vrai' && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute top-2 right-2 text-3xl"
+            >
+              ✓
+            </motion.div>
+          )}
+        </motion.button>
+
+        {/* Faux */}
+        <motion.button
+          initial={{ opacity: 0, x: 50, scale: 0.8 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+          onClick={() => !disabled && onAnswer('faux')}
+          disabled={disabled}
+          className={`
+            relative overflow-hidden rounded-2xl p-6 min-h-[140px]
+            bg-gradient-to-br from-[#e21b3c] to-[#b01530]
+            ${disabled && selectedAnswer !== 'faux' ? 'opacity-50' : ''}
+            ${selectedAnswer === 'faux' ? 'ring-4 ring-white ring-offset-2 ring-offset-transparent scale-105' : ''}
+            shadow-[0_8px_0_0_rgba(0,0,0,0.3)] hover:shadow-[0_6px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[6px]
+            transition-all duration-100
+          `}
+          whileHover={disabled ? {} : { scale: 1.05, y: -4 }}
+          whileTap={disabled ? {} : { scale: 0.98 }}
+        >
+          <div className="flex flex-col items-center justify-center h-full gap-2">
+            <motion.span
+              className="text-5xl"
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 1, repeat: Infinity, delay: 0.5 }}
+            >
+              ❌
+            </motion.span>
+            <span className="text-white font-extrabold text-2xl">
+              FAUX
+            </span>
+          </div>
+          {selectedAnswer === 'faux' && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute top-2 left-2 text-3xl"
+            >
+              ✓
+            </motion.div>
+          )}
+        </motion.button>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6 w-full max-w-2xl mx-auto">
       {(question.type === 'A' || question.type === 'B') && renderTypeAB()}
@@ -381,6 +472,7 @@ export default function QuestionCard({
       {question.type === 'D' && renderTypeD()}
       {question.type === 'E' && renderTypeE()}
       {question.type === 'F' && renderTypeF()}
+      {question.type === 'G' && renderTypeG()}
     </div>
   );
 }

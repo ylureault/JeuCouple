@@ -12,6 +12,7 @@ export default function Home() {
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [questionCount, setQuestionCount] = useState(10);
   const { createRoom, joinRoom, error, connected } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ export default function Home() {
     setLoading(true);
     playSound('click');
     try {
-      await createRoom(playerName.trim());
+      await createRoom(playerName.trim(), questionCount);
       navigate('/game');
     } catch {
       // Error handled in context
@@ -50,7 +51,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-kahoot-lobby flex flex-col">
+    <div className="h-screen bg-kahoot-lobby flex flex-col overflow-hidden">
       <MuteButton />
 
       {/* Floating hearts background decoration */}
@@ -77,16 +78,16 @@ export default function Home() {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 relative z-10">
         {/* Logo and title */}
         <motion.div
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: 'spring', damping: 15 }}
-          className="text-center mb-12"
+          className="text-center mb-6"
         >
           <motion.div
-            className="text-8xl mb-4"
+            className="text-6xl mb-2"
             animate={{
               scale: [1, 1.1, 1],
               rotate: [0, 5, -5, 0],
@@ -99,10 +100,10 @@ export default function Home() {
           >
             💑
           </motion.div>
-          <h1 className="text-5xl md:text-7xl font-black text-white text-shadow-strong mb-3">
+          <h1 className="text-4xl md:text-5xl font-black text-white text-shadow-strong mb-1">
             Jeu Couples
           </h1>
-          <p className="text-xl text-white/80 font-semibold">
+          <p className="text-lg text-white/80 font-semibold">
             Testez votre complicite !
           </p>
         </motion.div>
@@ -139,7 +140,7 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -30, scale: 0.95 }}
               transition={{ type: 'spring', damping: 20 }}
-              className="w-full max-w-md space-y-4"
+              className="w-full max-w-md space-y-3"
             >
               <motion.button
                 onClick={() => switchMode('create')}
@@ -178,12 +179,12 @@ export default function Home() {
               transition={{ type: 'spring', damping: 20 }}
               className="w-full max-w-md"
             >
-              <div className="bg-white rounded-2xl p-8 shadow-2xl">
-                <h2 className="text-2xl font-black text-gray-900 text-center mb-6">
+              <div className="bg-white rounded-2xl p-6 shadow-2xl">
+                <h2 className="text-xl font-black text-gray-900 text-center mb-4">
                   Creer une partie
                 </h2>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div>
                     <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
                       Ton prenom
@@ -198,6 +199,31 @@ export default function Home() {
                       autoFocus
                       onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
+                      Nombre de questions
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="range"
+                        min="5"
+                        max="30"
+                        step="5"
+                        value={questionCount}
+                        onChange={(e) => setQuestionCount(parseInt(e.target.value))}
+                        className="flex-1 h-3 rounded-full cursor-pointer accent-[#864cbf]"
+                      />
+                      <span className="text-2xl font-black text-[#864cbf] min-w-[3rem] text-center">
+                        {questionCount}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-400 mt-1 px-1">
+                      <span>5 min</span>
+                      <span>15 min</span>
+                      <span>30 min</span>
+                    </div>
                   </div>
 
                   <motion.button
@@ -238,12 +264,12 @@ export default function Home() {
               transition={{ type: 'spring', damping: 20 }}
               className="w-full max-w-md"
             >
-              <div className="bg-white rounded-2xl p-8 shadow-2xl">
-                <h2 className="text-2xl font-black text-gray-900 text-center mb-6">
+              <div className="bg-white rounded-2xl p-6 shadow-2xl">
+                <h2 className="text-xl font-black text-gray-900 text-center mb-4">
                   Rejoindre une partie
                 </h2>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div>
                     <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
                       Ton prenom
@@ -306,7 +332,7 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <div className="text-center py-4 text-white/40 text-sm">
+      <div className="text-center py-2 text-white/40 text-xs">
         Made with 💕
       </div>
     </div>
