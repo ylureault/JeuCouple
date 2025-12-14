@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
 import MuteButton from '../components/MuteButton';
+import type { Gender } from '../../../shared/types';
 
 export default function Lobby() {
   const {
@@ -142,7 +143,7 @@ export default function Lobby() {
           >
             <PlayerCard
               name={room.player1_name}
-              emoji="👩"
+              gender={room.player1_gender}
               isYou={playerId === 1}
               isReady={!!room.player1_name}
               position={1}
@@ -168,7 +169,7 @@ export default function Lobby() {
           >
             <PlayerCard
               name={room.player2_name}
-              emoji="👨"
+              gender={room.player2_gender}
               isYou={playerId === 2}
               isReady={!!room.player2_name}
               position={2}
@@ -279,32 +280,49 @@ export default function Lobby() {
 
 interface PlayerCardProps {
   name: string | null;
-  emoji: string;
+  gender: Gender | null;
   isYou: boolean;
   isReady: boolean;
   position: 1 | 2;
 }
 
-function PlayerCard({ name, emoji, isYou, isReady, position }: PlayerCardProps) {
+function PlayerCard({ name, gender, isYou, isReady, position }: PlayerCardProps) {
+  // Gender-based colors
+  const getGenderColors = () => {
+    if (!isReady || !gender) {
+      return {
+        bg: 'bg-white/10 border-2 border-dashed border-white/30',
+        avatarBg: 'bg-white/10',
+        glow: ''
+      };
+    }
+    if (gender === 'F') {
+      return {
+        bg: 'bg-gradient-to-r from-pink-500 to-pink-600 shadow-lg',
+        avatarBg: 'bg-white/20',
+        glow: 'shadow-[0_0_20px_rgba(236,72,153,0.5)]'
+      };
+    }
+    return {
+      bg: 'bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg',
+      avatarBg: 'bg-white/20',
+      glow: 'shadow-[0_0_20px_rgba(59,130,246,0.5)]'
+    };
+  };
+
+  const colors = getGenderColors();
+  const emoji = gender === 'F' ? '👩' : gender === 'M' ? '👨' : '❓';
+
   return (
     <motion.div
-      className={`
-        relative rounded-xl p-4 transition-all duration-300
-        ${isReady
-          ? 'bg-gradient-to-r from-[#26890c] to-[#1a6b08] shadow-lg glow-green'
-          : 'bg-white/10 border-2 border-dashed border-white/30'
-        }
-      `}
+      className={`relative rounded-xl p-4 transition-all duration-300 ${colors.bg} ${colors.glow}`}
       animate={isReady ? {} : { borderColor: ['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.5)', 'rgba(255,255,255,0.3)'] }}
       transition={{ duration: 2, repeat: Infinity }}
     >
       <div className="flex items-center gap-3">
         {/* Avatar */}
         <motion.div
-          className={`
-            w-12 h-12 rounded-full flex items-center justify-center text-2xl
-            ${isReady ? 'bg-white/20' : 'bg-white/10'}
-          `}
+          className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${colors.avatarBg}`}
           animate={isReady ? { scale: [1, 1.1, 1] } : {}}
           transition={{ duration: 0.5 }}
         >
@@ -334,7 +352,7 @@ function PlayerCard({ name, emoji, isYou, isReady, position }: PlayerCardProps) 
               animate={{ scale: 1 }}
               className="w-10 h-10 rounded-full bg-white flex items-center justify-center"
             >
-              <span className="text-[#26890c] text-xl">✓</span>
+              <span className={gender === 'F' ? 'text-pink-500 text-xl' : 'text-blue-500 text-xl'}>✓</span>
             </motion.div>
           )}
         </div>

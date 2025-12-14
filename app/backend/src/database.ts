@@ -28,8 +28,8 @@ export function initDatabase() {
       code TEXT UNIQUE NOT NULL,
       name TEXT NOT NULL,
       description TEXT,
-      scoring_mode TEXT NOT NULL DEFAULT 'match' CHECK(scoring_mode IN ('match', 'consensus', 'proximity', 'none')),
-      input_type TEXT NOT NULL DEFAULT 'options' CHECK(input_type IN ('options', 'binary', 'scale', 'text', 'who')),
+      scoring_mode TEXT NOT NULL DEFAULT 'match' CHECK(scoring_mode IN ('match', 'consensus', 'proximity', 'none', 'individual')),
+      input_type TEXT NOT NULL DEFAULT 'options' CHECK(input_type IN ('options', 'binary', 'scale', 'text', 'who', 'qcm')),
       icon TEXT,
       color TEXT,
       active INTEGER DEFAULT 1,
@@ -54,6 +54,8 @@ export function initDatabase() {
       code TEXT UNIQUE NOT NULL,
       player1_name TEXT,
       player2_name TEXT,
+      player1_gender TEXT CHECK(player1_gender IN ('M', 'F')),
+      player2_gender TEXT CHECK(player2_gender IN ('M', 'F')),
       status TEXT DEFAULT 'waiting' CHECK(status IN ('waiting', 'playing', 'finished')),
       created_at TEXT DEFAULT (datetime('now')),
       last_activity TEXT DEFAULT (datetime('now'))
@@ -68,6 +70,7 @@ export function initDatabase() {
       options TEXT,
       option_a TEXT,
       option_b TEXT,
+      correct_answer TEXT,
       timer INTEGER DEFAULT 20,
       active INTEGER DEFAULT 1
     );
@@ -175,6 +178,24 @@ function initDefaultQuestionTypes() {
       input_type: 'who',
       icon: '👫',
       color: '#e91e63'
+    },
+    {
+      code: 'G',
+      name: 'Vrai ou Faux',
+      description: 'Affirmation sur votre partenaire - vrai ou faux?',
+      scoring_mode: 'match',
+      input_type: 'binary',
+      icon: '✓✗',
+      color: '#00bcd4'
+    },
+    {
+      code: 'H',
+      name: 'Culture Generale',
+      description: 'QCM culture generale - chacun gagne des points individuellement',
+      scoring_mode: 'individual',
+      input_type: 'qcm',
+      icon: '🧠',
+      color: '#673ab7'
     }
   ];
 
@@ -197,7 +218,8 @@ function initDefaultCategories() {
     { code: 'projets', name: 'Projets', icon: '🚀', color: '#9c27b0', description: 'Avenir et reves', sort_order: 5 },
     { code: 'sexy', name: 'Sexy', icon: '🔥', color: '#f44336', description: 'Questions coquines', sort_order: 6 },
     { code: 'coquin', name: 'Coquin', icon: '😈', color: '#e91e63', description: 'Pour pimenter', sort_order: 7 },
-    { code: 'fun', name: 'Fun', icon: '🎉', color: '#ffeb3b', description: 'Questions fun et legeres', sort_order: 8 }
+    { code: 'fun', name: 'Fun', icon: '🎉', color: '#ffeb3b', description: 'Questions fun et legeres', sort_order: 8 },
+    { code: 'culture', name: 'Culture G', icon: '🧠', color: '#673ab7', description: 'Culture generale', sort_order: 9 }
   ];
 
   const insert = db.prepare(`
@@ -1515,12 +1537,325 @@ function initDefaultQuestions() {
     { type: 'G', category: 'coquin', text: 'Vrai ou Faux ? {player} aime le dirty talk', timer: 15 },
     { type: 'G', category: 'coquin', text: 'Vrai ou Faux ? {player} préfère les préliminaires longs', timer: 15 },
     { type: 'G', category: 'coquin', text: 'Vrai ou Faux ? {player} a une zone érogène secrète', timer: 15 },
-    { type: 'G', category: 'coquin', text: 'Vrai ou Faux ? {player} est plutôt actif/active au lit', timer: 15 }
+    { type: 'G', category: 'coquin', text: 'Vrai ou Faux ? {player} est plutôt actif/active au lit', timer: 15 },
+
+    // ============================================
+    // TYPE H - CULTURE GENERALE QCM (100 questions)
+    // ============================================
+
+    // Géographie (20 questions)
+    { type: 'H', category: 'culture', text: 'Quelle est la capitale de l\'Australie ?', options: JSON.stringify(['Sydney', 'Melbourne', 'Canberra', 'Perth']), correct_answer: 'Canberra', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel est le plus grand océan du monde ?', options: JSON.stringify(['Atlantique', 'Indien', 'Pacifique', 'Arctique']), correct_answer: 'Pacifique', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Dans quel pays se trouve la tour de Pise ?', options: JSON.stringify(['Espagne', 'Portugal', 'Italie', 'Grèce']), correct_answer: 'Italie', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel fleuve traverse Paris ?', options: JSON.stringify(['Loire', 'Rhône', 'Seine', 'Garonne']), correct_answer: 'Seine', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Combien de continents y a-t-il ?', options: JSON.stringify(['5', '6', '7', '8']), correct_answer: '7', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel pays a la plus grande population ?', options: JSON.stringify(['États-Unis', 'Inde', 'Chine', 'Indonésie']), correct_answer: 'Chine', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quelle est la plus haute montagne du monde ?', options: JSON.stringify(['K2', 'Mont Blanc', 'Everest', 'Kilimandjaro']), correct_answer: 'Everest', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Dans quel pays se trouve le Machu Picchu ?', options: JSON.stringify(['Mexique', 'Pérou', 'Chili', 'Colombie']), correct_answer: 'Pérou', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quelle est la capitale du Japon ?', options: JSON.stringify(['Osaka', 'Kyoto', 'Tokyo', 'Yokohama']), correct_answer: 'Tokyo', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel désert est le plus grand du monde ?', options: JSON.stringify(['Gobi', 'Sahara', 'Antarctique', 'Arabie']), correct_answer: 'Antarctique', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quelle mer borde la France au sud ?', options: JSON.stringify(['Mer du Nord', 'Atlantique', 'Méditerranée', 'Manche']), correct_answer: 'Méditerranée', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel est le plus petit pays du monde ?', options: JSON.stringify(['Monaco', 'Vatican', 'Malte', 'Liechtenstein']), correct_answer: 'Vatican', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Sur quel continent se trouve l\'Égypte ?', options: JSON.stringify(['Asie', 'Europe', 'Afrique', 'Amérique']), correct_answer: 'Afrique', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quelle est la capitale de l\'Allemagne ?', options: JSON.stringify(['Munich', 'Berlin', 'Francfort', 'Hambourg']), correct_answer: 'Berlin', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel pays est surnommé "le pays du soleil levant" ?', options: JSON.stringify(['Chine', 'Corée du Sud', 'Japon', 'Vietnam']), correct_answer: 'Japon', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Combien d\'étoiles y a-t-il sur le drapeau européen ?', options: JSON.stringify(['10', '12', '15', '27']), correct_answer: '12', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel est le plus long fleuve du monde ?', options: JSON.stringify(['Mississippi', 'Nil', 'Amazone', 'Yangzi']), correct_answer: 'Nil', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Dans quel pays se trouve la Grande Muraille ?', options: JSON.stringify(['Japon', 'Chine', 'Mongolie', 'Corée']), correct_answer: 'Chine', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quelle ville est surnommée "la ville lumière" ?', options: JSON.stringify(['Londres', 'New York', 'Paris', 'Rome']), correct_answer: 'Paris', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel pays a la forme d\'une botte ?', options: JSON.stringify(['Espagne', 'Italie', 'Grèce', 'Portugal']), correct_answer: 'Italie', timer: 20 },
+
+    // Histoire (20 questions)
+    { type: 'H', category: 'culture', text: 'En quelle année la Révolution française a-t-elle commencé ?', options: JSON.stringify(['1776', '1789', '1792', '1804']), correct_answer: '1789', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Qui a peint la Joconde ?', options: JSON.stringify(['Michel-Ange', 'Raphaël', 'Léonard de Vinci', 'Botticelli']), correct_answer: 'Léonard de Vinci', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel roi français était surnommé le Roi Soleil ?', options: JSON.stringify(['Louis XIII', 'Louis XIV', 'Louis XV', 'Louis XVI']), correct_answer: 'Louis XIV', timer: 20 },
+    { type: 'H', category: 'culture', text: 'En quelle année l\'homme a-t-il marché sur la Lune ?', options: JSON.stringify(['1965', '1967', '1969', '1971']), correct_answer: '1969', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Qui a découvert l\'Amérique en 1492 ?', options: JSON.stringify(['Magellan', 'Vasco de Gama', 'Christophe Colomb', 'Amerigo Vespucci']), correct_answer: 'Christophe Colomb', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quelle reine d\'Égypte était célèbre pour sa beauté ?', options: JSON.stringify(['Néfertiti', 'Cléopâtre', 'Hatchepsout', 'Néfertari']), correct_answer: 'Cléopâtre', timer: 20 },
+    { type: 'H', category: 'culture', text: 'En quelle année la Première Guerre mondiale a-t-elle pris fin ?', options: JSON.stringify(['1916', '1917', '1918', '1919']), correct_answer: '1918', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Qui était le premier président des États-Unis ?', options: JSON.stringify(['Lincoln', 'Jefferson', 'Washington', 'Adams']), correct_answer: 'Washington', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel empire a construit le Colisée de Rome ?', options: JSON.stringify(['Grec', 'Romain', 'Byzantine', 'Perse']), correct_answer: 'Romain', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Qui a inventé l\'imprimerie ?', options: JSON.stringify(['Newton', 'Gutenberg', 'Galilée', 'Edison']), correct_answer: 'Gutenberg', timer: 20 },
+    { type: 'H', category: 'culture', text: 'En quelle année le mur de Berlin est-il tombé ?', options: JSON.stringify(['1987', '1989', '1991', '1993']), correct_answer: '1989', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Qui était Napoléon Bonaparte ?', options: JSON.stringify(['Un roi', 'Un empereur', 'Un président', 'Un duc']), correct_answer: 'Un empereur', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quelle civilisation a construit les pyramides de Gizeh ?', options: JSON.stringify(['Romaine', 'Grecque', 'Égyptienne', 'Mésopotamienne']), correct_answer: 'Égyptienne', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Qui a écrit "Les Misérables" ?', options: JSON.stringify(['Zola', 'Balzac', 'Hugo', 'Flaubert']), correct_answer: 'Hugo', timer: 20 },
+    { type: 'H', category: 'culture', text: 'En quelle année la Seconde Guerre mondiale a-t-elle commencé ?', options: JSON.stringify(['1937', '1939', '1941', '1943']), correct_answer: '1939', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Qui a prononcé "I have a dream" ?', options: JSON.stringify(['Malcolm X', 'Rosa Parks', 'Martin Luther King', 'Nelson Mandela']), correct_answer: 'Martin Luther King', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel philosophe grec a enseigné Alexandre le Grand ?', options: JSON.stringify(['Socrate', 'Platon', 'Aristote', 'Épicure']), correct_answer: 'Aristote', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel pays a offert la Statue de la Liberté aux USA ?', options: JSON.stringify(['Angleterre', 'France', 'Allemagne', 'Espagne']), correct_answer: 'France', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Qui était le premier homme dans l\'espace ?', options: JSON.stringify(['Neil Armstrong', 'Youri Gagarine', 'Alan Shepard', 'John Glenn']), correct_answer: 'Youri Gagarine', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel siècle était celui des Lumières ?', options: JSON.stringify(['17e siècle', '18e siècle', '19e siècle', '20e siècle']), correct_answer: '18e siècle', timer: 20 },
+
+    // Sciences (20 questions)
+    { type: 'H', category: 'culture', text: 'Quelle planète est la plus proche du Soleil ?', options: JSON.stringify(['Vénus', 'Mars', 'Mercure', 'Terre']), correct_answer: 'Mercure', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel gaz respirons-nous principalement ?', options: JSON.stringify(['Oxygène', 'Azote', 'Dioxyde de carbone', 'Hydrogène']), correct_answer: 'Azote', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Combien d\'os y a-t-il dans le corps humain adulte ?', options: JSON.stringify(['150', '206', '256', '300']), correct_answer: '206', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel est le symbole chimique de l\'or ?', options: JSON.stringify(['Or', 'Ag', 'Au', 'Fe']), correct_answer: 'Au', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quelle est la vitesse de la lumière ?', options: JSON.stringify(['300 km/s', '3000 km/s', '300 000 km/s', '3 000 000 km/s']), correct_answer: '300 000 km/s', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel scientifique a découvert la relativité ?', options: JSON.stringify(['Newton', 'Einstein', 'Hawking', 'Curie']), correct_answer: 'Einstein', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel est l\'organe le plus grand du corps humain ?', options: JSON.stringify(['Foie', 'Poumons', 'Peau', 'Intestin']), correct_answer: 'Peau', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Combien de planètes y a-t-il dans notre système solaire ?', options: JSON.stringify(['7', '8', '9', '10']), correct_answer: '8', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel est le plus gros animal vivant sur Terre ?', options: JSON.stringify(['Éléphant', 'Baleine bleue', 'Girafe', 'Requin blanc']), correct_answer: 'Baleine bleue', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Combien de chromosomes a un être humain ?', options: JSON.stringify(['23', '46', '92', '64']), correct_answer: '46', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel gaz les plantes absorbent-elles ?', options: JSON.stringify(['Oxygène', 'Azote', 'Dioxyde de carbone', 'Méthane']), correct_answer: 'Dioxyde de carbone', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quelle est la formule chimique de l\'eau ?', options: JSON.stringify(['H2O', 'CO2', 'O2', 'H2SO4']), correct_answer: 'H2O', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Combien de temps met la Terre à tourner autour du Soleil ?', options: JSON.stringify(['24 heures', '7 jours', '365 jours', '28 jours']), correct_answer: '365 jours', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel scientifique a découvert la pénicilline ?', options: JSON.stringify(['Pasteur', 'Fleming', 'Koch', 'Jenner']), correct_answer: 'Fleming', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quelle est la température d\'ébullition de l\'eau ?', options: JSON.stringify(['90°C', '100°C', '110°C', '120°C']), correct_answer: '100°C', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel est le métal le plus conducteur d\'électricité ?', options: JSON.stringify(['Or', 'Cuivre', 'Argent', 'Aluminium']), correct_answer: 'Argent', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Combien de dents a un adulte ?', options: JSON.stringify(['28', '30', '32', '34']), correct_answer: '32', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quelle vitamine est produite par le soleil ?', options: JSON.stringify(['Vitamine A', 'Vitamine B', 'Vitamine C', 'Vitamine D']), correct_answer: 'Vitamine D', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel est le centre du système solaire ?', options: JSON.stringify(['Terre', 'Lune', 'Soleil', 'Jupiter']), correct_answer: 'Soleil', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel élément chimique a le symbole Fe ?', options: JSON.stringify(['Fluor', 'Fer', 'Francium', 'Fermium']), correct_answer: 'Fer', timer: 20 },
+
+    // Divertissement et Culture Pop (20 questions)
+    { type: 'H', category: 'culture', text: 'Qui a chanté "Bohemian Rhapsody" ?', options: JSON.stringify(['The Beatles', 'Queen', 'Led Zeppelin', 'Pink Floyd']), correct_answer: 'Queen', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel super-héros est surnommé "l\'homme chauve-souris" ?', options: JSON.stringify(['Superman', 'Spiderman', 'Batman', 'Iron Man']), correct_answer: 'Batman', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Dans quel film trouve-t-on le personnage de Forrest Gump ?', options: JSON.stringify(['Rain Man', 'Forrest Gump', 'Cast Away', 'Philadelphia']), correct_answer: 'Forrest Gump', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Qui a créé Mickey Mouse ?', options: JSON.stringify(['Steven Spielberg', 'Walt Disney', 'George Lucas', 'Stan Lee']), correct_answer: 'Walt Disney', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel groupe a chanté "Thriller" ?', options: JSON.stringify(['Prince', 'Michael Jackson', 'Stevie Wonder', 'Whitney Houston']), correct_answer: 'Michael Jackson', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Dans Harry Potter, quelle est la maison de Drago Malefoy ?', options: JSON.stringify(['Gryffondor', 'Poufsouffle', 'Serdaigle', 'Serpentard']), correct_answer: 'Serpentard', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel acteur joue Iron Man ?', options: JSON.stringify(['Chris Evans', 'Chris Hemsworth', 'Robert Downey Jr.', 'Mark Ruffalo']), correct_answer: 'Robert Downey Jr.', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel est le vrai nom de Lady Gaga ?', options: JSON.stringify(['Stefani Germanotta', 'Robyn Fenty', 'Belcalis Almánzar', 'Onika Maraj']), correct_answer: 'Stefani Germanotta', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Dans quel pays se déroule "La Casa de Papel" ?', options: JSON.stringify(['Mexique', 'Espagne', 'Italie', 'Portugal']), correct_answer: 'Espagne', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Qui a réalisé "Titanic" ?', options: JSON.stringify(['Steven Spielberg', 'James Cameron', 'Christopher Nolan', 'Martin Scorsese']), correct_answer: 'James Cameron', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel est le prénom du personnage principal de "Breaking Bad" ?', options: JSON.stringify(['Jesse', 'Walter', 'Saul', 'Gus']), correct_answer: 'Walter', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Qui chante "Shape of You" ?', options: JSON.stringify(['Justin Bieber', 'Ed Sheeran', 'Bruno Mars', 'The Weeknd']), correct_answer: 'Ed Sheeran', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Dans quel film peut-on voir Buzz l\'Éclair ?', options: JSON.stringify(['Cars', 'Toy Story', 'Les Indestructibles', 'Ratatouille']), correct_answer: 'Toy Story', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Qui joue le rôle de Joker dans "The Dark Knight" ?', options: JSON.stringify(['Jack Nicholson', 'Jared Leto', 'Heath Ledger', 'Joaquin Phoenix']), correct_answer: 'Heath Ledger', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel groupe a chanté "Yellow Submarine" ?', options: JSON.stringify(['The Rolling Stones', 'The Who', 'The Beatles', 'Led Zeppelin']), correct_answer: 'The Beatles', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Comment s\'appelle le dragon de "Game of Thrones" le plus connu ?', options: JSON.stringify(['Viserion', 'Rhaegal', 'Drogon', 'Balerion']), correct_answer: 'Drogon', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Qui a peint "La Nuit étoilée" ?', options: JSON.stringify(['Monet', 'Van Gogh', 'Picasso', 'Dali']), correct_answer: 'Van Gogh', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel est le nom du sorcier dans "Le Seigneur des Anneaux" ?', options: JSON.stringify(['Saruman', 'Gandalf', 'Radagast', 'Albus']), correct_answer: 'Gandalf', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Qui chante "Bad Guy" ?', options: JSON.stringify(['Ariana Grande', 'Dua Lipa', 'Billie Eilish', 'Selena Gomez']), correct_answer: 'Billie Eilish', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Dans quelle ville se passe "Friends" ?', options: JSON.stringify(['Los Angeles', 'Chicago', 'New York', 'Boston']), correct_answer: 'New York', timer: 20 },
+
+    // Sport (20 questions)
+    { type: 'H', category: 'culture', text: 'Combien de joueurs y a-t-il dans une équipe de football ?', options: JSON.stringify(['9', '10', '11', '12']), correct_answer: '11', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Dans quel sport utilise-t-on un volant ?', options: JSON.stringify(['Tennis', 'Badminton', 'Squash', 'Ping-pong']), correct_answer: 'Badminton', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel pays a remporté la Coupe du Monde 2018 ?', options: JSON.stringify(['Brésil', 'Allemagne', 'France', 'Argentine']), correct_answer: 'France', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Combien de points vaut un panier à 3 points au basket ?', options: JSON.stringify(['1', '2', '3', '4']), correct_answer: '3', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel nageur a gagné 23 médailles d\'or olympiques ?', options: JSON.stringify(['Mark Spitz', 'Michael Phelps', 'Ian Thorpe', 'Ryan Lochte']), correct_answer: 'Michael Phelps', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Tous les combien d\'années ont lieu les Jeux Olympiques d\'été ?', options: JSON.stringify(['2 ans', '3 ans', '4 ans', '5 ans']), correct_answer: '4 ans', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel sport pratique Roger Federer ?', options: JSON.stringify(['Golf', 'Tennis', 'Football', 'Basket']), correct_answer: 'Tennis', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Dans quel sport trouve-t-on un home run ?', options: JSON.stringify(['Cricket', 'Baseball', 'Rugby', 'Football américain']), correct_answer: 'Baseball', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel est le record du monde du 100m hommes (environ) ?', options: JSON.stringify(['9.12s', '9.58s', '9.74s', '9.95s']), correct_answer: '9.58s', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel club de foot a le plus de Ligue des Champions ?', options: JSON.stringify(['Milan AC', 'Real Madrid', 'Liverpool', 'Bayern Munich']), correct_answer: 'Real Madrid', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Combien de sets faut-il pour gagner un match de tennis en Grand Chelem (hommes) ?', options: JSON.stringify(['2', '3', '4', '5']), correct_answer: '3', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel sport est pratiqué à Roland-Garros ?', options: JSON.stringify(['Golf', 'Tennis', 'Rugby', 'Athlétisme']), correct_answer: 'Tennis', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel pays a inventé le rugby ?', options: JSON.stringify(['France', 'Nouvelle-Zélande', 'Angleterre', 'Australie']), correct_answer: 'Angleterre', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel basketteur est surnommé "King James" ?', options: JSON.stringify(['Michael Jordan', 'Kobe Bryant', 'LeBron James', 'Stephen Curry']), correct_answer: 'LeBron James', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Combien de temps dure un match de football ?', options: JSON.stringify(['60 min', '80 min', '90 min', '100 min']), correct_answer: '90 min', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel pilote de F1 a le plus de titres mondiaux ?', options: JSON.stringify(['Ayrton Senna', 'Michael Schumacher', 'Lewis Hamilton', 'Sebastian Vettel']), correct_answer: 'Lewis Hamilton', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Dans quel sport utilise-t-on des haltères ?', options: JSON.stringify(['Yoga', 'Haltérophilie', 'Natation', 'Cyclisme']), correct_answer: 'Haltérophilie', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel est le sport national du Japon ?', options: JSON.stringify(['Judo', 'Sumo', 'Karaté', 'Kendo']), correct_answer: 'Sumo', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Combien de trous y a-t-il sur un parcours de golf standard ?', options: JSON.stringify(['9', '12', '18', '21']), correct_answer: '18', timer: 20 },
+    { type: 'H', category: 'culture', text: 'Quel footballeur est surnommé "La Pulga" (la puce) ?', options: JSON.stringify(['Cristiano Ronaldo', 'Neymar', 'Lionel Messi', 'Kylian Mbappé']), correct_answer: 'Lionel Messi', timer: 20 },
+
+    // ============================================
+    // 100 QUESTIONS DROLES POUR COUPLES
+    // ============================================
+
+    // Type A - Questions drôles Devine
+    { type: 'A', category: 'fun', text: 'Si je devais choisir un animal pour me représenter, ce serait ?', options: JSON.stringify(['Un chat paresseux', 'Un chien fidèle', 'Un paresseux zen', 'Un écureuil hyperactif']), timer: 20 },
+    { type: 'A', category: 'fun', text: 'Quelle est ma pire habitude secrète ?', options: JSON.stringify(['Chanter sous la douche', 'Parler tout seul', 'Manger au lit', 'Stalker des gens sur Insta']), timer: 20 },
+    { type: 'A', category: 'fun', text: 'Si je devais survivre avec un seul aliment, ce serait ?', options: JSON.stringify(['Pizza', 'Sushi', 'Pâtes', 'Tacos']), timer: 20 },
+    { type: 'A', category: 'fun', text: 'Mon emoji préféré reflète vraiment ma personnalité, c\'est ?', options: JSON.stringify(['😂', '🙄', '🥺', '😏']), timer: 15 },
+    { type: 'A', category: 'fun', text: 'Si j\'étais un personnage de dessin animé, ce serait ?', options: JSON.stringify(['Shrek', 'Bob l\'éponge', 'Patrick', 'Scooby-Doo']), timer: 20 },
+    { type: 'A', category: 'fun', text: 'Ma plus grande peur ridicule c\'est ?', options: JSON.stringify(['Les clowns', 'Les pigeons', 'Les papillons', 'Les trous (trypophobie)']), timer: 20 },
+    { type: 'A', category: 'fun', text: 'Si je devais être dans un film d\'horreur, je serais ?', options: JSON.stringify(['Le premier à mourir', 'Le survivant chanceux', 'Le héros courageux', 'Le/la méchant(e)']), timer: 20 },
+    { type: 'A', category: 'fun', text: 'Mon talent caché le plus inutile c\'est ?', options: JSON.stringify(['Faire des bruits bizarres', 'Imiter des célébrités', 'Faire le poirier', 'Jongler']), timer: 20 },
+    { type: 'A', category: 'fun', text: 'Si j\'avais un superpouvoir débile, ce serait ?', options: JSON.stringify(['Faire pousser mes ongles vite', 'Parler aux pigeons', 'Changer la couleur de mes cheveux', 'Toujours trouver une place de parking']), timer: 20 },
+    { type: 'A', category: 'fun', text: 'Mon excuse préférée pour annuler des plans c\'est ?', options: JSON.stringify(['Je suis malade', 'Mon chat a besoin de moi', 'J\'ai oublié', 'Netflix m\'a appelé']), timer: 20 },
+
+    // Type B - Questions drôles Répondez pareil
+    { type: 'B', category: 'fun', text: 'Qui de nous deux serait le pire en tant que célébrité ?', options: JSON.stringify(['Moi', 'Toi', 'Les deux', 'On serait des stars']), timer: 20 },
+    { type: 'B', category: 'fun', text: 'Si on était des animaux, on serait ?', options: JSON.stringify(['Chiens fidèles', 'Chats indépendants', 'Loutres câlines', 'Pandas paresseux']), timer: 20 },
+    { type: 'B', category: 'fun', text: 'Notre chanson de couple devrait être ?', options: JSON.stringify(['Une ballade romantique', 'Un tube de l\'été', 'Un rap clash', 'La musique de Titanic']), timer: 20 },
+    { type: 'B', category: 'fun', text: 'Si on participait à Pékin Express, on serait éliminés ?', options: JSON.stringify(['Premier jour', 'À mi-parcours', 'En finale', 'On gagnerait']), timer: 20 },
+    { type: 'B', category: 'fun', text: 'Notre emoji de couple serait ?', options: JSON.stringify(['❤️', '🔥', '🤡', '🥴']), timer: 15 },
+    { type: 'B', category: 'fun', text: 'Si on ouvrait un restaurant, ce serait ?', options: JSON.stringify(['Une pizzeria', 'Un fast-food', 'Un resto gastronomique', 'Un food truck']), timer: 20 },
+    { type: 'B', category: 'fun', text: 'Notre film de couple préféré serait dans quel genre ?', options: JSON.stringify(['Comédie romantique', 'Action', 'Horreur', 'Documentaire animalier']), timer: 20 },
+    { type: 'B', category: 'fun', text: 'Si on était dans une téléréalité, ce serait ?', options: JSON.stringify(['Les Marseillais', 'Koh-Lanta', 'Top Chef', 'Qui veut épouser mon fils']), timer: 20 },
+    { type: 'B', category: 'fun', text: 'Notre sport de couple idéal serait ?', options: JSON.stringify(['Yoga', 'Course à pied', 'Le canapé', 'La bataille de polochons']), timer: 20 },
+    { type: 'B', category: 'fun', text: 'Si on avait un groupe de musique, on s\'appellerait ?', options: JSON.stringify(['Les Amoureux du Canapé', 'The Lazy Lovers', 'Pizza Party', 'Netflix & Chill Band']), timer: 20 },
+
+    // Type E - Tu es plutôt drôle
+    { type: 'E', category: 'fun', text: 'En soirée, tu es plutôt...', option_a: 'Le DJ', option_b: 'La plante verte', timer: 10 },
+    { type: 'E', category: 'fun', text: 'Au réveil, tu es plutôt...', option_a: 'Zombie grognon', option_b: 'Chanteur du matin', timer: 10 },
+    { type: 'E', category: 'fun', text: 'Quand tu cuisines, c\'est plutôt...', option_a: 'MasterChef', option_b: 'Catastrophe culinaire', timer: 10 },
+    { type: 'E', category: 'fun', text: 'En voyage, tu es plutôt...', option_a: 'Planificateur fou', option_b: 'On verra bien', timer: 10 },
+    { type: 'E', category: 'fun', text: 'Au karaoké, tu es plutôt...', option_a: 'Star autoproclamée', option_b: 'Spectateur gêné', timer: 10 },
+    { type: 'E', category: 'fun', text: 'En dispute, tu es plutôt...', option_a: 'Avocat du diable', option_b: 'Boudeur professionnel', timer: 10 },
+    { type: 'E', category: 'fun', text: 'Au supermarché, tu es plutôt...', option_a: 'Liste stricte', option_b: 'Acheteur compulsif', timer: 10 },
+    { type: 'E', category: 'fun', text: 'Le matin, tu préfères...', option_a: 'Snooze 10 fois', option_b: 'Sauter du lit', timer: 10 },
+    { type: 'E', category: 'fun', text: 'Pour un film, tu es plutôt...', option_a: '2h à choisir', option_b: 'Je m\'en fiche', timer: 10 },
+    { type: 'E', category: 'fun', text: 'Face à un problème, tu es plutôt...', option_a: 'Paniquer d\'abord', option_b: 'Procrastiner', timer: 10 },
+
+    // Type C - Questions drôles ouvertes
+    { type: 'C', category: 'fun', text: 'Raconte ta pire honte en public en 3 mots', timer: 25 },
+    { type: 'C', category: 'fun', text: 'Si tu étais une pizza, quels seraient tes toppings ?', timer: 25 },
+    { type: 'C', category: 'fun', text: 'Décris-moi en utilisant uniquement des noms d\'animaux', timer: 25 },
+    { type: 'C', category: 'fun', text: 'Quel serait le titre de ta biographie ?', timer: 25 },
+    { type: 'C', category: 'fun', text: 'Invente un nouveau mot pour décrire notre couple', timer: 30 },
+    { type: 'C', category: 'fun', text: 'Si tu étais un mème, lequel serais-tu ?', timer: 25 },
+    { type: 'C', category: 'fun', text: 'Quel serait ton slogan de campagne si tu te présentais à une élection ?', timer: 30 },
+    { type: 'C', category: 'fun', text: 'Décris notre relation comme si c\'était un film', timer: 30 },
+    { type: 'C', category: 'fun', text: 'Si on avait un podcast, de quoi parlerait-on ?', timer: 25 },
+    { type: 'C', category: 'fun', text: 'Quel secret embarrassant es-tu prêt(e) à avouer maintenant ?', timer: 30 },
+
+    // Type F - Qui de nous deux drôle
+    { type: 'F', category: 'fun', text: 'Qui de nous deux est le plus susceptible de finir en prison pour une raison stupide ?', timer: 15 },
+    { type: 'F', category: 'fun', text: 'Qui de nous deux danserait sur une table en soirée ?', timer: 15 },
+    { type: 'F', category: 'fun', text: 'Qui de nous deux serait le plus mauvais dans une émission de survie ?', timer: 15 },
+    { type: 'F', category: 'fun', text: 'Qui de nous deux parle le plus à ses plantes ?', timer: 15 },
+    { type: 'F', category: 'fun', text: 'Qui de nous deux serait le premier à pleurer devant un film ?', timer: 15 },
+    { type: 'F', category: 'fun', text: 'Qui de nous deux est le plus accro à son téléphone ?', timer: 15 },
+    { type: 'F', category: 'fun', text: 'Qui de nous deux ferait la pire blague au mauvais moment ?', timer: 15 },
+    { type: 'F', category: 'fun', text: 'Qui de nous deux serait le plus terrible en tant que parent ?', timer: 15 },
+    { type: 'F', category: 'fun', text: 'Qui de nous deux oublierait un anniversaire important ?', timer: 15 },
+    { type: 'F', category: 'fun', text: 'Qui de nous deux survivrait le moins longtemps dans un film d\'horreur ?', timer: 15 },
+
+    // Plus de questions drôles diverses
+    { type: 'A', category: 'fun', text: 'Mon rêve le plus bizarre récent c\'était ?', options: JSON.stringify(['Voler', 'Être pourchassé', 'Perdre mes dents', 'Être en cours en sous-vêtements']), timer: 20 },
+    { type: 'A', category: 'fun', text: 'Si j\'étais un personnage de sitcom, ce serait ?', options: JSON.stringify(['Chandler de Friends', 'Sheldon de TBBT', 'Michael Scott de The Office', 'Jake de Brooklyn 99']), timer: 20 },
+    { type: 'B', category: 'fun', text: 'Si on devait adopter un animal bizarre, ce serait ?', options: JSON.stringify(['Un alpaga', 'Un hérisson', 'Un cochon', 'Un furet']), timer: 20 },
+    { type: 'B', category: 'fun', text: 'Notre destination de vacances idéale serait ?', options: JSON.stringify(['Plage déserte', 'Montagne enneigée', 'Ville animée', 'Camping dans les bois']), timer: 20 },
+    { type: 'E', category: 'fun', text: 'En photo, tu es plutôt...', option_a: 'Photogénique naturel', option_b: '47 essais avant la bonne', timer: 10 },
+    { type: 'E', category: 'fun', text: 'Avec les enfants des autres, tu es plutôt...', option_a: 'Tonton/tata gâteau', option_b: 'Malaise total', timer: 10 },
+    { type: 'C', category: 'fun', text: 'Si tu pouvais manger un seul plat pour toujours, lequel ?', timer: 25 },
+    { type: 'C', category: 'fun', text: 'Quelle est la chose la plus folle que tu ferais pour 1 million d\'euros ?', timer: 30 },
+    { type: 'F', category: 'fun', text: 'Qui de nous deux se perdrait dans un centre commercial ?', timer: 15 },
+    { type: 'F', category: 'fun', text: 'Qui de nous deux mangerait tout le gâteau en secret ?', timer: 15 },
+
+    // Questions drôles supplémentaires variées
+    { type: 'A', category: 'fun', text: 'Ma réaction quand je vois une araignée c\'est ?', options: JSON.stringify(['Crier et fuir', 'L\'écraser calmement', 'L\'attraper et la mettre dehors', 'Appeler à l\'aide']), timer: 20 },
+    { type: 'B', category: 'fun', text: 'Notre style de danse ensemble c\'est plutôt ?', options: JSON.stringify(['Chorégraphie TikTok', 'Slow romantique', 'Danse des canards', 'On évite de danser']), timer: 20 },
+    { type: 'A', category: 'fun', text: 'Si je pouvais avoir un dialogue avec un animal, ce serait ?', options: JSON.stringify(['Mon chat pour savoir ce qu\'il pense', 'Un dauphin pour ses secrets', 'Un corbeau pour des ragots', 'Une mouche pour comprendre pourquoi']), timer: 20 },
+    { type: 'E', category: 'fun', text: 'Quand tu as faim, tu es plutôt...', option_a: 'Monstre affamé', option_b: 'Patient(e) et zen', timer: 10 },
+    { type: 'F', category: 'fun', text: 'Qui de nous deux se réveillerait le premier en cas d\'apocalypse zombie ?', timer: 15 },
+    { type: 'C', category: 'fun', text: 'Invente une excuse ridicule pour être en retard au travail', timer: 25 },
+    { type: 'B', category: 'fun', text: 'Si on avait un super pouvoir de couple, ce serait ?', options: JSON.stringify(['Lire les pensées de l\'autre', 'Téléportation ensemble', 'Invisibilité à deux', 'Contrôler le temps']), timer: 20 },
+    { type: 'A', category: 'fun', text: 'Ma série réconfort quand je suis triste c\'est ?', options: JSON.stringify(['Friends', 'The Office', 'Brooklyn 99', 'How I Met Your Mother']), timer: 20 },
+    { type: 'E', category: 'fun', text: 'Pour un road trip, tu préfères...', option_a: 'Conduire', option_b: 'Être DJ', timer: 10 },
+    { type: 'F', category: 'fun', text: 'Qui de nous deux gagnerait une bataille d\'oreillers ?', timer: 15 },
+
+    { type: 'A', category: 'fun', text: 'Mon addiction secrète c\'est ?', options: JSON.stringify(['Le téléphone au lit', 'Les vidéos de chats', 'Les potins', 'Le shopping en ligne']), timer: 20 },
+    { type: 'B', category: 'fun', text: 'Notre série à binge-watcher ensemble serait ?', options: JSON.stringify(['Squid Game', 'Stranger Things', 'The Witcher', 'Emily in Paris']), timer: 20 },
+    { type: 'C', category: 'fun', text: 'Si tu devais choisir un surnom ridicule pour moi, ce serait ?', timer: 25 },
+    { type: 'E', category: 'fun', text: 'Quand tu fais un cadeau, tu es plutôt...', option_a: 'Planification au top', option_b: 'Dernière minute', timer: 10 },
+    { type: 'F', category: 'fun', text: 'Qui de nous deux resterait coincé dans un ascenseur en premier ?', timer: 15 },
+    { type: 'A', category: 'fun', text: 'Si je devais décrire ma façon de conduire, ce serait ?', options: JSON.stringify(['Pépère tranquille', 'Fast & Furious', 'GPS ou rien', 'Toujours perdu(e)']), timer: 20 },
+    { type: 'B', category: 'fun', text: 'Notre jeu vidéo de couple serait plutôt ?', options: JSON.stringify(['Mario Kart', 'Just Dance', 'Minecraft', 'FIFA']), timer: 20 },
+    { type: 'C', category: 'fun', text: 'Raconte la blague la plus nulle que tu connais', timer: 30 },
+    { type: 'E', category: 'fun', text: 'En IKEA, tu es plutôt...', option_a: 'Liste et plan', option_b: 'Perdu(e) 3h', timer: 10 },
+    { type: 'F', category: 'fun', text: 'Qui de nous deux ronchonne le plus le matin ?', timer: 15 },
+
+    // ============================================
+    // 50 QUESTIONS INTROSPECTIVES POUR COUPLES
+    // ============================================
+
+    { type: 'C', category: 'couple', text: 'Quelle est la leçon la plus importante que notre relation t\'a apprise ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Quel aspect de toi-même as-tu découvert grâce à notre relation ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Qu\'est-ce qui t\'a fait grandir le plus dans notre couple ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Quel moment difficile nous a rendus plus forts ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Qu\'est-ce que tu admirais chez moi au début et maintenant ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Comment notre relation a-t-elle changé ta vision de l\'amour ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Quel sacrifice serais-tu prêt(e) à faire pour nous ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Qu\'est-ce que tu voudrais qu\'on améliore dans notre communication ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Quel est ton plus grand regret dans notre relation ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Comment gères-tu les moments où tu doutes de nous ?', timer: 45 },
+
+    { type: 'D', category: 'couple', text: 'À quel point te sens-tu épanoui(e) dans notre relation ? (1-10)', timer: 15 },
+    { type: 'D', category: 'couple', text: 'À quel point te sens-tu compris(e) par moi ? (1-10)', timer: 15 },
+    { type: 'D', category: 'couple', text: 'À quel point notre relation te permet-elle d\'être toi-même ? (1-10)', timer: 15 },
+    { type: 'D', category: 'couple', text: 'À quel point te sens-tu en sécurité émotionnellement avec moi ? (1-10)', timer: 15 },
+    { type: 'D', category: 'couple', text: 'À quel point crois-tu en notre avenir ensemble ? (1-10)', timer: 15 },
+    { type: 'D', category: 'couple', text: 'À quel point notre relation répond-elle à tes besoins ? (1-10)', timer: 15 },
+    { type: 'D', category: 'couple', text: 'À quel point notre intimité te satisfait-elle ? (1-10)', timer: 15 },
+    { type: 'D', category: 'couple', text: 'À quel point as-tu confiance en nous ? (1-10)', timer: 15 },
+    { type: 'D', category: 'couple', text: 'À quel point te sens-tu valorisé(e) dans notre couple ? (1-10)', timer: 15 },
+    { type: 'D', category: 'couple', text: 'À quel point notre relation t\'inspire-t-elle ? (1-10)', timer: 15 },
+
+    { type: 'C', category: 'couple', text: 'Qu\'est-ce qui te fait peur concernant notre avenir ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Quelle partie de ton passé affecte encore notre relation ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Qu\'est-ce que tu n\'as jamais osé me demander ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Comment voudrais-tu qu\'on gère les conflits différemment ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Qu\'est-ce qui te manquerait le plus si on se séparait ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Quel rêve personnel as-tu mis de côté pour nous ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Comment notre relation a-t-elle influencé ta relation avec ta famille ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Qu\'est-ce que tu voudrais me dire mais que tu retiens ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Quel aspect de notre relation aimerais-tu approfondir ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Comment définirais-tu le succès de notre relation ?', timer: 45 },
+
+    { type: 'A', category: 'couple', text: 'Qu\'est-ce qui me rend unique à tes yeux ?', options: JSON.stringify(['Ma façon de t\'aimer', 'Ma personnalité', 'Mon soutien inconditionnel', 'Tout ça à la fois']), timer: 25 },
+    { type: 'B', category: 'couple', text: 'Ce qui nous unit le plus profondément c\'est ?', options: JSON.stringify(['Nos valeurs', 'Notre humour', 'Notre complicité', 'Nos rêves communs']), timer: 25 },
+    { type: 'A', category: 'couple', text: 'Ce que j\'ai appris de plus important sur l\'amour grâce à toi ?', options: JSON.stringify(['La patience', 'Le pardon', 'La vulnérabilité', 'L\'acceptation']), timer: 25 },
+    { type: 'B', category: 'couple', text: 'Notre plus grande force en tant que couple ?', options: JSON.stringify(['Notre résilience', 'Notre communication', 'Notre soutien mutuel', 'Notre authenticité']), timer: 25 },
+    { type: 'A', category: 'couple', text: 'Le moment où j\'ai su que c\'était sérieux entre nous ?', options: JSON.stringify(['Dès le début', 'Après une épreuve', 'Avec le temps', 'Un moment précis']), timer: 25 },
+
+    { type: 'C', category: 'couple', text: 'Qu\'est-ce que tu voudrais qu\'on construise ensemble ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Comment vois-tu notre vie dans 20 ans ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Quelle tradition voudrais-tu qu\'on crée ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Qu\'est-ce qui fait que tu me choisis chaque jour ?', timer: 45 },
+    { type: 'C', category: 'couple', text: 'Comment puis-je mieux te soutenir ?', timer: 45 },
+
+    // ============================================
+    // 50 QUESTIONS LIBRES POUR MIEUX SE CONNAITRE
+    // ============================================
+
+    { type: 'C', category: 'preferences', text: 'Si tu pouvais vivre une journée parfaite, à quoi ressemblerait-elle ?', timer: 40 },
+    { type: 'C', category: 'preferences', text: 'Quel est ton souvenir d\'enfance le plus précieux ?', timer: 40 },
+    { type: 'C', category: 'preferences', text: 'Qu\'est-ce qui te fait te sentir vraiment vivant(e) ?', timer: 40 },
+    { type: 'C', category: 'preferences', text: 'Quelle est ta définition du bonheur ?', timer: 40 },
+    { type: 'C', category: 'preferences', text: 'Si tu pouvais maîtriser un talent du jour au lendemain, lequel ?', timer: 40 },
+    { type: 'C', category: 'preferences', text: 'Qu\'est-ce que tu ferais si tu n\'avais pas peur ?', timer: 40 },
+    { type: 'C', category: 'preferences', text: 'Quel livre ou film t\'a le plus marqué et pourquoi ?', timer: 40 },
+    { type: 'C', category: 'preferences', text: 'Qu\'est-ce que tu voudrais que les gens retiennent de toi ?', timer: 40 },
+    { type: 'C', category: 'preferences', text: 'Quelle est la chose la plus courageuse que tu aies faite ?', timer: 40 },
+    { type: 'C', category: 'preferences', text: 'Si tu pouvais avoir une conversation avec quelqu\'un du passé, qui ?', timer: 40 },
+
+    { type: 'A', category: 'preferences', text: 'Ma façon préférée de me détendre c\'est ?', options: JSON.stringify(['Lecture/Film', 'Nature/Sport', 'Musique/Art', 'Être avec des proches']), timer: 20 },
+    { type: 'A', category: 'preferences', text: 'Ce qui me motive le plus dans la vie c\'est ?', options: JSON.stringify(['L\'amour', 'L\'aventure', 'La réussite', 'Aider les autres']), timer: 20 },
+    { type: 'A', category: 'preferences', text: 'Mon plus grand rêve de vie c\'est ?', options: JSON.stringify(['Voyager le monde', 'Fonder une famille', 'Créer quelque chose', 'Trouver la paix intérieure']), timer: 20 },
+    { type: 'A', category: 'preferences', text: 'Ce qui me rend unique selon moi c\'est ?', options: JSON.stringify(['Mon empathie', 'Ma créativité', 'Mon humour', 'Ma détermination']), timer: 20 },
+    { type: 'A', category: 'preferences', text: 'Si je pouvais changer une chose dans le monde ?', options: JSON.stringify(['La pauvreté', 'L\'environnement', 'Les guerres', 'L\'éducation']), timer: 20 },
+
+    { type: 'B', category: 'preferences', text: 'Notre valeur commune la plus importante ?', options: JSON.stringify(['L\'honnêteté', 'La liberté', 'La famille', 'L\'aventure']), timer: 20 },
+    { type: 'B', category: 'preferences', text: 'Ce qu\'on apprécie le plus l\'un chez l\'autre ?', options: JSON.stringify(['Le soutien', 'L\'humour', 'La tendresse', 'L\'intelligence']), timer: 20 },
+    { type: 'B', category: 'preferences', text: 'Notre activité préférée ensemble ?', options: JSON.stringify(['Voyager', 'Regarder des films', 'Cuisiner', 'Simplement parler']), timer: 20 },
+    { type: 'B', category: 'preferences', text: 'Ce qui nous distingue des autres couples ?', options: JSON.stringify(['Notre complicité', 'Notre folie', 'Notre communication', 'Notre passion']), timer: 20 },
+    { type: 'B', category: 'preferences', text: 'Notre plus beau souvenir ensemble ?', options: JSON.stringify(['Un voyage', 'Un moment simple', 'Une surprise', 'Notre rencontre']), timer: 20 },
+
+    { type: 'E', category: 'preferences', text: 'Tu préfères...', option_a: 'Le matin calme', option_b: 'Les soirées animées', timer: 10 },
+    { type: 'E', category: 'preferences', text: 'Tu préfères...', option_a: 'Vacances aventure', option_b: 'Vacances détente', timer: 10 },
+    { type: 'E', category: 'preferences', text: 'Tu préfères...', option_a: 'Grande ville', option_b: 'Petite ville/campagne', timer: 10 },
+    { type: 'E', category: 'preferences', text: 'Tu préfères...', option_a: 'Peu d\'amis proches', option_b: 'Beaucoup de connaissances', timer: 10 },
+    { type: 'E', category: 'preferences', text: 'Tu préfères...', option_a: 'Stabilité', option_b: 'Changement', timer: 10 },
+
+    { type: 'C', category: 'preferences', text: 'Qu\'est-ce que tu ferais différemment si tu avais 18 ans à nouveau ?', timer: 40 },
+    { type: 'C', category: 'preferences', text: 'Quel est le conseil le plus précieux qu\'on t\'ait donné ?', timer: 40 },
+    { type: 'C', category: 'preferences', text: 'Qu\'est-ce qui te fait pleurer de joie ?', timer: 40 },
+    { type: 'C', category: 'preferences', text: 'Décris ton endroit préféré au monde et pourquoi', timer: 40 },
+    { type: 'C', category: 'preferences', text: 'Qu\'est-ce que tu voudrais apprendre avant de mourir ?', timer: 40 },
+
+    { type: 'F', category: 'preferences', text: 'Qui de nous deux est le plus nostalgique ?', timer: 15 },
+    { type: 'F', category: 'preferences', text: 'Qui de nous deux prend les meilleures décisions sous pression ?', timer: 15 },
+    { type: 'F', category: 'preferences', text: 'Qui de nous deux est le plus rêveur ?', timer: 15 },
+    { type: 'F', category: 'preferences', text: 'Qui de nous deux est le plus empathique ?', timer: 15 },
+    { type: 'F', category: 'preferences', text: 'Qui de nous deux serait le meilleur mentor ?', timer: 15 },
+
+    { type: 'C', category: 'preferences', text: 'Quelle odeur te rappelle ton enfance ?', timer: 35 },
+    { type: 'C', category: 'preferences', text: 'Si tu pouvais revivre un moment de ta vie, lequel ?', timer: 40 },
+    { type: 'C', category: 'preferences', text: 'Qu\'est-ce que tu voudrais que tes enfants/proches disent de toi ?', timer: 40 },
+    { type: 'C', category: 'preferences', text: 'Quel est ton plus grand accomplissement personnel ?', timer: 40 },
+    { type: 'C', category: 'preferences', text: 'Qu\'est-ce qui te passionne vraiment et pourquoi ?', timer: 40 }
   ];
 
   const insert = db.prepare(`
-    INSERT INTO questions (type, category, text, options, option_a, option_b, timer, active)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+    INSERT INTO questions (type, category, text, options, option_a, option_b, correct_answer, timer, active)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
   `);
 
   for (const q of questions) {
@@ -1531,6 +1866,7 @@ function initDefaultQuestions() {
       q.options || null,
       q.option_a || null,
       q.option_b || null,
+      (q as any).correct_answer || null,
       q.timer
     );
   }

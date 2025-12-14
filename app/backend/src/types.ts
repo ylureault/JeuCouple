@@ -1,13 +1,15 @@
 // Types partagés entre frontend et backend
 
-// Extended question types: A, B, C, D + new E (binary choice), F (who of us), G (vrai ou faux about player)
-export type QuestionType = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
+// Extended question types: A, B, C, D + new E (binary choice), F (who of us), G (vrai ou faux about player), H (culture générale QCM)
+export type QuestionType = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H';
 
 // Scoring modes for question types
-export type ScoringMode = 'match' | 'consensus' | 'proximity' | 'none';
+// 'individual' for Type H: each player scores independently based on correct answer
+export type ScoringMode = 'match' | 'consensus' | 'proximity' | 'none' | 'individual';
 
 // Input types for questions
-export type InputType = 'options' | 'binary' | 'scale' | 'text' | 'who';
+// 'qcm' for Type H: multiple choice with one correct answer
+export type InputType = 'options' | 'binary' | 'scale' | 'text' | 'who' | 'qcm';
 
 // Question Type Configuration (administrable)
 export interface QuestionTypeConfig {
@@ -43,15 +45,20 @@ export interface Question {
   option_a?: string;  // For type E (binary choice)
   option_b?: string;  // For type E (binary choice)
   target_player?: 1 | 2;  // For type G (vrai ou faux about a specific player)
+  correct_answer?: string;  // For type H (culture générale QCM - the correct option)
   timer: number;
   active: boolean;
 }
+
+export type Gender = 'M' | 'F';
 
 export interface Room {
   id: number;
   code: string;
   player1_name: string | null;
   player2_name: string | null;
+  player1_gender: Gender | null;
+  player2_gender: Gender | null;
   status: 'waiting' | 'playing' | 'finished';
   created_at: string;
   last_activity: string;
@@ -78,7 +85,7 @@ export interface Answer {
 // Socket.IO Events
 export interface ServerToClientEvents {
   'room:joined': (data: { room: Room; playerId: 1 | 2 }) => void;
-  'room:player-joined': (data: { playerName: string; playerId: 1 | 2 }) => void;
+  'room:player-joined': (data: { playerName: string; playerId: 1 | 2; gender: Gender }) => void;
   'room:player-left': (data: { playerId: 1 | 2 }) => void;
   'game:started': (data: { gameId: number }) => void;
   'game:question': (data: { question: Question; questionNumber: number; totalQuestions: number }) => void;
@@ -91,8 +98,8 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  'room:create': (data: { playerName: string; questionCount?: number }, callback: (response: RoomResponse) => void) => void;
-  'room:join': (data: { code: string; playerName: string }, callback: (response: RoomResponse) => void) => void;
+  'room:create': (data: { playerName: string; gender: Gender; questionCount?: number }, callback: (response: RoomResponse) => void) => void;
+  'room:join': (data: { code: string; playerName: string; gender: Gender }, callback: (response: RoomResponse) => void) => void;
   'room:leave': () => void;
   'game:start': (callback: (response: { success: boolean; error?: string }) => void) => void;
   'game:answer': (data: { answer: string }) => void;
@@ -126,6 +133,8 @@ export interface GameRevealData {
   answerTime1: number | null;
   answerTime2: number | null;
   category: string;
+  // For Type H (culture générale) - show correct answer
+  correctAnswer?: string;
 }
 
 export interface GameFinishedData {

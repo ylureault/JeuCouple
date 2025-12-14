@@ -204,6 +204,8 @@ function createRoom(player1Name: string): Room {
     code,
     player1_name: player1Name,
     player2_name: null,
+    player1_gender: 'M',
+    player2_gender: null,
     status: 'waiting',
     created_at: new Date().toISOString(),
     last_activity: new Date().toISOString()
@@ -221,6 +223,7 @@ function joinRoom(code: string, player2Name: string): Room | null {
     return null;
   }
   room.player2_name = player2Name;
+  room.player2_gender = 'F';
   return room;
 }
 

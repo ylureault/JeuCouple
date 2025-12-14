@@ -1,5 +1,5 @@
 import { db } from '../database.js';
-import type { Room } from '../types.js';
+import type { Room, Gender } from '../types.js';
 
 function generateCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluded confusing chars
@@ -10,7 +10,7 @@ function generateCode(): string {
   return code;
 }
 
-export function createRoom(player1Name: string): Room {
+export function createRoom(player1Name: string, player1Gender: Gender): Room {
   let code: string;
   let attempts = 0;
 
@@ -24,9 +24,9 @@ export function createRoom(player1Name: string): Room {
   } while (getRoomByCode(code));
 
   const result = db.prepare(`
-    INSERT INTO rooms (code, player1_name, status)
-    VALUES (?, ?, 'waiting')
-  `).run(code, player1Name);
+    INSERT INTO rooms (code, player1_name, player1_gender, status)
+    VALUES (?, ?, ?, 'waiting')
+  `).run(code, player1Name, player1Gender);
 
   return getRoomById(result.lastInsertRowid as number)!;
 }
@@ -39,7 +39,7 @@ export function getRoomByCode(code: string): Room | undefined {
   return db.prepare('SELECT * FROM rooms WHERE code = ?').get(code.toUpperCase()) as Room | undefined;
 }
 
-export function joinRoom(code: string, player2Name: string): Room | null {
+export function joinRoom(code: string, player2Name: string, player2Gender: Gender): Room | null {
   const room = getRoomByCode(code);
 
   if (!room) return null;
@@ -48,9 +48,9 @@ export function joinRoom(code: string, player2Name: string): Room | null {
 
   db.prepare(`
     UPDATE rooms
-    SET player2_name = ?, last_activity = datetime('now')
+    SET player2_name = ?, player2_gender = ?, last_activity = datetime('now')
     WHERE id = ?
-  `).run(player2Name, room.id);
+  `).run(player2Name, player2Gender, room.id);
 
   return getRoomById(room.id)!;
 }
@@ -64,10 +64,11 @@ export function updateRoomStatus(id: number, status: Room['status']): void {
 }
 
 export function removePlayerFromRoom(id: number, playerId: 1 | 2): void {
-  const field = playerId === 1 ? 'player1_name' : 'player2_name';
+  const nameField = playerId === 1 ? 'player1_name' : 'player2_name';
+  const genderField = playerId === 1 ? 'player1_gender' : 'player2_gender';
   db.prepare(`
     UPDATE rooms
-    SET ${field} = NULL, last_activity = datetime('now')
+    SET ${nameField} = NULL, ${genderField} = NULL, last_activity = datetime('now')
     WHERE id = ?
   `).run(id);
 }

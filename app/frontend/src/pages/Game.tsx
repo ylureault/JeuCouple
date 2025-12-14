@@ -277,6 +277,11 @@ export default function Game() {
                       Vrai ou Faux ? Points si vos reponses concordent !
                     </p>
                   )}
+                  {currentQuestion.type === 'H' && (
+                    <p className="text-gray-500 text-sm mt-3">
+                      Culture G : chacun gagne des points s'il a la bonne reponse !
+                    </p>
+                  )}
                 </div>
               </motion.div>
 

@@ -5,7 +5,7 @@ import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
 import MuteButton from '../components/MuteButton';
 import Confetti from '../components/Confetti';
-import type { CategoryScore } from '../../../shared/types';
+import type { CategoryScore, Gender } from '../../../shared/types';
 
 // Category icons mapping
 const CATEGORY_ICONS: Record<string, string> = {
@@ -293,7 +293,7 @@ export default function Results() {
                 isYou={playerId === 1}
                 rank={finalResults.winner === 2 ? 2 : 1}
                 delay={0.3}
-                emoji="👩"
+                gender={room.player1_gender}
               />
 
               {/* VS */}
@@ -315,7 +315,7 @@ export default function Results() {
                 isYou={playerId === 2}
                 rank={finalResults.winner === 1 ? 2 : 1}
                 delay={0.4}
-                emoji="👨"
+                gender={room.player2_gender}
               />
             </motion.div>
           )}
@@ -468,7 +468,7 @@ interface PodiumColumnProps {
   isYou: boolean;
   rank: 1 | 2;
   delay: number;
-  emoji: string;
+  gender: Gender | null;
 }
 
 function PodiumColumn({
@@ -479,12 +479,36 @@ function PodiumColumn({
   isYou,
   rank,
   delay,
-  emoji
+  gender
 }: PodiumColumnProps) {
   const height = isWinner || isTie ? 160 : 120;
-  const bgGradient = isWinner || isTie
-    ? 'from-[#ffd700] via-[#ffec8b] to-[#b8860b]'
-    : 'from-[#c0c0c0] via-[#e8e8e8] to-[#a0a0a0]';
+
+  // Gender-based colors
+  const getGradient = () => {
+    if (isWinner || isTie) {
+      return 'from-[#ffd700] via-[#ffec8b] to-[#b8860b]'; // Gold for winner
+    }
+    // Gender colors for non-winner
+    if (gender === 'F') {
+      return 'from-pink-400 via-pink-300 to-pink-500';
+    }
+    if (gender === 'M') {
+      return 'from-blue-400 via-blue-300 to-blue-500';
+    }
+    return 'from-[#c0c0c0] via-[#e8e8e8] to-[#a0a0a0]';
+  };
+
+  const bgGradient = getGradient();
+  const emoji = gender === 'F' ? '👩' : gender === 'M' ? '👨' : '👤';
+
+  // Avatar gradient based on gender
+  const avatarGradient = isWinner || isTie
+    ? 'from-[#ffd700] to-[#ff8c00]'
+    : gender === 'F'
+      ? 'from-pink-400 to-pink-600'
+      : gender === 'M'
+        ? 'from-blue-400 to-blue-600'
+        : 'from-[#9ca3af] to-[#6b7280]';
 
   return (
     <motion.div
@@ -532,8 +556,8 @@ function PodiumColumn({
         transition={{ delay: delay + 0.2, type: 'spring', stiffness: 150 }}
         className={`
           w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-1 relative z-10
-          shadow-2xl border-4
-          ${isWinner || isTie ? 'bg-gradient-to-br from-[#ffd700] to-[#ff8c00] border-white' : 'bg-gradient-to-br from-[#9ca3af] to-[#6b7280] border-white/50'}
+          shadow-2xl border-4 bg-gradient-to-br ${avatarGradient}
+          ${isWinner || isTie ? 'border-white' : 'border-white/50'}
         `}
       >
         <motion.span

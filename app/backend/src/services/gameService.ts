@@ -79,7 +79,7 @@ export function setupSocketHandlers(
     // Create room
     socket.on('room:create', (data, callback) => {
       try {
-        const room = roomModel.createRoom(data.playerName);
+        const room = roomModel.createRoom(data.playerName, data.gender);
         socket.join(room.code);
 
         playerConnections.set(socket.id, {
@@ -103,7 +103,7 @@ export function setupSocketHandlers(
     // Join room
     socket.on('room:join', (data, callback) => {
       try {
-        const room = roomModel.joinRoom(data.code, data.playerName);
+        const room = roomModel.joinRoom(data.code, data.playerName, data.gender);
 
         if (!room) {
           callback({ success: false, error: 'Room not found or full' });
@@ -121,7 +121,8 @@ export function setupSocketHandlers(
         // Notify player 1
         socket.to(room.code).emit('room:player-joined', {
           playerName: data.playerName,
-          playerId: 2
+          playerId: 2,
+          gender: data.gender
         });
 
         callback({ success: true, room, playerId: 2 });
@@ -155,7 +156,8 @@ export function setupSocketHandlers(
         // Notify the other player
         socket.to(room.code).emit('room:player-joined', {
           playerName: data.playerId === 1 ? room.player1_name! : room.player2_name!,
-          playerId: data.playerId
+          playerId: data.playerId,
+          gender: data.playerId === 1 ? room.player1_gender! : room.player2_gender!
         });
       } catch (error) {
         callback({ success: false, error: 'Failed to reconnect' });
@@ -186,10 +188,10 @@ export function setupSocketHandlers(
         return;
       }
 
-      // Get random questions based on room settings
+      // Get mixed questions based on room settings (ensures variety of question types)
       const settings = roomSettings.get(connection.roomCode);
       const questionCount = settings?.questionCount || DEFAULT_QUESTION_COUNT;
-      const questions = questionModel.getRandomQuestions(questionCount);
+      const questions = questionModel.getMixedQuestions(questionCount);
       if (questions.length === 0) {
         callback({ success: false, error: 'No questions available' });
         return;
@@ -396,10 +398,16 @@ function revealAnswers(
   const baseResult = calculateBasePoints(
     question.type,
     answers.answer1,
-    answers.answer2
+    answers.answer2,
+    question.correct_answer
   );
 
   let { basePoints, correct } = baseResult;
+
+  // For Type H, use individual points
+  const isTypeH = question.type === 'H';
+  let individualPoints1 = isTypeH ? (baseResult.points1 || 0) : 0;
+  let individualPoints2 = isTypeH ? (baseResult.points2 || 0) : 0;
 
   // Calculate answer times (seconds from question start)
   const answerTime1 = answers.time1
@@ -412,7 +420,15 @@ function revealAnswers(
   // Calculate speed bonuses (only if correct and not Type C)
   let speedBonus1 = 0;
   let speedBonus2 = 0;
-  if (correct && question.type !== 'C' && basePoints > 0) {
+  if (isTypeH) {
+    // For Type H, speed bonus based on individual correctness
+    if (individualPoints1 > 0 && answers.time1) {
+      speedBonus1 = Math.round(individualPoints1 * calculateSpeedBonus(answers.time1, gameState.questionStartTime));
+    }
+    if (individualPoints2 > 0 && answers.time2) {
+      speedBonus2 = Math.round(individualPoints2 * calculateSpeedBonus(answers.time2, gameState.questionStartTime));
+    }
+  } else if (correct && question.type !== 'C' && basePoints > 0) {
     if (answers.time1) {
       speedBonus1 = Math.round(basePoints * calculateSpeedBonus(answers.time1, gameState.questionStartTime));
     }
@@ -422,7 +438,19 @@ function revealAnswers(
   }
 
   // Update streaks
-  if (correct && question.type !== 'C') {
+  if (isTypeH) {
+    // For Type H, individual streaks based on individual correctness
+    if (individualPoints1 > 0) {
+      gamification.streak1++;
+    } else {
+      gamification.streak1 = 0;
+    }
+    if (individualPoints2 > 0) {
+      gamification.streak2++;
+    } else {
+      gamification.streak2 = 0;
+    }
+  } else if (correct && question.type !== 'C') {
     gamification.streak1++;
     gamification.streak2++;
     if (answers.answer1 === answers.answer2 && basePoints === BASE_POINTS) {
@@ -440,7 +468,21 @@ function revealAnswers(
   // Calculate streak bonuses (only if streak >= 2)
   let streakBonus1 = 0;
   let streakBonus2 = 0;
-  if (correct && question.type !== 'C' && basePoints > 0) {
+  if (isTypeH) {
+    // For Type H, individual streak bonuses
+    if (individualPoints1 > 0) {
+      const multiplier1 = getStreakMultiplier(gamification.streak1);
+      if (multiplier1 > 1) {
+        streakBonus1 = Math.round(individualPoints1 * (multiplier1 - 1));
+      }
+    }
+    if (individualPoints2 > 0) {
+      const multiplier2 = getStreakMultiplier(gamification.streak2);
+      if (multiplier2 > 1) {
+        streakBonus2 = Math.round(individualPoints2 * (multiplier2 - 1));
+      }
+    }
+  } else if (correct && question.type !== 'C' && basePoints > 0) {
     const multiplier1 = getStreakMultiplier(gamification.streak1);
     const multiplier2 = getStreakMultiplier(gamification.streak2);
     if (multiplier1 > 1) {
@@ -466,8 +508,17 @@ function revealAnswers(
   }
 
   // Calculate total points
-  const points1 = basePoints + speedBonus1 + streakBonus1;
-  const points2 = basePoints + speedBonus2 + streakBonus2;
+  let points1: number;
+  let points2: number;
+  if (isTypeH) {
+    // For Type H, use individual points + bonuses
+    points1 = individualPoints1 + speedBonus1 + streakBonus1;
+    points2 = individualPoints2 + speedBonus2 + streakBonus2;
+    basePoints = individualPoints1; // For reveal display, show player 1's base
+  } else {
+    points1 = basePoints + speedBonus1 + streakBonus1;
+    points2 = basePoints + speedBonus2 + streakBonus2;
+  }
 
   // Update speed bonus totals
   gamification.speedBonusTotal1 += speedBonus1;
@@ -510,7 +561,8 @@ function revealAnswers(
     streak2: gamification.streak2,
     answerTime1,
     answerTime2,
-    category: question.category
+    category: question.category,
+    correctAnswer: isTypeH ? question.correct_answer : undefined
   };
 
   io.to(roomCode).emit('game:reveal', revealData);
@@ -536,10 +588,23 @@ function revealAnswers(
 function calculateBasePoints(
   type: QuestionType,
   answer1: string | undefined,
-  answer2: string | undefined
-): { basePoints: number; correct: boolean } {
+  answer2: string | undefined,
+  correctAnswer?: string
+): { basePoints: number; correct: boolean; points1?: number; points2?: number } {
   let basePoints = 0;
   let correct = false;
+
+  // Type H: Individual scoring based on correct answer
+  if (type === 'H') {
+    const correct1 = answer1 === correctAnswer;
+    const correct2 = answer2 === correctAnswer;
+    return {
+      basePoints: 0, // Not used for Type H
+      correct: correct1 || correct2, // At least one got it right
+      points1: correct1 ? BASE_POINTS : 0,
+      points2: correct2 ? BASE_POINTS : 0
+    };
+  }
 
   if (!answer1 || !answer2) {
     return { basePoints, correct };

@@ -465,6 +465,70 @@ export default function QuestionCard({
     );
   };
 
+  // Type H: Culture Générale QCM - Multiple choice with one correct answer
+  const renderTypeH = () => {
+    const qcmStyles = [
+      { bg: 'bg-gradient-to-br from-[#673ab7] to-[#512da8]', letter: 'A' },
+      { bg: 'bg-gradient-to-br from-[#3f51b5] to-[#303f9f]', letter: 'B' },
+      { bg: 'bg-gradient-to-br from-[#009688] to-[#00796b]', letter: 'C' },
+      { bg: 'bg-gradient-to-br from-[#ff9800] to-[#f57c00]', letter: 'D' },
+    ];
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {question.options?.map((option, index) => {
+          const style = qcmStyles[index % 4];
+          const isSelected = selectedAnswer === option;
+
+          return (
+            <motion.button
+              key={index}
+              initial={{ opacity: 0, y: 30, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{
+                delay: index * 0.1,
+                type: 'spring',
+                stiffness: 200,
+                damping: 15
+              }}
+              onClick={() => !disabled && onAnswer(option)}
+              disabled={disabled}
+              className={`
+                relative overflow-hidden rounded-xl p-4 min-h-[70px]
+                ${style.bg} text-white
+                ${disabled && !isSelected ? 'opacity-50' : ''}
+                ${isSelected ? 'ring-4 ring-white ring-offset-2 scale-105' : ''}
+                shadow-[0_6px_0_0_rgba(0,0,0,0.3)]
+                active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[4px]
+                transition-all duration-100
+              `}
+              whileHover={disabled ? {} : { scale: 1.03, y: -3 }}
+              whileTap={disabled ? {} : { scale: 0.97 }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-black text-xl">
+                  {style.letter}
+                </span>
+                <span className="flex-1 text-left font-bold text-lg">
+                  {option}
+                </span>
+                {isSelected && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="text-2xl"
+                  >
+                    ✓
+                  </motion.span>
+                )}
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6 w-full max-w-2xl mx-auto">
       {(question.type === 'A' || question.type === 'B') && renderTypeAB()}
@@ -473,6 +537,7 @@ export default function QuestionCard({
       {question.type === 'E' && renderTypeE()}
       {question.type === 'F' && renderTypeF()}
       {question.type === 'G' && renderTypeG()}
+      {question.type === 'H' && renderTypeH()}
     </div>
   );
 }

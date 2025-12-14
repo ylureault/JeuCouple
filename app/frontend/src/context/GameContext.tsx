@@ -13,7 +13,8 @@ import type {
   ServerToClientEvents,
   ClientToServerEvents,
   GameRevealData,
-  GameFinishedData
+  GameFinishedData,
+  Gender
 } from '../../../shared/types';
 
 interface GameState {
@@ -39,7 +40,7 @@ type GameAction =
   | { type: 'SET_SOCKET'; socket: Socket<ServerToClientEvents, ClientToServerEvents> }
   | { type: 'SET_CONNECTED'; connected: boolean }
   | { type: 'JOIN_ROOM'; room: Room; playerId: 1 | 2; playerName: string }
-  | { type: 'PLAYER_JOINED'; playerName: string; playerId: 1 | 2 }
+  | { type: 'PLAYER_JOINED'; playerName: string; playerId: 1 | 2; gender: Gender }
   | { type: 'PLAYER_LEFT'; playerId: 1 | 2 }
   | { type: 'GAME_STARTED'; gameId: number }
   | { type: 'SET_QUESTION'; question: Question; questionNumber: number; totalQuestions: number }
@@ -96,7 +97,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         room: {
           ...state.room,
-          [action.playerId === 1 ? 'player1_name' : 'player2_name']: action.playerName
+          [action.playerId === 1 ? 'player1_name' : 'player2_name']: action.playerName,
+          [action.playerId === 1 ? 'player1_gender' : 'player2_gender']: action.gender
         }
       };
 
@@ -106,7 +108,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         room: {
           ...state.room,
-          [action.playerId === 1 ? 'player1_name' : 'player2_name']: null
+          [action.playerId === 1 ? 'player1_name' : 'player2_name']: null,
+          [action.playerId === 1 ? 'player1_gender' : 'player2_gender']: null
         }
       };
 
@@ -199,8 +202,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 }
 
 interface GameContextType extends GameState {
-  createRoom: (playerName: string, questionCount?: number) => Promise<void>;
-  joinRoom: (code: string, playerName: string) => Promise<void>;
+  createRoom: (playerName: string, gender: Gender, questionCount?: number) => Promise<void>;
+  joinRoom: (code: string, playerName: string, gender: Gender) => Promise<void>;
   startGame: () => Promise<void>;
   submitAnswer: (answer: string) => void;
   leaveRoom: () => void;
@@ -235,7 +238,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
 
     socket.on('room:player-joined', (data) => {
-      dispatch({ type: 'PLAYER_JOINED', playerName: data.playerName, playerId: data.playerId });
+      dispatch({ type: 'PLAYER_JOINED', playerName: data.playerName, playerId: data.playerId, gender: data.gender });
     });
 
     socket.on('room:player-left', (data) => {
@@ -286,11 +289,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const createRoom = useCallback(async (playerName: string, questionCount?: number) => {
+  const createRoom = useCallback(async (playerName: string, gender: Gender, questionCount?: number) => {
     if (!state.socket) return;
 
     return new Promise<void>((resolve, reject) => {
-      state.socket!.emit('room:create', { playerName, questionCount }, (response) => {
+      state.socket!.emit('room:create', { playerName, gender, questionCount }, (response) => {
         if (response.success && response.room && response.playerId) {
           dispatch({
             type: 'JOIN_ROOM',
@@ -307,11 +310,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [state.socket]);
 
-  const joinRoom = useCallback(async (code: string, playerName: string) => {
+  const joinRoom = useCallback(async (code: string, playerName: string, gender: Gender) => {
     if (!state.socket) return;
 
     return new Promise<void>((resolve, reject) => {
-      state.socket!.emit('room:join', { code: code.toUpperCase(), playerName }, (response) => {
+      state.socket!.emit('room:join', { code: code.toUpperCase(), playerName, gender }, (response) => {
         if (response.success && response.room && response.playerId) {
           dispatch({
             type: 'JOIN_ROOM',

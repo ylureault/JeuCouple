@@ -9,6 +9,8 @@ interface QuestionRow {
   options: string | null;
   option_a: string | null;
   option_b: string | null;
+  target_player: number | null;
+  correct_answer: string | null;
   timer: number;
   active: number;
 }
@@ -22,6 +24,8 @@ function rowToQuestion(row: QuestionRow): Question {
     options: row.options ? JSON.parse(row.options) : undefined,
     option_a: row.option_a || undefined,
     option_b: row.option_b || undefined,
+    target_player: row.target_player as (1 | 2) || undefined,
+    correct_answer: row.correct_answer || undefined,
     timer: row.timer,
     active: Boolean(row.active)
   };
@@ -50,6 +54,80 @@ export function getRandomQuestions(count: number): Question[] {
     LIMIT ?
   `).all(count) as QuestionRow[];
   return rows.map(rowToQuestion);
+}
+
+/**
+ * Get questions with a balanced mix of different question types.
+ * Ensures variety by selecting proportionally from each type.
+ */
+export function getMixedQuestions(count: number): Question[] {
+  // Get available question types and their counts
+  const stats = getQuestionStats();
+  const availableTypes = (Object.entries(stats) as [QuestionType, number][])
+    .filter(([_, typeCount]) => typeCount > 0)
+    .map(([type]) => type);
+
+  if (availableTypes.length === 0) {
+    return [];
+  }
+
+  // Calculate how many questions per type (at least 1 from each if possible)
+  const questionsPerType = Math.max(1, Math.floor(count / availableTypes.length));
+  const remainder = count - (questionsPerType * availableTypes.length);
+
+  const selectedQuestions: Question[] = [];
+  const usedIds = new Set<number>();
+
+  // Select questions from each type
+  for (let i = 0; i < availableTypes.length; i++) {
+    const type = availableTypes[i];
+    // Add extra question to first few types to use the remainder
+    const typeCount = questionsPerType + (i < remainder ? 1 : 0);
+
+    const typeQuestions = db.prepare(`
+      SELECT * FROM questions
+      WHERE active = 1 AND type = ?
+      ORDER BY RANDOM()
+      LIMIT ?
+    `).all(type, typeCount) as QuestionRow[];
+
+    for (const row of typeQuestions) {
+      if (!usedIds.has(row.id)) {
+        usedIds.add(row.id);
+        selectedQuestions.push(rowToQuestion(row));
+      }
+    }
+  }
+
+  // If we don't have enough questions, fill with random ones
+  if (selectedQuestions.length < count) {
+    const needed = count - selectedQuestions.length;
+    const excludeIds = Array.from(usedIds);
+
+    let query = `
+      SELECT * FROM questions
+      WHERE active = 1
+    `;
+
+    if (excludeIds.length > 0) {
+      query += ` AND id NOT IN (${excludeIds.join(',')})`;
+    }
+
+    query += ` ORDER BY RANDOM() LIMIT ?`;
+
+    const additionalRows = db.prepare(query).all(needed) as QuestionRow[];
+    for (const row of additionalRows) {
+      selectedQuestions.push(rowToQuestion(row));
+    }
+  }
+
+  // Shuffle the final array for randomness
+  for (let i = selectedQuestions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [selectedQuestions[i], selectedQuestions[j]] = [selectedQuestions[j], selectedQuestions[i]];
+  }
+
+  return selectedQuestions.slice(0, count);
 }
 
 export function createQuestion(question: Omit<Question, 'id' | 'active'>): Question {
@@ -163,7 +241,7 @@ export function getQuestionStats(): Record<QuestionType, number> {
     GROUP BY type
   `).all() as { type: QuestionType; count: number }[];
 
-  const stats: Record<QuestionType, number> = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0 };
+  const stats: Record<QuestionType, number> = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, G: 0, H: 0 };
   for (const row of rows) {
     stats[row.type] = row.count;
   }

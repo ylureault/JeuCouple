@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
 import MuteButton from '../components/MuteButton';
+import type { Gender } from '../../../shared/types';
 
 type Mode = 'home' | 'create' | 'join';
 
@@ -13,16 +14,17 @@ export default function Home() {
   const [roomCode, setRoomCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [questionCount, setQuestionCount] = useState(10);
+  const [gender, setGender] = useState<Gender | null>(null);
   const { createRoom, joinRoom, error, connected } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
 
   const handleCreate = async () => {
-    if (!playerName.trim()) return;
+    if (!playerName.trim() || !gender) return;
     setLoading(true);
     playSound('click');
     try {
-      await createRoom(playerName.trim(), questionCount);
+      await createRoom(playerName.trim(), gender, questionCount);
       navigate('/game');
     } catch {
       // Error handled in context
@@ -32,11 +34,11 @@ export default function Home() {
   };
 
   const handleJoin = async () => {
-    if (!playerName.trim() || !roomCode.trim()) return;
+    if (!playerName.trim() || !roomCode.trim() || !gender) return;
     setLoading(true);
     playSound('click');
     try {
-      await joinRoom(roomCode.trim().toUpperCase(), playerName.trim());
+      await joinRoom(roomCode.trim().toUpperCase(), playerName.trim(), gender);
       navigate('/game');
     } catch {
       // Error handled in context
@@ -203,6 +205,42 @@ export default function Home() {
 
                   <div>
                     <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
+                      Tu es...
+                    </label>
+                    <div className="flex gap-3">
+                      <motion.button
+                        type="button"
+                        onClick={() => setGender('F')}
+                        className={`flex-1 py-3 rounded-xl font-bold text-lg transition-all ${
+                          gender === 'F'
+                            ? 'bg-pink-500 text-white shadow-lg scale-105'
+                            : 'bg-gray-100 text-gray-600 hover:bg-pink-100'
+                        }`}
+                        whileHover={{ scale: gender === 'F' ? 1.05 : 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span className="text-2xl mr-2">👩</span>
+                        Femme
+                      </motion.button>
+                      <motion.button
+                        type="button"
+                        onClick={() => setGender('M')}
+                        className={`flex-1 py-3 rounded-xl font-bold text-lg transition-all ${
+                          gender === 'M'
+                            ? 'bg-blue-500 text-white shadow-lg scale-105'
+                            : 'bg-gray-100 text-gray-600 hover:bg-blue-100'
+                        }`}
+                        whileHover={{ scale: gender === 'M' ? 1.05 : 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span className="text-2xl mr-2">👨</span>
+                        Homme
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
                       Nombre de questions
                     </label>
                     <div className="flex items-center gap-4">
@@ -228,7 +266,7 @@ export default function Home() {
 
                   <motion.button
                     onClick={handleCreate}
-                    disabled={!playerName.trim() || loading}
+                    disabled={!playerName.trim() || !gender || loading}
                     className="btn-create w-full disabled:opacity-50 disabled:cursor-not-allowed mt-6"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -287,6 +325,42 @@ export default function Home() {
 
                   <div>
                     <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
+                      Tu es...
+                    </label>
+                    <div className="flex gap-3">
+                      <motion.button
+                        type="button"
+                        onClick={() => setGender('F')}
+                        className={`flex-1 py-3 rounded-xl font-bold text-lg transition-all ${
+                          gender === 'F'
+                            ? 'bg-pink-500 text-white shadow-lg scale-105'
+                            : 'bg-gray-100 text-gray-600 hover:bg-pink-100'
+                        }`}
+                        whileHover={{ scale: gender === 'F' ? 1.05 : 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span className="text-2xl mr-2">👩</span>
+                        Femme
+                      </motion.button>
+                      <motion.button
+                        type="button"
+                        onClick={() => setGender('M')}
+                        className={`flex-1 py-3 rounded-xl font-bold text-lg transition-all ${
+                          gender === 'M'
+                            ? 'bg-blue-500 text-white shadow-lg scale-105'
+                            : 'bg-gray-100 text-gray-600 hover:bg-blue-100'
+                        }`}
+                        whileHover={{ scale: gender === 'M' ? 1.05 : 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span className="text-2xl mr-2">👨</span>
+                        Homme
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
                       Code du salon
                     </label>
                     <input
@@ -302,7 +376,7 @@ export default function Home() {
 
                   <motion.button
                     onClick={handleJoin}
-                    disabled={!playerName.trim() || roomCode.length !== 6 || loading}
+                    disabled={!playerName.trim() || !gender || roomCode.length !== 6 || loading}
                     className="btn-join w-full disabled:opacity-50 disabled:cursor-not-allowed mt-6"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}

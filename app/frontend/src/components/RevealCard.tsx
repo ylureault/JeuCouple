@@ -120,7 +120,7 @@ export default function RevealCard({
   const {
     answer1, answer2, correct, points1, points2, questionType,
     basePoints, speedBonus1, speedBonus2, streakBonus1, streakBonus2,
-    streak1, streak2, answerTime1, answerTime2
+    streak1, streak2, answerTime1, answerTime2, correctAnswer
   } = revealData;
   const [showFlash, setShowFlash] = useState(false);
   const [countedPoints, setCountedPoints] = useState(0);
@@ -210,9 +210,10 @@ export default function RevealCard({
           transition={{ type: 'spring', damping: 12, stiffness: 100 }}
           className={`
             rounded-2xl p-8 text-center shadow-2xl relative overflow-hidden
-            ${correct && showPoints && myPoints > 0 ? 'bg-gradient-to-br from-[#26890c] to-[#1a5e08] glow-green' : ''}
-            ${!correct && questionType !== 'C' ? 'bg-gradient-to-br from-[#e21b3c] to-[#9c1229] glow-red' : ''}
+            ${correct && showPoints && myPoints > 0 && questionType !== 'H' ? 'bg-gradient-to-br from-[#26890c] to-[#1a5e08] glow-green' : ''}
+            ${!correct && questionType !== 'C' && questionType !== 'H' ? 'bg-gradient-to-br from-[#e21b3c] to-[#9c1229] glow-red' : ''}
             ${questionType === 'C' ? 'bg-gradient-to-br from-[#9c27b0] to-[#6a1b7a]' : ''}
+            ${questionType === 'H' ? 'bg-gradient-to-br from-[#673ab7] to-[#512da8]' : ''}
           `}
         >
           {/* Animated background shimmer */}
@@ -222,7 +223,7 @@ export default function RevealCard({
             transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
           />
 
-          {questionType !== 'C' && (
+          {questionType !== 'C' && questionType !== 'H' && (
             <div className="relative z-10">
               {/* Main emoji with dramatic entrance */}
               <motion.div
@@ -365,6 +366,62 @@ export default function RevealCard({
                   +{basePoints} points pour vos reponses reflechies !
                 </motion.p>
               )}
+            </div>
+          )}
+
+          {questionType === 'H' && (
+            <div className="relative z-10">
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', damping: 10 }}
+                className="text-8xl mb-4"
+              >
+                🧠
+              </motion.div>
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-3xl font-black text-white mb-4"
+              >
+                Culture Generale
+              </motion.h2>
+
+              {/* Correct answer */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.4 }}
+                className="bg-white/20 backdrop-blur rounded-xl p-4 mb-4"
+              >
+                <p className="text-white/70 text-sm mb-1">Bonne reponse :</p>
+                <p className="text-white font-bold text-xl">{correctAnswer}</p>
+              </motion.div>
+
+              {/* Individual results */}
+              <div className="grid grid-cols-2 gap-4">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className={`rounded-xl p-3 ${answer1 === correctAnswer ? 'bg-green-500/30' : 'bg-red-500/30'}`}
+                >
+                  <p className="text-white/70 text-sm">{player1Name}</p>
+                  <p className="text-2xl">{answer1 === correctAnswer ? '✅' : '❌'}</p>
+                  <p className="text-white font-bold">+{points1} pts</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className={`rounded-xl p-3 ${answer2 === correctAnswer ? 'bg-green-500/30' : 'bg-red-500/30'}`}
+                >
+                  <p className="text-white/70 text-sm">{player2Name}</p>
+                  <p className="text-2xl">{answer2 === correctAnswer ? '✅' : '❌'}</p>
+                  <p className="text-white font-bold">+{points2} pts</p>
+                </motion.div>
+              </div>
             </div>
           )}
         </motion.div>
