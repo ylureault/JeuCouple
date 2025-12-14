@@ -800,8 +800,8 @@ function TypeModal({ questionType, onSave, onClose }: TypeModalProps) {
   const [code, setCode] = useState(questionType?.code || '');
   const [name, setName] = useState(questionType?.name || '');
   const [description, setDescription] = useState(questionType?.description || '');
-  const [scoringMode, setScoringMode] = useState<'match' | 'consensus' | 'proximity' | 'none'>(questionType?.scoring_mode || 'match');
-  const [inputType, setInputType] = useState<'options' | 'binary' | 'scale' | 'text' | 'who'>(questionType?.input_type || 'options');
+  const [scoringMode, setScoringMode] = useState<'match' | 'consensus' | 'proximity' | 'none' | 'individual'>(questionType?.scoring_mode || 'match');
+  const [inputType, setInputType] = useState<'options' | 'binary' | 'scale' | 'text' | 'who' | 'qcm'>(questionType?.input_type || 'options');
   const [icon, setIcon] = useState(questionType?.icon || '❓');
   const [color, setColor] = useState(questionType?.color || '#46178f');
   const [active, setActive] = useState(questionType?.active ?? true);
@@ -879,20 +879,21 @@ function TypeModal({ questionType, onSave, onClose }: TypeModalProps) {
               <label className="block text-white/70 text-sm mb-2">Mode de scoring</label>
               <select
                 value={scoringMode}
-                onChange={(e) => setScoringMode(e.target.value as 'match' | 'consensus' | 'proximity' | 'none')}
+                onChange={(e) => setScoringMode(e.target.value as 'match' | 'consensus' | 'proximity' | 'none' | 'individual')}
                 className="input-field"
               >
                 <option value="match">Match (réponses identiques)</option>
                 <option value="consensus">Consensus (accord)</option>
                 <option value="proximity">Proximité (écart)</option>
                 <option value="none">Aucun (découverte)</option>
+                <option value="individual">Individuel (chacun pour soi)</option>
               </select>
             </div>
             <div>
               <label className="block text-white/70 text-sm mb-2">Type d'input</label>
               <select
                 value={inputType}
-                onChange={(e) => setInputType(e.target.value as 'options' | 'binary' | 'scale' | 'text' | 'who')}
+                onChange={(e) => setInputType(e.target.value as 'options' | 'binary' | 'scale' | 'text' | 'who' | 'qcm')}
                 className="input-field"
               >
                 <option value="options">Options (choix multiple)</option>
@@ -900,6 +901,7 @@ function TypeModal({ questionType, onSave, onClose }: TypeModalProps) {
                 <option value="scale">Échelle (1-10)</option>
                 <option value="text">Texte libre</option>
                 <option value="who">Qui (Moi/Lui-Elle)</option>
+                <option value="qcm">QCM (bonne réponse)</option>
               </select>
             </div>
           </div>
