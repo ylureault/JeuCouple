@@ -527,6 +527,10 @@ function QuestionHistoryItem({
   const getDisplayAnswer = (answer: string | null) => {
     if (!answer) return 'Pas de reponse';
 
+    // Special answers
+    if (answer === 'joker') return '🃏 Joker';
+    if (answer === 'dontknow') return '🤷 Je ne sais pas';
+
     // Type E: Convert 'A' or 'B' to actual option text
     if (question.type === 'E') {
       if (answer === 'A') return question.option_a || 'Option A';

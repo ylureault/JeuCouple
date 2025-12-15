@@ -288,83 +288,119 @@ export default function QuestionCard({
     const theirName = playerId === 1 ? player2Name : player1Name;
 
     return (
-      <div className="grid grid-cols-2 gap-4">
-        {/* Moi */}
-        <motion.button
-          initial={{ opacity: 0, y: 50, scale: 0.8 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-          onClick={() => !disabled && onAnswer(playerId === 1 ? 'player1' : 'player2')}
-          disabled={disabled}
-          className={`
-            relative overflow-hidden rounded-2xl p-6 min-h-[160px]
-            bg-gradient-to-br from-[#00bcd4] to-[#0097a7]
-            ${disabled && selectedAnswer !== (playerId === 1 ? 'player1' : 'player2') ? 'opacity-50' : ''}
-            ${selectedAnswer === (playerId === 1 ? 'player1' : 'player2') ? 'ring-4 ring-white ring-offset-2 scale-105' : ''}
-            shadow-[0_8px_0_0_rgba(0,0,0,0.3)]
-            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[6px]
-            transition-all duration-100
-          `}
-          whileHover={disabled ? {} : { scale: 1.05, y: -4 }}
-          whileTap={disabled ? {} : { scale: 0.98 }}
-        >
-          <div className="flex flex-col items-center justify-center h-full gap-3">
-            <motion.span
-              className="text-6xl"
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
-            >
-              🙋
-            </motion.span>
-            <span className="text-white font-extrabold text-xl">MOI</span>
-            <span className="text-white/70 text-sm">({myName})</span>
-          </div>
-          {selectedAnswer === (playerId === 1 ? 'player1' : 'player2') && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute top-2 right-2 text-3xl"
-            >
-              ✓
-            </motion.div>
-          )}
-        </motion.button>
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          {/* Moi */}
+          <motion.button
+            initial={{ opacity: 0, y: 50, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+            onClick={() => !disabled && onAnswer(playerId === 1 ? 'player1' : 'player2')}
+            disabled={disabled}
+            className={`
+              relative overflow-hidden rounded-2xl p-6 min-h-[140px]
+              bg-gradient-to-br from-[#00bcd4] to-[#0097a7]
+              ${disabled && selectedAnswer !== (playerId === 1 ? 'player1' : 'player2') ? 'opacity-50' : ''}
+              ${selectedAnswer === (playerId === 1 ? 'player1' : 'player2') ? 'ring-4 ring-white ring-offset-2 scale-105' : ''}
+              shadow-[0_8px_0_0_rgba(0,0,0,0.3)]
+              active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[6px]
+              transition-all duration-100
+            `}
+            whileHover={disabled ? {} : { scale: 1.05, y: -4 }}
+            whileTap={disabled ? {} : { scale: 0.98 }}
+          >
+            <div className="flex flex-col items-center justify-center h-full gap-2">
+              <motion.span
+                className="text-5xl"
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+              >
+                🙋
+              </motion.span>
+              <span className="text-white font-extrabold text-lg">MOI</span>
+              <span className="text-white/70 text-xs">({myName})</span>
+            </div>
+            {selectedAnswer === (playerId === 1 ? 'player1' : 'player2') && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute top-2 right-2 text-2xl"
+              >
+                ✓
+              </motion.div>
+            )}
+          </motion.button>
 
-        {/* Lui/Elle */}
+          {/* Lui/Elle */}
+          <motion.button
+            initial={{ opacity: 0, y: 50, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+            onClick={() => !disabled && onAnswer(playerId === 1 ? 'player2' : 'player1')}
+            disabled={disabled}
+            className={`
+              relative overflow-hidden rounded-2xl p-6 min-h-[140px]
+              bg-gradient-to-br from-[#ff5722] to-[#e64a19]
+              ${disabled && selectedAnswer !== (playerId === 1 ? 'player2' : 'player1') ? 'opacity-50' : ''}
+              ${selectedAnswer === (playerId === 1 ? 'player2' : 'player1') ? 'ring-4 ring-white ring-offset-2 scale-105' : ''}
+              shadow-[0_8px_0_0_rgba(0,0,0,0.3)]
+              active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[6px]
+              transition-all duration-100
+            `}
+            whileHover={disabled ? {} : { scale: 1.05, y: -4 }}
+            whileTap={disabled ? {} : { scale: 0.98 }}
+          >
+            <div className="flex flex-col items-center justify-center h-full gap-2">
+              <motion.span
+                className="text-5xl"
+                animate={{ rotate: [0, -10, 10, 0] }}
+                transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+              >
+                💑
+              </motion.span>
+              <span className="text-white font-extrabold text-lg">LUI/ELLE</span>
+              <span className="text-white/70 text-xs">({theirName})</span>
+            </div>
+            {selectedAnswer === (playerId === 1 ? 'player2' : 'player1') && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute top-2 left-2 text-2xl"
+              >
+                ✓
+              </motion.div>
+            )}
+          </motion.button>
+        </div>
+
+        {/* Je ne sais pas */}
         <motion.button
-          initial={{ opacity: 0, y: 50, scale: 0.8 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
-          onClick={() => !disabled && onAnswer(playerId === 1 ? 'player2' : 'player1')}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
+          onClick={() => !disabled && onAnswer('dontknow')}
           disabled={disabled}
           className={`
-            relative overflow-hidden rounded-2xl p-6 min-h-[160px]
-            bg-gradient-to-br from-[#ff5722] to-[#e64a19]
-            ${disabled && selectedAnswer !== (playerId === 1 ? 'player2' : 'player1') ? 'opacity-50' : ''}
-            ${selectedAnswer === (playerId === 1 ? 'player2' : 'player1') ? 'ring-4 ring-white ring-offset-2 scale-105' : ''}
-            shadow-[0_8px_0_0_rgba(0,0,0,0.3)]
-            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[6px]
+            w-full relative overflow-hidden rounded-xl p-4
+            bg-gradient-to-br from-gray-500 to-gray-600
+            ${disabled && selectedAnswer !== 'dontknow' ? 'opacity-50' : ''}
+            ${selectedAnswer === 'dontknow' ? 'ring-4 ring-white ring-offset-2 scale-105' : ''}
+            shadow-[0_6px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[4px]
             transition-all duration-100
           `}
-          whileHover={disabled ? {} : { scale: 1.05, y: -4 }}
+          whileHover={disabled ? {} : { scale: 1.02, y: -2 }}
           whileTap={disabled ? {} : { scale: 0.98 }}
         >
-          <div className="flex flex-col items-center justify-center h-full gap-3">
-            <motion.span
-              className="text-6xl"
-              animate={{ rotate: [0, -10, 10, 0] }}
-              transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
-            >
-              💑
-            </motion.span>
-            <span className="text-white font-extrabold text-xl">LUI/ELLE</span>
-            <span className="text-white/70 text-sm">({theirName})</span>
+          <div className="flex items-center justify-center gap-3">
+            <span className="text-3xl">🤷</span>
+            <span className="text-white font-bold text-lg">Je ne sais pas</span>
           </div>
-          {selectedAnswer === (playerId === 1 ? 'player2' : 'player1') && (
+          {selectedAnswer === 'dontknow' && (
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute top-2 left-2 text-3xl"
+              className="absolute top-2 right-2 text-2xl"
             >
               ✓
             </motion.div>
@@ -529,6 +565,45 @@ export default function QuestionCard({
     );
   };
 
+  // Joker button - available for all question types
+  const renderJoker = () => (
+    <motion.button
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5, type: 'spring', stiffness: 150 }}
+      onClick={() => !disabled && onAnswer('joker')}
+      disabled={disabled}
+      className={`
+        w-full relative overflow-hidden rounded-xl p-3
+        bg-gradient-to-br from-amber-600 to-amber-700 border-2 border-amber-400
+        ${disabled && selectedAnswer !== 'joker' ? 'opacity-40' : ''}
+        ${selectedAnswer === 'joker' ? 'ring-4 ring-amber-300 ring-offset-2 scale-105' : ''}
+        shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
+        active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[2px]
+        transition-all duration-100
+      `}
+      whileHover={disabled ? {} : { scale: 1.02, y: -2 }}
+      whileTap={disabled ? {} : { scale: 0.98 }}
+    >
+      <div className="flex items-center justify-center gap-3">
+        <span className="text-2xl">🃏</span>
+        <div className="text-left">
+          <span className="text-white font-bold text-base">JOKER</span>
+          <span className="text-amber-200 text-xs ml-2">(-50 pts)</span>
+        </div>
+      </div>
+      {selectedAnswer === 'joker' && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="absolute top-2 right-2 text-xl"
+        >
+          ✓
+        </motion.div>
+      )}
+    </motion.button>
+  );
+
   return (
     <div className="space-y-6 w-full max-w-2xl mx-auto">
       {(question.type === 'A' || question.type === 'B') && renderTypeAB()}
@@ -538,6 +613,11 @@ export default function QuestionCard({
       {question.type === 'F' && renderTypeF()}
       {question.type === 'G' && renderTypeG()}
       {question.type === 'H' && renderTypeH()}
+
+      {/* Joker button for all types */}
+      <div className="pt-2 border-t border-white/20">
+        {renderJoker()}
+      </div>
     </div>
   );
 }

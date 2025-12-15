@@ -79,6 +79,7 @@ const STREAK_MULTIPLIERS: Record<number, number> = {
   5: 2.0,   // 5+ streak = 100% bonus (2x)
 };
 const TYPE_C_THOUGHTFUL_BONUS = 50;  // Bonus for answers > 20 chars
+const JOKER_PENALTY = -50;  // Penalty for using joker
 
 export function setupSocketHandlers(
   io: Server<ClientToServerEvents, ServerToClientEvents>
@@ -405,11 +406,21 @@ function revealAnswers(
   const answers = gameState.answers.get(question.id) || {};
   const { gamification } = gameState;
 
-  // Calculate base points
+  // Check for joker and dontknow answers
+  const isJoker1 = answers.answer1 === 'joker';
+  const isJoker2 = answers.answer2 === 'joker';
+  const isDontKnow1 = answers.answer1 === 'dontknow';
+  const isDontKnow2 = answers.answer2 === 'dontknow';
+
+  // For scoring purposes, joker and dontknow are treated as no valid answer
+  const effectiveAnswer1 = (isJoker1 || isDontKnow1) ? undefined : answers.answer1;
+  const effectiveAnswer2 = (isJoker2 || isDontKnow2) ? undefined : answers.answer2;
+
+  // Calculate base points using effective answers
   const baseResult = calculateBasePoints(
     question.type,
-    answers.answer1,
-    answers.answer2,
+    effectiveAnswer1,
+    effectiveAnswer2,
     question.correct_answer
   );
 
@@ -529,6 +540,14 @@ function revealAnswers(
   } else {
     points1 = basePoints + speedBonus1 + streakBonus1;
     points2 = basePoints + speedBonus2 + streakBonus2;
+  }
+
+  // Apply joker penalty
+  if (isJoker1) {
+    points1 = JOKER_PENALTY;
+  }
+  if (isJoker2) {
+    points2 = JOKER_PENALTY;
   }
 
   // Update speed bonus totals

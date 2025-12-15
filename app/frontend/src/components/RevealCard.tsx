@@ -522,6 +522,10 @@ function AnswerBlock({
   const getDisplayAnswer = () => {
     if (!answer) return null;
 
+    // Special answers
+    if (answer === 'joker') return '🃏 Joker';
+    if (answer === 'dontknow') return '🤷 Je ne sais pas';
+
     // Type E: Convert 'A' or 'B' to actual option text
     if (questionType === 'E' && question) {
       if (answer === 'A') return question.option_a || 'Option A';
