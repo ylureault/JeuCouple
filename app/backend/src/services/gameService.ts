@@ -7,8 +7,10 @@ import type {
   ClientToServerEvents,
   GameRevealData,
   GameFinishedData,
-  CategoryScore
+  CategoryScore,
+  ReactionEmoji
 } from '../types.js';
+import { REACTION_EMOJIS } from '../types.js';
 import * as roomModel from '../models/room.js';
 import * as gameModel from '../models/game.js';
 import * as questionModel from '../models/question.js';
@@ -319,6 +321,22 @@ export function setupSocketHandlers(
       io.to(connection.roomCode).emit('game:restarted');
 
       callback({ success: true });
+    });
+
+    // Send reaction emoji to partner
+    socket.on('game:reaction', (data) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+
+      // Validate emoji
+      if (!REACTION_EMOJIS.includes(data.emoji as ReactionEmoji)) return;
+
+      // Broadcast reaction to the room (including sender for their own visual feedback)
+      io.to(connection.roomCode).emit('game:reaction', {
+        playerId: connection.playerId,
+        emoji: data.emoji as ReactionEmoji,
+        timestamp: Date.now()
+      });
     });
 
     // Handle disconnect

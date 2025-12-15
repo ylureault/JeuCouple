@@ -82,6 +82,16 @@ export interface Answer {
   answered_at: string;
 }
 
+// Emoji reactions
+export const REACTION_EMOJIS = ['❤️', '😂', '😮', '😢', '👏', '🔥', '😍', '🤔'] as const;
+export type ReactionEmoji = typeof REACTION_EMOJIS[number];
+
+export interface ReactionData {
+  playerId: 1 | 2;
+  emoji: ReactionEmoji;
+  timestamp: number;
+}
+
 // Socket.IO Events
 export interface ServerToClientEvents {
   'room:joined': (data: { room: Room; playerId: 1 | 2 }) => void;
@@ -94,6 +104,7 @@ export interface ServerToClientEvents {
   'game:score-update': (data: { score1: number; score2: number }) => void;
   'game:finished': (data: GameFinishedData) => void;
   'game:restarted': () => void;
+  'game:reaction': (data: ReactionData) => void;
   'error': (data: { message: string }) => void;
 }
 
@@ -105,6 +116,7 @@ export interface ClientToServerEvents {
   'game:answer': (data: { answer: string }) => void;
   'game:restart': (callback: (response: { success: boolean; error?: string }) => void) => void;
   'room:reconnect': (data: { code: string; playerId: 1 | 2 }, callback: (response: RoomResponse) => void) => void;
+  'game:reaction': (data: { emoji: ReactionEmoji }) => void;
 }
 
 export interface RoomResponse {

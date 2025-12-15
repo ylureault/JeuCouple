@@ -8,6 +8,8 @@ import Countdown from '../components/Countdown';
 import QuestionCard from '../components/QuestionCard';
 import RevealCard from '../components/RevealCard';
 import CategoryBadge from '../components/CategoryBadge';
+import ReactionBar from '../components/ReactionBar';
+import ReactionOverlay from '../components/ReactionOverlay';
 import Lobby from './Lobby';
 
 export default function Game() {
@@ -130,6 +132,7 @@ export default function Game() {
   return (
     <div className="min-h-screen bg-[#46178f] flex flex-col">
       <MuteButton />
+      <ReactionOverlay />
 
       {/* Top bar */}
       <motion.div
@@ -413,6 +416,19 @@ export default function Game() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Reaction Bar - visible during all game phases */}
+        {!showIntro && (phase === 'question' || phase === 'waiting' || phase === 'reveal') && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-6 pt-4 border-t border-white/10"
+          >
+            <p className="text-white/50 text-xs text-center mb-2">Envoyer une reaction</p>
+            <ReactionBar />
+          </motion.div>
+        )}
       </div>
     </div>
   );

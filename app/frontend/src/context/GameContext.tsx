@@ -14,7 +14,9 @@ import type {
   ClientToServerEvents,
   GameRevealData,
   GameFinishedData,
-  Gender
+  Gender,
+  ReactionEmoji,
+  ReactionData
 } from '../../../shared/types';
 
 interface GameState {
@@ -34,6 +36,7 @@ interface GameState {
   scores: { player1: number; player2: number };
   finalResults: GameFinishedData | null;
   error: string | null;
+  reactions: ReactionData[];
 }
 
 type GameAction =
@@ -52,6 +55,8 @@ type GameAction =
   | { type: 'GAME_RESTARTED' }
   | { type: 'SET_ERROR'; error: string }
   | { type: 'CLEAR_ERROR' }
+  | { type: 'ADD_REACTION'; reaction: ReactionData }
+  | { type: 'CLEAR_REACTIONS' }
   | { type: 'RESET' };
 
 const initialState: GameState = {
@@ -70,7 +75,8 @@ const initialState: GameState = {
   revealData: null,
   scores: { player1: 0, player2: 0 },
   finalResults: null,
-  error: null
+  error: null,
+  reactions: []
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -189,6 +195,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'CLEAR_ERROR':
       return { ...state, error: null };
 
+    case 'ADD_REACTION':
+      // Keep only recent reactions (last 10, auto-cleanup old ones)
+      const newReactions = [...state.reactions, action.reaction]
+        .filter(r => Date.now() - r.timestamp < 5000) // Keep reactions from last 5 seconds
+        .slice(-10); // Max 10 reactions
+      return { ...state, reactions: newReactions };
+
+    case 'CLEAR_REACTIONS':
+      return { ...state, reactions: [] };
+
     case 'RESET':
       return {
         ...initialState,
@@ -209,6 +225,7 @@ interface GameContextType extends GameState {
   leaveRoom: () => void;
   resetGame: () => void;
   restartGame: () => Promise<void>;
+  sendReaction: (emoji: ReactionEmoji) => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -328,6 +345,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'GAME_RESTARTED' });
     });
 
+    socket.on('game:reaction', (data) => {
+      dispatch({ type: 'ADD_REACTION', reaction: data });
+    });
+
     socket.on('error', (data) => {
       dispatch({ type: 'SET_ERROR', error: data.message });
     });
@@ -433,6 +454,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [state.socket]);
 
+  const sendReaction = useCallback((emoji: ReactionEmoji) => {
+    if (!state.socket) return;
+    state.socket.emit('game:reaction', { emoji });
+  }, [state.socket]);
+
   return (
     <GameContext.Provider
       value={{
@@ -443,7 +469,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         submitAnswer,
         leaveRoom,
         resetGame,
-        restartGame
+        restartGame,
+        sendReaction
       }}
     >
       {children}
