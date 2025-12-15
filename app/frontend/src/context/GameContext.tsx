@@ -213,6 +213,35 @@ interface GameContextType extends GameState {
 
 const GameContext = createContext<GameContextType | null>(null);
 
+// Session storage helpers
+const SESSION_KEY = 'jeucouple_session';
+
+interface StoredSession {
+  roomCode: string;
+  playerId: 1 | 2;
+  playerName: string;
+}
+
+function saveSession(roomCode: string, playerId: 1 | 2, playerName: string) {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode, playerId, playerName }));
+}
+
+function getStoredSession(): StoredSession | null {
+  const stored = sessionStorage.getItem(SESSION_KEY);
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function clearSession() {
+  sessionStorage.removeItem(SESSION_KEY);
+}
+
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, initialState);
 
@@ -230,6 +259,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
     socket.on('connect', () => {
       console.log('Connected to server');
       dispatch({ type: 'SET_CONNECTED', connected: true });
+
+      // Try to reconnect to existing session
+      const session = getStoredSession();
+      if (session) {
+        socket.emit('room:reconnect', {
+          code: session.roomCode,
+          playerId: session.playerId
+        }, (response) => {
+          if (response.success && response.room && response.playerId) {
+            dispatch({
+              type: 'JOIN_ROOM',
+              room: response.room,
+              playerId: response.playerId,
+              playerName: session.playerName
+            });
+          } else {
+            // Session invalid, clear it
+            clearSession();
+          }
+        });
+      }
     });
 
     socket.on('disconnect', () => {
@@ -301,6 +351,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             playerId: response.playerId,
             playerName
           });
+          saveSession(response.room.code, response.playerId, playerName);
           resolve();
         } else {
           dispatch({ type: 'SET_ERROR', error: response.error || 'Failed to create room' });
@@ -322,6 +373,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             playerId: response.playerId,
             playerName
           });
+          saveSession(response.room.code, response.playerId, playerName);
           resolve();
         } else {
           dispatch({ type: 'SET_ERROR', error: response.error || 'Failed to join room' });
@@ -357,10 +409,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (state.socket) {
       state.socket.emit('room:leave');
     }
+    clearSession();
     dispatch({ type: 'RESET' });
   }, [state.socket]);
 
   const resetGame = useCallback(() => {
+    clearSession();
     dispatch({ type: 'RESET' });
   }, []);
 
