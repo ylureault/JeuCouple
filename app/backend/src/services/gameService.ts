@@ -31,6 +31,15 @@ interface GamificationState {
   perfectMatches: number;
 }
 
+interface QuestionHistoryItem {
+  question: Question;
+  answer1: string | null;
+  answer2: string | null;
+  correct: boolean;
+  points1: number;
+  points2: number;
+}
+
 interface GameState {
   gameId: number;
   roomId: number;
@@ -42,6 +51,7 @@ interface GameState {
   phase: 'question' | 'waiting' | 'reveal';
   questionStartTime: number;
   gamification: GamificationState;
+  questionHistory: QuestionHistoryItem[];
 }
 
 interface PlayerConnection {
@@ -221,7 +231,8 @@ export function setupSocketHandlers(
           speedBonusTotal2: 0,
           categoryStats: new Map(),
           perfectMatches: 0
-        }
+        },
+        questionHistory: []
       };
 
       activeGames.set(room.code, gameState);
@@ -573,6 +584,16 @@ function revealAnswers(
     score2: gameState.scores.player2
   });
 
+  // Add to question history
+  gameState.questionHistory.push({
+    question,
+    answer1: answers.answer1 || null,
+    answer2: answers.answer2 || null,
+    correct,
+    points1,
+    points2
+  });
+
   // Next question or finish
   setTimeout(() => {
     gameState.currentQuestionIndex++;
@@ -724,7 +745,8 @@ function finishGame(
     maxStreak2: gamification.maxStreak2,
     speedBonusTotal1: gamification.speedBonusTotal1,
     speedBonusTotal2: gamification.speedBonusTotal2,
-    perfectMatches: gamification.perfectMatches
+    perfectMatches: gamification.perfectMatches,
+    questionHistory: gameState.questionHistory
   };
 
   io.to(roomCode).emit('game:finished', finishedData);

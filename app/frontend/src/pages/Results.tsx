@@ -5,7 +5,7 @@ import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
 import MuteButton from '../components/MuteButton';
 import Confetti from '../components/Confetti';
-import type { CategoryScore, Gender } from '../../../shared/types';
+import type { CategoryScore, Gender, QuestionHistory } from '../../../shared/types';
 
 // Category icons mapping
 const CATEGORY_ICONS: Record<string, string> = {
@@ -92,7 +92,7 @@ function CategoryBar({ category, delay = 0 }: { category: CategoryScore; delay?:
 }
 
 export default function Results() {
-  const { room, playerId, finalResults, restartGame } = useGame();
+  const { room, playerId, finalResults, restartGame, phase } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
   const [showPodium, setShowPodium] = useState(false);
@@ -100,6 +100,14 @@ export default function Results() {
   const [showFireworks, setShowFireworks] = useState(false);
   const [drumroll, setDrumroll] = useState(true);
   const [showCategories, setShowCategories] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Navigate to game/lobby when restart happens
+  useEffect(() => {
+    if (phase === 'lobby' && room) {
+      navigate('/game');
+    }
+  }, [phase, room, navigate]);
 
   useEffect(() => {
     if (!finalResults || !room) {
@@ -130,7 +138,7 @@ export default function Results() {
     playSound('click');
     try {
       await restartGame();
-      navigate('/game');
+      // Navigation happens via useEffect when phase changes to 'lobby'
     } catch (error) {
       console.error('Failed to restart game:', error);
     }
@@ -430,6 +438,47 @@ export default function Results() {
                 </motion.div>
               )}
 
+              {/* History toggle button */}
+              {finalResults.questionHistory && finalResults.questionHistory.length > 0 && (
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  onClick={() => setShowHistory(!showHistory)}
+                  className="w-full mb-4 py-3 bg-[#46178f]/10 hover:bg-[#46178f]/20 rounded-xl text-[#46178f] font-bold transition-colors"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <span>📋</span>
+                    {showHistory ? 'Masquer l\'historique' : 'Voir l\'historique des questions'}
+                    <span>{showHistory ? '▲' : '▼'}</span>
+                  </span>
+                </motion.button>
+              )}
+
+              {/* Question history */}
+              <AnimatePresence>
+                {showHistory && finalResults.questionHistory && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mb-4 overflow-hidden"
+                  >
+                    <div className="bg-gray-50 rounded-xl p-4 space-y-3 max-h-[40vh] overflow-y-auto">
+                      {finalResults.questionHistory.map((item, idx) => (
+                        <QuestionHistoryItem
+                          key={idx}
+                          item={item}
+                          index={idx}
+                          player1Name={player1Name}
+                          player2Name={player2Name}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               {/* Play again button */}
               <motion.button
                 initial={{ y: 50, opacity: 0, scale: 0.8 }}
@@ -457,6 +506,71 @@ export default function Results() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// Question history item component
+function QuestionHistoryItem({
+  item,
+  index,
+  player1Name,
+  player2Name
+}: {
+  item: QuestionHistory;
+  index: number;
+  player1Name: string;
+  player2Name: string;
+}) {
+  const { question, answer1, answer2, correct, points1, points2 } = item;
+
+  // Convert answer codes to display text
+  const getDisplayAnswer = (answer: string | null) => {
+    if (!answer) return 'Pas de reponse';
+
+    // Type E: Convert 'A' or 'B' to actual option text
+    if (question.type === 'E') {
+      if (answer === 'A') return question.option_a || 'Option A';
+      if (answer === 'B') return question.option_b || 'Option B';
+    }
+
+    // Type F: Convert 'player1' or 'player2' to player name
+    if (question.type === 'F') {
+      if (answer === 'player1') return player1Name;
+      if (answer === 'player2') return player2Name;
+    }
+
+    // Type G: Capitalize vrai/faux
+    if (question.type === 'G') {
+      return answer.charAt(0).toUpperCase() + answer.slice(1);
+    }
+
+    return answer;
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className={`p-3 rounded-lg border-l-4 ${correct ? 'border-green-500 bg-green-50' : 'border-red-400 bg-red-50'}`}
+    >
+      <div className="flex items-start gap-2 mb-2">
+        <span className="text-lg">{correct ? '✅' : '❌'}</span>
+        <p className="font-semibold text-gray-800 text-sm flex-1">{question.text}</p>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="bg-white/50 rounded p-2">
+          <p className="text-gray-500 font-medium">{player1Name}</p>
+          <p className="text-gray-800 font-semibold truncate">{getDisplayAnswer(answer1)}</p>
+          <p className="text-[#46178f] font-bold">+{points1} pts</p>
+        </div>
+        <div className="bg-white/50 rounded p-2">
+          <p className="text-gray-500 font-medium">{player2Name}</p>
+          <p className="text-gray-800 font-semibold truncate">{getDisplayAnswer(answer2)}</p>
+          <p className="text-[#46178f] font-bold">+{points2} pts</p>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 

@@ -137,6 +137,15 @@ export interface GameRevealData {
   correctAnswer?: string;
 }
 
+export interface QuestionHistory {
+  question: Question;
+  answer1: string | null;
+  answer2: string | null;
+  correct: boolean;
+  points1: number;
+  points2: number;
+}
+
 export interface GameFinishedData {
   score1: number;
   score2: number;
@@ -151,6 +160,8 @@ export interface GameFinishedData {
   speedBonusTotal1: number;
   speedBonusTotal2: number;
   perfectMatches: number;
+  // Question history for review
+  questionHistory?: QuestionHistory[];
 }
 
 export interface CategoryScore {

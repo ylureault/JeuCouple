@@ -128,7 +128,7 @@ export default function Game() {
   const theirName = playerId === 1 ? player2Name : player1Name;
 
   return (
-    <div className="h-screen bg-[#46178f] flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-[#46178f] flex flex-col">
       <MuteButton />
 
       {/* Top bar */}
@@ -167,7 +167,7 @@ export default function Game() {
       </motion.div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-6">
+      <div className="flex-1 flex flex-col items-center justify-start p-4 md:p-6 pb-8 overflow-y-auto">
         <AnimatePresence mode="wait">
           {/* INTRO SEQUENCE */}
           {showIntro && (

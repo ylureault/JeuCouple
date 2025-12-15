@@ -112,6 +112,7 @@ function SpeedBonusBadge({ bonus, time }: { bonus: number; time: number | null }
 }
 
 export default function RevealCard({
+  question,
   revealData,
   player1Name,
   player2Name,
@@ -439,6 +440,9 @@ export default function RevealCard({
           emoji="👩"
           answerTime={answerTime1}
           speedBonus={speedBonus1}
+          question={question}
+          player1Name={player1Name}
+          player2Name={player2Name}
         />
         <AnswerBlock
           name={player2Name}
@@ -450,6 +454,9 @@ export default function RevealCard({
           emoji="👨"
           answerTime={answerTime2}
           speedBonus={speedBonus2}
+          question={question}
+          player1Name={player1Name}
+          player2Name={player2Name}
         />
       </div>
 
@@ -492,6 +499,9 @@ interface AnswerBlockProps {
   emoji: string;
   answerTime: number | null;
   speedBonus: number;
+  question?: Question;
+  player1Name?: string;
+  player2Name?: string;
 }
 
 function AnswerBlock({
@@ -503,8 +513,37 @@ function AnswerBlock({
   delay,
   emoji,
   answerTime,
-  speedBonus
+  speedBonus,
+  question,
+  player1Name,
+  player2Name
 }: AnswerBlockProps) {
+  // Convert answer codes to display text
+  const getDisplayAnswer = () => {
+    if (!answer) return null;
+
+    // Type E: Convert 'A' or 'B' to actual option text
+    if (questionType === 'E' && question) {
+      if (answer === 'A') return question.option_a || 'Option A';
+      if (answer === 'B') return question.option_b || 'Option B';
+    }
+
+    // Type F: Convert 'player1' or 'player2' to player name
+    if (questionType === 'F') {
+      if (answer === 'player1') return player1Name || 'Joueur 1';
+      if (answer === 'player2') return player2Name || 'Joueur 2';
+    }
+
+    // Type G: Keep vrai/faux as is but capitalize
+    if (questionType === 'G') {
+      return answer.charAt(0).toUpperCase() + answer.slice(1);
+    }
+
+    return answer;
+  };
+
+  const displayAnswer = getDisplayAnswer();
+
   return (
     <motion.div
       initial={{ x: isYou ? -100 : 100, opacity: 0, scale: 0.5, rotate: isYou ? -15 : 15 }}
@@ -594,11 +633,11 @@ function AnswerBlock({
         transition={{ delay: delay + 0.2, type: 'spring', stiffness: 150 }}
         className={`
           rounded-lg p-4 text-center relative overflow-hidden
-          ${answer ? 'bg-gradient-to-br from-[#46178f]/10 to-[#7c3aed]/10' : 'bg-gray-100'}
+          ${displayAnswer ? 'bg-gradient-to-br from-[#46178f]/10 to-[#7c3aed]/10' : 'bg-gray-100'}
         `}
       >
         {/* Shine effect on answer */}
-        {answer && (
+        {displayAnswer && (
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
             initial={{ x: '-100%' }}
@@ -611,13 +650,13 @@ function AnswerBlock({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: delay + 0.3 }}
           className={`
-            font-bold relative z-10
-            ${questionType === 'D' ? 'text-5xl text-[#46178f]' : 'text-xl text-gray-900'}
-            ${questionType === 'C' ? 'text-base text-gray-800' : ''}
-            ${!answer ? 'text-gray-400 italic' : ''}
+            font-bold relative z-10 break-words
+            ${questionType === 'D' ? 'text-5xl text-[#46178f]' : 'text-lg text-gray-900'}
+            ${questionType === 'C' ? 'text-base text-gray-800 whitespace-pre-wrap' : ''}
+            ${!displayAnswer ? 'text-gray-400 italic' : ''}
           `}
         >
-          {answer || 'Pas de reponse'}
+          {displayAnswer || 'Pas de reponse'}
         </motion.p>
       </motion.div>
     </motion.div>
