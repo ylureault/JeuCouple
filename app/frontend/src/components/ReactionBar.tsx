@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { useGame } from '../context/GameContext';
-import { REACTION_EMOJIS } from '../../../shared/types';
+
+// Define locally to avoid Vite import issues with shared folder values
+const REACTION_EMOJIS = ['❤️', '😂', '😮', '😢', '👏', '🔥', '😍', '🤔'] as const;
 
 export default function ReactionBar() {
   const { sendReaction } = useGame();
