@@ -75,7 +75,7 @@ function StreakBadge({ streak }: { streak: number }) {
         {getStreakEmoji()}
       </motion.span>
       <span className="font-black text-white">
-        Serie de {streak} !
+        Série de {streak} !
       </span>
       <span className="bg-white/30 rounded-full px-2 py-0.5 text-white font-bold text-sm">
         {getMultiplier()}
@@ -355,7 +355,7 @@ export default function RevealCard({
                 transition={{ delay: 0.3 }}
                 className="text-3xl font-black text-white"
               >
-                Comparez vos reponses !
+                Comparez vos réponses !
               </motion.h2>
               {basePoints > 0 && (
                 <motion.p
@@ -364,7 +364,7 @@ export default function RevealCard({
                   transition={{ delay: 0.5 }}
                   className="text-white/80 mt-2"
                 >
-                  +{basePoints} points pour vos reponses reflechies !
+                  +{basePoints} points pour vos réponses réfléchies !
                 </motion.p>
               )}
             </div>
@@ -386,7 +386,7 @@ export default function RevealCard({
                 transition={{ delay: 0.3 }}
                 className="text-3xl font-black text-white mb-4"
               >
-                Culture Generale
+                Culture Générale
               </motion.h2>
 
               {/* Correct answer */}
@@ -396,7 +396,7 @@ export default function RevealCard({
                 transition={{ delay: 0.4 }}
                 className="bg-white/20 backdrop-blur rounded-xl p-4 mb-4"
               >
-                <p className="text-white/70 text-sm mb-1">Bonne reponse :</p>
+                <p className="text-white/70 text-sm mb-1">Bonne réponse :</p>
                 <p className="text-white font-bold text-xl">{correctAnswer}</p>
               </motion.div>
 
@@ -536,6 +536,7 @@ function AnswerBlock({
     if (questionType === 'F') {
       if (answer === 'player1') return player1Name || 'Joueur 1';
       if (answer === 'player2') return player2Name || 'Joueur 2';
+      if (answer === 'both') return '👫 Nous deux';
     }
 
     // Type G: Keep vrai/faux as is but capitalize
@@ -660,7 +661,7 @@ function AnswerBlock({
             ${!displayAnswer ? 'text-gray-400 italic' : ''}
           `}
         >
-          {displayAnswer || 'Pas de reponse'}
+          {displayAnswer || 'Pas de réponse'}
         </motion.p>
       </motion.div>
     </motion.div>
@@ -697,7 +698,7 @@ function ScaleComparison({
       <div className="flex items-center justify-center gap-2 mb-4">
         <span className="text-2xl">{getEmoji()}</span>
         <span className="text-gray-900 font-bold">
-          Ecart de {diff} point{diff !== 1 ? 's' : ''}
+          Écart de {diff} point{diff !== 1 ? 's' : ''}
         </span>
       </div>
 

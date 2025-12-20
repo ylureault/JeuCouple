@@ -231,7 +231,7 @@ export default function Game() {
                       animate={{ opacity: 1 }}
                       className="text-white/60 text-xl font-semibold mt-4"
                     >
-                      Preparez-vous...
+                      Préparez-vous...
                     </motion.p>
                   </motion.div>
                 )}
@@ -281,22 +281,22 @@ export default function Game() {
                   </p>
                   {currentQuestion.type === 'A' && (
                     <p className="text-gray-500 text-sm mt-3">
-                      Devine ce que {theirName} va repondre !
+                      Devine ce que {theirName} va répondre !
                     </p>
                   )}
                   {currentQuestion.type === 'B' && (
                     <p className="text-gray-500 text-sm mt-3">
-                      Points si vos reponses concordent !
+                      Points si vos réponses concordent !
                     </p>
                   )}
                   {currentQuestion.type === 'G' && (
                     <p className="text-gray-500 text-sm mt-3">
-                      Vrai ou Faux ? Points si vos reponses concordent !
+                      Vrai ou Faux ? Points si vos réponses concordent !
                     </p>
                   )}
                   {currentQuestion.type === 'H' && (
                     <p className="text-gray-500 text-sm mt-3">
-                      Culture G : chacun gagne des points s'il a la bonne reponse !
+                      Culture G : chacun gagne des points s'il a la bonne réponse !
                     </p>
                   )}
                 </div>
@@ -337,7 +337,7 @@ export default function Game() {
                       ✓
                     </motion.span>
                     <span className="text-white font-bold">
-                      Reponse enregistree !
+                      Réponse enregistrée !
                     </span>
                   </div>
                   {!otherAnswered && (
@@ -366,7 +366,7 @@ export default function Game() {
                       animate={{ scale: 1, opacity: 1 }}
                       className="text-[#26890c] mt-3 font-bold"
                     >
-                      {theirName} a repondu ! Revelation imminente...
+                      {theirName} a répondu ! Révélation imminente...
                     </motion.p>
                   )}
                 </motion.div>
@@ -402,7 +402,7 @@ export default function Game() {
                   ⏳
                 </motion.div>
                 <p className="text-2xl font-bold text-white mb-2">
-                  {myAnswer ? 'Reponse envoyee !' : 'Temps ecoule !'}
+                  {myAnswer ? 'Réponse envoyée !' : 'Temps écoulé !'}
                 </p>
                 <p className="text-white/60">
                   En attente de {theirName}...

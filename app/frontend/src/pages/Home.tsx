@@ -153,7 +153,7 @@ export default function Home() {
               >
                 <span className="flex items-center justify-center gap-3">
                   <span className="text-2xl">🎮</span>
-                  Creer une partie
+                  Créer une partie
                 </span>
               </motion.button>
 
@@ -183,13 +183,13 @@ export default function Home() {
             >
               <div className="bg-white rounded-2xl p-6 shadow-2xl">
                 <h2 className="text-xl font-black text-gray-900 text-center mb-4">
-                  Creer une partie
+                  Créer une partie
                 </h2>
 
                 <div className="space-y-3">
                   <div>
                     <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
-                      Ton prenom
+                      Ton prénom
                     </label>
                     <input
                       type="text"
@@ -310,7 +310,7 @@ export default function Home() {
                 <div className="space-y-3">
                   <div>
                     <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
-                      Ton prenom
+                      Ton prénom
                     </label>
                     <input
                       type="text"

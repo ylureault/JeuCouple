@@ -167,16 +167,16 @@ export default function Results() {
   const bestCategory = finalResults.categoryScores?.[0];
 
   const getHeadline = () => {
-    if (isTie) return { emoji: '🤝', text: 'Egalite parfaite !' };
-    if (isWinner) return { emoji: '🏆', text: 'Tu as gagne !' };
+    if (isTie) return { emoji: '🤝', text: 'Égalité parfaite !' };
+    if (isWinner) return { emoji: '🏆', text: 'Tu as gagné !' };
     return { emoji: '💪', text: 'Belle tentative !' };
   };
 
   const getCompatibilityMessage = () => {
-    if (compatibility >= 80) return { emoji: '💕', text: 'Vous vous connaissez par coeur !' };
-    if (compatibility >= 60) return { emoji: '😊', text: 'Belle complicite !' };
+    if (compatibility >= 80) return { emoji: '💕', text: 'Vous vous connaissez par cœur !' };
+    if (compatibility >= 60) return { emoji: '😊', text: 'Belle complicité !' };
     if (compatibility >= 40) return { emoji: '🌱', text: 'Votre histoire ne fait que commencer...' };
-    return { emoji: '💬', text: 'Prenez le temps de vous decouvrir !' };
+    return { emoji: '💬', text: 'Prenez le temps de vous découvrir !' };
   };
 
   const headline = getHeadline();
@@ -246,7 +246,7 @@ export default function Results() {
                 transition={{ duration: 0.8, repeat: Infinity }}
                 className="text-3xl font-black text-white"
               >
-                Les resultats arrivent...
+                Les résultats arrivent...
               </motion.p>
             </motion.div>
           </motion.div>
@@ -357,7 +357,7 @@ export default function Results() {
                       {compatibility}%
                     </p>
                     <p className="text-gray-600 font-semibold text-xs">
-                      de compatibilite
+                      de compatibilité
                     </p>
                   </div>
                 </div>
@@ -375,7 +375,7 @@ export default function Results() {
               >
                 {myMaxStreak >= 2 && (
                   <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 rounded-full px-3 py-1 text-sm font-bold">
-                    🔥 Serie max: {myMaxStreak}
+                    🔥 Série max: {myMaxStreak}
                   </span>
                 )}
                 {mySpeedBonus > 0 && (
@@ -421,7 +421,7 @@ export default function Results() {
                   className="mb-4"
                 >
                   <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3 text-center">
-                    Compatibilite par categorie
+                    Compatibilité par catégorie
                   </h3>
                   <div className="space-y-3 bg-gray-50 rounded-xl p-4">
                     {finalResults.categoryScores.slice(0, 5).map((cat, idx) => (
@@ -538,7 +538,7 @@ function QuestionHistoryItem({
 
   // Convert answer codes to display text
   const getDisplayAnswer = (answer: string | null) => {
-    if (!answer) return 'Pas de reponse';
+    if (!answer) return 'Pas de réponse';
 
     // Special answers
     if (answer === 'joker') return '🃏 Joker';

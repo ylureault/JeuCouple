@@ -109,7 +109,7 @@ export default function QuestionCard({
           <textarea
             value={freeText}
             onChange={(e) => setFreeText(e.target.value)}
-            placeholder="Ecris ta reponse ici..."
+            placeholder="Écris ta réponse ici..."
             className="w-full h-32 p-4 text-gray-900 text-lg font-semibold resize-none rounded-lg
                        focus:outline-none placeholder-gray-400"
             disabled={disabled}
@@ -124,7 +124,7 @@ export default function QuestionCard({
           whileTap={disabled || !freeText.trim() ? {} : { scale: 0.98 }}
         >
           <span className="text-xl">✓</span>
-          <span>Valider ma reponse</span>
+          <span>Valider ma réponse</span>
         </motion.button>
       </motion.div>
     );

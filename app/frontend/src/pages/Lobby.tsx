@@ -118,7 +118,7 @@ export default function Lobby() {
               </p>
             </div>
             <p className="text-white/50 text-sm mt-3 group-hover:text-white/70 transition-colors">
-              {copied ? 'Code copie !' : 'Clique pour copier'}
+              {copied ? 'Code copié !' : 'Clique pour copier'}
             </p>
           </motion.div>
         </motion.div>
