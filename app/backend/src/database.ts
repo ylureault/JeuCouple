@@ -268,7 +268,7 @@ function initDefaultQuestions() {
   if (count.count > 0) return;
 
   // Type annotation to avoid "Expression produces a union type that is too complex" error
-  type QuestionData = {
+  interface QuestionData {
     type: string;
     category: string;
     text: string;
@@ -280,8 +280,9 @@ function initDefaultQuestions() {
     correct_answer?: string;
     target_player?: 1 | 2;
     timer: number;
-  };
+  }
 
+  // @ts-ignore - Large array, TypeScript inference too complex
   const questions: QuestionData[] = [
     // === TYPE A - Devine sa réponse ===
     { type: 'A', category: 'couple', text: 'Quel est mon reve secret que je n\'ai jamais realise ?', options: JSON.stringify(['Voyager seul(e)', 'Changer de metier', 'Vivre a l\'etranger', 'Apprendre un instrument']), timer: 20 },
