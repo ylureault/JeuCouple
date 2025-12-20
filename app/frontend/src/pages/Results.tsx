@@ -5,6 +5,8 @@ import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
 import MuteButton from '../components/MuteButton';
 import Confetti from '../components/Confetti';
+import ReactionBar from '../components/ReactionBar';
+import ReactionOverlay from '../components/ReactionOverlay';
 import type { CategoryScore, Gender, QuestionHistory } from '../../../shared/types';
 
 // Category icons mapping
@@ -181,8 +183,9 @@ export default function Results() {
   const compatMessage = getCompatibilityMessage();
 
   return (
-    <div className="h-screen bg-gradient-to-b from-[#1a0a2e] via-[#46178f] to-[#7b2cbf] flex flex-col overflow-hidden relative">
+    <div className="h-screen bg-gradient-to-b from-[#1a0a2e] via-[#46178f] to-[#7b2cbf] flex flex-col overflow-hidden relative pb-16">
       <MuteButton />
+      <ReactionOverlay />
 
       {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -505,6 +508,16 @@ export default function Results() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Fixed Reaction Bar at bottom */}
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 3 }}
+        className="fixed bottom-0 left-0 right-0 bg-black/30 backdrop-blur-sm py-3 px-4 border-t border-white/10 z-40"
+      >
+        <ReactionBar />
+      </motion.div>
     </div>
   );
 }
@@ -541,6 +554,7 @@ function QuestionHistoryItem({
     if (question.type === 'F') {
       if (answer === 'player1') return player1Name;
       if (answer === 'player2') return player2Name;
+      if (answer === 'both') return '👫 Nous deux';
     }
 
     // Type G: Capitalize vrai/faux
@@ -599,7 +613,7 @@ function PodiumColumn({
   delay,
   gender
 }: PodiumColumnProps) {
-  const height = isWinner || isTie ? 160 : 120;
+  const height = isWinner || isTie ? 100 : 80;
 
   // Gender-based colors
   const getGradient = () => {

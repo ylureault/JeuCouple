@@ -373,11 +373,45 @@ export default function QuestionCard({
           </motion.button>
         </div>
 
-        {/* Je ne sais pas */}
+        {/* Nous deux */}
         <motion.button
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
+          onClick={() => !disabled && onAnswer('both')}
+          disabled={disabled}
+          className={`
+            w-full relative overflow-hidden rounded-xl p-4
+            bg-gradient-to-br from-[#9c27b0] to-[#7b1fa2]
+            ${disabled && selectedAnswer !== 'both' ? 'opacity-50' : ''}
+            ${selectedAnswer === 'both' ? 'ring-4 ring-white ring-offset-2 scale-105' : ''}
+            shadow-[0_6px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[4px]
+            transition-all duration-100
+          `}
+          whileHover={disabled ? {} : { scale: 1.02, y: -2 }}
+          whileTap={disabled ? {} : { scale: 0.98 }}
+        >
+          <div className="flex items-center justify-center gap-3">
+            <span className="text-3xl">👫</span>
+            <span className="text-white font-bold text-lg">Nous deux</span>
+          </div>
+          {selectedAnswer === 'both' && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute top-2 right-2 text-2xl"
+            >
+              ✓
+            </motion.div>
+          )}
+        </motion.button>
+
+        {/* Je ne sais pas */}
+        <motion.button
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.3 }}
           onClick={() => !disabled && onAnswer('dontknow')}
           disabled={disabled}
           className={`

@@ -15,7 +15,7 @@ interface SoundContextType {
   stopLobbyMusic: () => void;
 }
 
-type SoundType = 'click' | 'correct' | 'wrong' | 'tick' | 'reveal' | 'fanfare' | 'countdown';
+type SoundType = 'click' | 'correct' | 'wrong' | 'tick' | 'reveal' | 'fanfare' | 'countdown' | 'notification';
 
 // Web Audio API type
 type WebAudioContext = typeof window.AudioContext;
@@ -166,6 +166,35 @@ function createFanfareSound(): () => void {
   };
 }
 
+function createNotificationSound(): () => void {
+  return () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: WebAudioContext }).webkitAudioContext)();
+      // Two-tone notification sound (like a message ping)
+      const notes = [880, 1174.66]; // A5, D6
+
+      notes.forEach((freq, i) => {
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.12);
+
+        gainNode.gain.setValueAtTime(0.25, audioCtx.currentTime + i * 0.12);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.12 + 0.15);
+
+        oscillator.start(audioCtx.currentTime + i * 0.12);
+        oscillator.stop(audioCtx.currentTime + i * 0.12 + 0.15);
+      });
+    } catch {
+      // Audio not supported
+    }
+  };
+}
+
 const sounds: Record<SoundType, () => void> = {
   click: createClickSound(),
   correct: createCorrectSound(),
@@ -173,7 +202,8 @@ const sounds: Record<SoundType, () => void> = {
   tick: createTickSound(),
   reveal: createRevealSound(),
   fanfare: createFanfareSound(),
-  countdown: createTickSound()
+  countdown: createTickSound(),
+  notification: createNotificationSound()
 };
 
 // Procedural ambient music generator using Web Audio API

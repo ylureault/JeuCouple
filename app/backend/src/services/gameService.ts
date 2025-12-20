@@ -640,7 +640,7 @@ function revealAnswers(
     } else {
       sendQuestion(io, roomCode, gameState);
     }
-  }, 5000); // 5 seconds to view results
+  }, 7000); // 7 seconds to view results
 }
 
 function calculateBasePoints(

@@ -25,13 +25,27 @@ export default function Game() {
     revealData,
     scores,
     submitAnswer,
-    finalResults
+    finalResults,
+    reactions
   } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(0);
   const [showIntro, setShowIntro] = useState(true);
   const [introStep, setIntroStep] = useState<'number' | 'category' | 'question'>('number');
+  const [lastReactionCount, setLastReactionCount] = useState(0);
+
+  // Play notification sound when receiving reaction from partner
+  useEffect(() => {
+    if (reactions.length > lastReactionCount) {
+      const newReaction = reactions[reactions.length - 1];
+      // Only play sound if the reaction is from the other player
+      if (newReaction.playerId !== playerId) {
+        playSound('notification');
+      }
+      setLastReactionCount(reactions.length);
+    }
+  }, [reactions, lastReactionCount, playerId, playSound]);
 
   useEffect(() => {
     if (!room) {
@@ -130,7 +144,7 @@ export default function Game() {
   const theirName = playerId === 1 ? player2Name : player1Name;
 
   return (
-    <div className="min-h-screen bg-[#46178f] flex flex-col">
+    <div className="min-h-screen bg-[#46178f] flex flex-col pb-20">
       <MuteButton />
       <ReactionOverlay />
 
@@ -417,19 +431,16 @@ export default function Game() {
           )}
         </AnimatePresence>
 
-        {/* Reaction Bar - visible during all game phases */}
-        {!showIntro && (phase === 'question' || phase === 'waiting' || phase === 'reveal') && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mt-6 pt-4 border-t border-white/10"
-          >
-            <p className="text-white/50 text-xs text-center mb-2">Envoyer une reaction</p>
-            <ReactionBar />
-          </motion.div>
-        )}
       </div>
+
+      {/* Fixed Reaction Bar at bottom - always visible during game */}
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="fixed bottom-0 left-0 right-0 bg-black/30 backdrop-blur-sm py-3 px-4 border-t border-white/10 z-40"
+      >
+        <ReactionBar />
+      </motion.div>
     </div>
   );
 }

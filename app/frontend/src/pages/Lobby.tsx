@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
 import MuteButton from '../components/MuteButton';
+import ReactionBar from '../components/ReactionBar';
+import ReactionOverlay from '../components/ReactionOverlay';
 import type { Gender } from '../../../shared/types';
 
 export default function Lobby() {
@@ -67,8 +69,9 @@ export default function Lobby() {
   const bothPlayersReady = room.player1_name && room.player2_name;
 
   return (
-    <div className="h-screen bg-kahoot-lobby flex flex-col overflow-hidden">
+    <div className="h-screen bg-kahoot-lobby flex flex-col overflow-hidden pb-16">
       <MuteButton />
+      <ReactionOverlay />
 
       {/* Animated background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -274,6 +277,15 @@ export default function Lobby() {
           ← Quitter le salon
         </motion.button>
       </div>
+
+      {/* Fixed Reaction Bar at bottom */}
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="fixed bottom-0 left-0 right-0 bg-black/30 backdrop-blur-sm py-3 px-4 border-t border-white/10 z-40"
+      >
+        <ReactionBar />
+      </motion.div>
     </div>
   );
 }
