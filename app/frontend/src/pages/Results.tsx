@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
+import { useTheme } from '../context/ThemeContext';
 import MuteButton from '../components/MuteButton';
 import Confetti from '../components/Confetti';
 import ReactionBar from '../components/ReactionBar';
@@ -146,6 +147,8 @@ export default function Results() {
     }
   };
 
+  const { theme } = useTheme();
+
   if (!finalResults || !room) return null;
 
   const player1Name = room.player1_name || 'Joueur 1';
@@ -183,7 +186,7 @@ export default function Results() {
   const compatMessage = getCompatibilityMessage();
 
   return (
-    <div className="h-screen bg-gradient-to-b from-[#1a0a2e] via-[#46178f] to-[#7b2cbf] flex flex-col overflow-hidden relative pb-16">
+    <div className={`h-screen bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-hidden relative pb-16`}>
       <MuteButton />
       <ReactionOverlay />
 

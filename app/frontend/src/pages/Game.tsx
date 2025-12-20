@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
+import { useTheme } from '../context/ThemeContext';
 import MuteButton from '../components/MuteButton';
 import Countdown from '../components/Countdown';
 import QuestionCard from '../components/QuestionCard';
@@ -138,6 +139,7 @@ export default function Game() {
     );
   }
 
+  const { theme } = useTheme();
   const player1Name = room.player1_name || 'Joueur 1';
   const player2Name = room.player2_name || 'Joueur 2';
   const myScore = playerId === 1 ? scores.player1 : scores.player2;
@@ -145,7 +147,7 @@ export default function Game() {
   const theirName = playerId === 1 ? player2Name : player1Name;
 
   return (
-    <div className="min-h-screen bg-[#46178f] flex flex-col pb-20">
+    <div className={`min-h-screen bg-gradient-to-br ${theme.colors.background} flex flex-col pb-20`}>
       <MuteButton />
       <ReactionOverlay />
 

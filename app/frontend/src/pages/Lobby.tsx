@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
+import { useTheme } from '../context/ThemeContext';
 import MuteButton from '../components/MuteButton';
 import ReactionBar from '../components/ReactionBar';
 import ReactionOverlay from '../components/ReactionOverlay';
@@ -64,13 +65,37 @@ export default function Lobby() {
     }
   };
 
+  const shareLink = () => {
+    if (room?.code) {
+      const url = `${window.location.origin}/join/${room.code}`;
+
+      // Try native share API first (mobile)
+      if (navigator.share) {
+        navigator.share({
+          title: 'Jeu Couples',
+          text: `Rejoins-moi pour jouer ! 💕`,
+          url: url
+        }).catch(() => {
+          // Fallback to clipboard
+          navigator.clipboard.writeText(url);
+        });
+      } else {
+        // Desktop fallback - copy link
+        navigator.clipboard.writeText(url);
+      }
+      playSound('click');
+    }
+  };
+
+  const { theme } = useTheme();
+
   if (!room) return null;
 
   const isHost = playerId === 1;
   const bothPlayersReady = room.player1_name && room.player2_name;
 
   return (
-    <div className="h-screen bg-kahoot-lobby flex flex-col overflow-hidden pb-16">
+    <div className={`h-screen bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-hidden pb-16`}>
       <MuteButton />
       <ReactionOverlay />
 
@@ -129,6 +154,20 @@ export default function Lobby() {
               {copied ? 'Code copié !' : 'Clique pour copier'}
             </p>
           </motion.div>
+
+          {/* Share link button */}
+          <motion.button
+            onClick={shareLink}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="mt-3 flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white font-bold px-5 py-2 rounded-full transition-colors"
+          >
+            <span>🔗</span>
+            Partager le lien
+          </motion.button>
         </motion.div>
 
         {/* Music indicator */}

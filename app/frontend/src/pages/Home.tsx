@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
+import { useTheme } from '../context/ThemeContext';
 import MuteButton from '../components/MuteButton';
+import ThemeSelector from '../components/ThemeSelector';
 import type { Gender } from '../../../shared/types';
 
 type Mode = 'home' | 'create' | 'join';
@@ -18,6 +20,18 @@ export default function Home() {
   const { createRoom, joinRoom, error, connected } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Handle join link redirect
+  useEffect(() => {
+    const state = location.state as { joinCode?: string } | null;
+    if (state?.joinCode) {
+      setRoomCode(state.joinCode);
+      setMode('join');
+      // Clear the state to prevent re-triggering
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const handleCreate = async () => {
     if (!playerName.trim() || !gender) return;
@@ -52,9 +66,12 @@ export default function Home() {
     setMode(newMode);
   };
 
+  const { theme } = useTheme();
+
   return (
-    <div className="h-screen bg-kahoot-lobby flex flex-col overflow-hidden">
+    <div className={`h-screen bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-hidden`}>
       <MuteButton />
+      <ThemeSelector />
 
       {/* Floating hearts background decoration */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
