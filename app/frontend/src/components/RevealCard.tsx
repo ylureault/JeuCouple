@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import type { Question, GameRevealData } from '../../../shared/types';
 import Confetti from './Confetti';
+import Fireworks from './Fireworks';
 
 interface RevealCardProps {
   question: Question;
@@ -182,9 +183,10 @@ export default function RevealCard({
         )}
       </AnimatePresence>
 
-      {/* Flying emojis for correct answers */}
+      {/* Flying emojis and fireworks for correct answers */}
       {correct && showPoints && myPoints > 0 && (
         <>
+          <Fireworks />
           <Confetti count={50} />
           <FlyingEmojis emojis={['💖', '✨', '🌟', '💕', '🎊', '💫']} count={12} />
         </>

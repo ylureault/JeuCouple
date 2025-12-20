@@ -6,6 +6,7 @@ import { useAudio } from '../context/AudioContext';
 import { useTheme } from '../context/ThemeContext';
 import MuteButton from '../components/MuteButton';
 import Confetti from '../components/Confetti';
+import Fireworks from '../components/Fireworks';
 import ReactionBar from '../components/ReactionBar';
 import ReactionOverlay from '../components/ReactionOverlay';
 import type { CategoryScore, Gender, QuestionHistory } from '../../../shared/types';
@@ -217,7 +218,8 @@ export default function Results() {
       {/* Fireworks layer */}
       {showFireworks && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <Confetti count={80} />
+          <Fireworks />
+          <Confetti count={100} />
           <Firework x={20} y={20} delay={0} />
           <Firework x={80} y={25} delay={0.3} />
           <Firework x={50} y={15} delay={0.6} />
