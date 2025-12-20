@@ -267,7 +267,22 @@ function initDefaultQuestions() {
   const count = db.prepare('SELECT COUNT(*) as count FROM questions').get() as { count: number };
   if (count.count > 0) return;
 
-  const questions = [
+  // Type annotation to avoid "Expression produces a union type that is too complex" error
+  type QuestionData = {
+    type: string;
+    category: string;
+    text: string;
+    options?: string;
+    option_a?: string;
+    option_b?: string;
+    emoji_a?: string;
+    emoji_b?: string;
+    correct_answer?: string;
+    target_player?: 1 | 2;
+    timer: number;
+  };
+
+  const questions: QuestionData[] = [
     // === TYPE A - Devine sa réponse ===
     { type: 'A', category: 'couple', text: 'Quel est mon reve secret que je n\'ai jamais realise ?', options: JSON.stringify(['Voyager seul(e)', 'Changer de metier', 'Vivre a l\'etranger', 'Apprendre un instrument']), timer: 20 },
     { type: 'A', category: 'couple', text: 'Qu\'est-ce qui me met vraiment en colere ?', options: JSON.stringify(['Le mensonge', 'L\'injustice', 'Le manque de respect', 'Etre ignore(e)']), timer: 20 },
