@@ -339,6 +339,36 @@ export function setupSocketHandlers(
       });
     });
 
+    // Voice chat signaling - relay WebRTC messages to partner
+    socket.on('voice:offer', (data) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+      // Send to the other player in the room
+      socket.to(connection.roomCode).emit('voice:offer', data);
+    });
+
+    socket.on('voice:answer', (data) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+      socket.to(connection.roomCode).emit('voice:answer', data);
+    });
+
+    socket.on('voice:ice-candidate', (data) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+      socket.to(connection.roomCode).emit('voice:ice-candidate', data);
+    });
+
+    socket.on('voice:toggle', (data) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+      // Notify partner that this player toggled their voice
+      socket.to(connection.roomCode).emit('voice:peer-toggle', {
+        playerId: connection.playerId,
+        enabled: data.enabled
+      });
+    });
+
     // Handle disconnect
     socket.on('disconnect', () => {
       handleDisconnect(socket, io);

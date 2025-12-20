@@ -6,6 +6,7 @@ import { useAudio } from '../context/AudioContext';
 import MuteButton from '../components/MuteButton';
 import ReactionBar from '../components/ReactionBar';
 import ReactionOverlay from '../components/ReactionOverlay';
+import VoiceChat from '../components/VoiceChat';
 import type { Gender } from '../../../shared/types';
 
 export default function Lobby() {
@@ -72,6 +73,13 @@ export default function Lobby() {
     <div className="h-screen bg-kahoot-lobby flex flex-col overflow-hidden pb-16">
       <MuteButton />
       <ReactionOverlay />
+
+      {/* Voice chat - top right */}
+      {bothPlayersReady && (
+        <div className="fixed top-4 right-16 z-50">
+          <VoiceChat />
+        </div>
+      )}
 
       {/* Animated background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">

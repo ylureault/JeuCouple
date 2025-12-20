@@ -92,6 +92,23 @@ export interface ReactionData {
   timestamp: number;
 }
 
+// WebRTC Voice Chat
+export interface VoiceOffer {
+  sdp: string;
+  type: 'offer';
+}
+
+export interface VoiceAnswer {
+  sdp: string;
+  type: 'answer';
+}
+
+export interface IceCandidate {
+  candidate: string;
+  sdpMLineIndex: number | null;
+  sdpMid: string | null;
+}
+
 // Socket.IO Events
 export interface ServerToClientEvents {
   'room:joined': (data: { room: Room; playerId: 1 | 2 }) => void;
@@ -105,6 +122,11 @@ export interface ServerToClientEvents {
   'game:finished': (data: GameFinishedData) => void;
   'game:restarted': () => void;
   'game:reaction': (data: ReactionData) => void;
+  // Voice chat
+  'voice:offer': (data: VoiceOffer) => void;
+  'voice:answer': (data: VoiceAnswer) => void;
+  'voice:ice-candidate': (data: IceCandidate) => void;
+  'voice:peer-toggle': (data: { playerId: 1 | 2; enabled: boolean }) => void;
   'error': (data: { message: string }) => void;
 }
 
@@ -117,6 +139,11 @@ export interface ClientToServerEvents {
   'game:restart': (callback: (response: { success: boolean; error?: string }) => void) => void;
   'room:reconnect': (data: { code: string; playerId: 1 | 2 }, callback: (response: RoomResponse) => void) => void;
   'game:reaction': (data: { emoji: ReactionEmoji }) => void;
+  // Voice chat
+  'voice:offer': (data: VoiceOffer) => void;
+  'voice:answer': (data: VoiceAnswer) => void;
+  'voice:ice-candidate': (data: IceCandidate) => void;
+  'voice:toggle': (data: { enabled: boolean }) => void;
 }
 
 export interface RoomResponse {

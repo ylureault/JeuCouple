@@ -10,6 +10,7 @@ import RevealCard from '../components/RevealCard';
 import CategoryBadge from '../components/CategoryBadge';
 import ReactionBar from '../components/ReactionBar';
 import ReactionOverlay from '../components/ReactionOverlay';
+import VoiceChat from '../components/VoiceChat';
 import Lobby from './Lobby';
 
 export default function Game() {
@@ -147,6 +148,11 @@ export default function Game() {
     <div className="min-h-screen bg-[#46178f] flex flex-col pb-20">
       <MuteButton />
       <ReactionOverlay />
+
+      {/* Voice chat - top right */}
+      <div className="fixed top-4 right-16 z-50">
+        <VoiceChat />
+      </div>
 
       {/* Top bar */}
       <motion.div
