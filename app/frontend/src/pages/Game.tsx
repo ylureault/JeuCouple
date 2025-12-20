@@ -12,6 +12,7 @@ import CategoryBadge from '../components/CategoryBadge';
 import ReactionBar from '../components/ReactionBar';
 import ReactionOverlay from '../components/ReactionOverlay';
 import VoiceChat from '../components/VoiceChat';
+import GameAlerts from '../components/GameAlerts';
 import Lobby from './Lobby';
 
 export default function Game() {
@@ -150,6 +151,14 @@ export default function Game() {
     <div className={`min-h-screen bg-gradient-to-br ${theme.colors.background} flex flex-col pb-20`}>
       <MuteButton />
       <ReactionOverlay />
+      <GameAlerts
+        otherAnswered={otherAnswered}
+        myAnswer={myAnswer}
+        myScore={myScore}
+        theirScore={theirScore}
+        theirName={theirName}
+        questionNumber={questionNumber}
+      />
 
       {/* Voice chat - top right */}
       <div className="fixed top-4 right-16 z-50">
