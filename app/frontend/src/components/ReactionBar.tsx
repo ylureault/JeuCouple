@@ -95,8 +95,8 @@ export default function ReactionBar() {
           {/* Emoji with animation */}
           <motion.span
             className="text-2xl sm:text-3xl relative z-10"
-            animate={lastClicked === emoji ? EMOJI_ANIMATIONS[emoji]?.animation : {}}
-            transition={lastClicked === emoji ? EMOJI_ANIMATIONS[emoji]?.transition : {}}
+            animate={(lastClicked === emoji ? EMOJI_ANIMATIONS[emoji]?.animation : {}) as any}
+            transition={(lastClicked === emoji ? EMOJI_ANIMATIONS[emoji]?.transition : {}) as any}
           >
             {emoji}
           </motion.span>
