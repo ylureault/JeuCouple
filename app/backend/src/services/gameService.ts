@@ -82,6 +82,8 @@ const STREAK_MULTIPLIERS: Record<number, number> = {
 };
 const TYPE_C_THOUGHTFUL_BONUS = 50;  // Bonus for answers > 20 chars
 const JOKER_PENALTY = -50;  // Penalty for using joker
+const UNLIMITED_MODE_QUESTION_COUNT = 50;  // When set to 50, it's unlimited
+const UNLIMITED_MODE_GAP_TO_WIN = 200;  // 200 point gap to win in unlimited
 
 export function setupSocketHandlers(
   io: Server<ClientToServerEvents, ServerToClientEvents>
@@ -665,8 +667,27 @@ function revealAnswers(
   setTimeout(() => {
     gameState.currentQuestionIndex++;
 
-    if (gameState.currentQuestionIndex >= gameState.questions.length) {
+    // Check if unlimited mode (question count = 50)
+    const settings = roomSettings.get(roomCode);
+    const isUnlimitedMode = settings?.questionCount === UNLIMITED_MODE_QUESTION_COUNT;
+    const pointGap = Math.abs(gameState.scores.player1 - gameState.scores.player2);
+
+    // In unlimited mode, check for 200 point gap
+    if (isUnlimitedMode && pointGap >= UNLIMITED_MODE_GAP_TO_WIN) {
       finishGame(io, roomCode, gameState);
+    } else if (gameState.currentQuestionIndex >= gameState.questions.length) {
+      // If we ran out of questions in unlimited mode, load more
+      if (isUnlimitedMode) {
+        const moreQuestions = questionModel.getRandomQuestions(20);
+        if (moreQuestions.length > 0) {
+          gameState.questions = gameState.questions.concat(moreQuestions);
+          sendQuestion(io, roomCode, gameState);
+        } else {
+          finishGame(io, roomCode, gameState);
+        }
+      } else {
+        finishGame(io, roomCode, gameState);
+      }
     } else {
       sendQuestion(io, roomCode, gameState);
     }

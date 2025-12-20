@@ -264,20 +264,20 @@ export default function Home() {
                       <input
                         type="range"
                         min="5"
-                        max="30"
+                        max="50"
                         step="5"
                         value={questionCount}
                         onChange={(e) => setQuestionCount(parseInt(e.target.value))}
                         className="flex-1 h-3 rounded-full cursor-pointer accent-[#864cbf]"
                       />
                       <span className="text-2xl font-black text-[#864cbf] min-w-[3rem] text-center">
-                        {questionCount}
+                        {questionCount === 50 ? '∞' : questionCount}
                       </span>
                     </div>
                     <div className="flex justify-between text-xs text-gray-400 mt-1 px-1">
                       <span>5 min</span>
-                      <span>15 min</span>
-                      <span>30 min</span>
+                      <span>25 min</span>
+                      <span>∞ (200pts)</span>
                     </div>
                   </div>
 
