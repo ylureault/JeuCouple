@@ -1,7 +1,7 @@
 // Types partagés entre frontend et backend
 
-// Extended question types: A, B, C, D + new E (binary choice), F (who of us), G (vrai ou faux about player), H (culture générale QCM)
-export type QuestionType = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H';
+// Extended question types: A, B, C, D + new E (binary choice), F (who of us), G (vrai ou faux about player), H (culture générale QCM), I (image-based choice)
+export type QuestionType = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I';
 
 // Scoring modes for question types
 // 'individual' for Type H: each player scores independently based on correct answer
@@ -9,7 +9,8 @@ export type ScoringMode = 'match' | 'consensus' | 'proximity' | 'none' | 'indivi
 
 // Input types for questions
 // 'qcm' for Type H: multiple choice with one correct answer
-export type InputType = 'options' | 'binary' | 'scale' | 'text' | 'who' | 'qcm';
+// 'image_choice' for Type I: visual emoji-based choice between two options
+export type InputType = 'options' | 'binary' | 'scale' | 'text' | 'who' | 'qcm' | 'image_choice';
 
 // Question Type Configuration (administrable)
 export interface QuestionTypeConfig {
@@ -44,6 +45,8 @@ export interface Question {
   options?: string[];
   option_a?: string;  // For type E (binary choice)
   option_b?: string;  // For type E (binary choice)
+  emoji_a?: string;   // For type I (image choice) - visual emoji for option A
+  emoji_b?: string;   // For type I (image choice) - visual emoji for option B
   target_player?: 1 | 2;  // For type G (vrai ou faux about a specific player)
   correct_answer?: string;  // For type H (culture générale QCM - the correct option)
   timer: number;

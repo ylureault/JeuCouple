@@ -599,6 +599,110 @@ export default function QuestionCard({
     );
   };
 
+  // Type I: Image-based choice with large emojis - "Tu es plutot crac crac..."
+  const renderTypeI = () => {
+    const optionA = question.option_a || 'Option A';
+    const optionB = question.option_b || 'Option B';
+    const emojiA = question.emoji_a || '🏖️';
+    const emojiB = question.emoji_b || '⛰️';
+
+    return (
+      <div className="grid grid-cols-2 gap-4">
+        {/* Option A with large emoji */}
+        <motion.button
+          initial={{ opacity: 0, x: -50, scale: 0.8, rotateY: -30 }}
+          animate={{ opacity: 1, x: 0, scale: 1, rotateY: 0 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+          onClick={() => !disabled && onAnswer('A')}
+          disabled={disabled}
+          className={`
+            relative overflow-hidden rounded-2xl p-4 min-h-[180px]
+            bg-gradient-to-br from-[#ff6b6b] via-[#ee5a5a] to-[#ff4757]
+            ${disabled && selectedAnswer !== 'A' ? 'opacity-50' : ''}
+            ${selectedAnswer === 'A' ? 'ring-4 ring-white ring-offset-2 ring-offset-transparent scale-105' : ''}
+            shadow-[0_10px_0_0_rgba(0,0,0,0.3)] hover:shadow-[0_8px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[8px]
+            transition-all duration-100
+          `}
+          whileHover={disabled ? {} : { scale: 1.05, y: -6, rotateY: 5 }}
+          whileTap={disabled ? {} : { scale: 0.98 }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+          <div className="relative flex flex-col items-center justify-center h-full gap-2">
+            <motion.span
+              className="text-6xl md:text-7xl filter drop-shadow-lg"
+              animate={{
+                scale: [1, 1.1, 1],
+                rotate: [0, 5, -5, 0]
+              }}
+              transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+            >
+              {emojiA}
+            </motion.span>
+            <span className="text-white font-extrabold text-lg md:text-xl text-center leading-tight text-shadow-strong px-1">
+              {optionA}
+            </span>
+          </div>
+          {selectedAnswer === 'A' && (
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              className="absolute top-2 right-2 bg-white rounded-full p-1"
+            >
+              <span className="text-green-500 text-2xl font-bold">✓</span>
+            </motion.div>
+          )}
+        </motion.button>
+
+        {/* Option B with large emoji */}
+        <motion.button
+          initial={{ opacity: 0, x: 50, scale: 0.8, rotateY: 30 }}
+          animate={{ opacity: 1, x: 0, scale: 1, rotateY: 0 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+          onClick={() => !disabled && onAnswer('B')}
+          disabled={disabled}
+          className={`
+            relative overflow-hidden rounded-2xl p-4 min-h-[180px]
+            bg-gradient-to-br from-[#5f27cd] via-[#6c3ad1] to-[#341f97]
+            ${disabled && selectedAnswer !== 'B' ? 'opacity-50' : ''}
+            ${selectedAnswer === 'B' ? 'ring-4 ring-white ring-offset-2 ring-offset-transparent scale-105' : ''}
+            shadow-[0_10px_0_0_rgba(0,0,0,0.3)] hover:shadow-[0_8px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[8px]
+            transition-all duration-100
+          `}
+          whileHover={disabled ? {} : { scale: 1.05, y: -6, rotateY: -5 }}
+          whileTap={disabled ? {} : { scale: 0.98 }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+          <div className="relative flex flex-col items-center justify-center h-full gap-2">
+            <motion.span
+              className="text-6xl md:text-7xl filter drop-shadow-lg"
+              animate={{
+                scale: [1, 1.1, 1],
+                rotate: [0, -5, 5, 0]
+              }}
+              transition={{ duration: 2, repeat: Infinity, repeatDelay: 1, delay: 0.5 }}
+            >
+              {emojiB}
+            </motion.span>
+            <span className="text-white font-extrabold text-lg md:text-xl text-center leading-tight text-shadow-strong px-1">
+              {optionB}
+            </span>
+          </div>
+          {selectedAnswer === 'B' && (
+            <motion.div
+              initial={{ scale: 0, rotate: 180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              className="absolute top-2 left-2 bg-white rounded-full p-1"
+            >
+              <span className="text-green-500 text-2xl font-bold">✓</span>
+            </motion.div>
+          )}
+        </motion.button>
+      </div>
+    );
+  };
+
   // Joker button - available for all question types
   const renderJoker = () => (
     <motion.button
@@ -647,6 +751,7 @@ export default function QuestionCard({
       {question.type === 'F' && renderTypeF()}
       {question.type === 'G' && renderTypeG()}
       {question.type === 'H' && renderTypeH()}
+      {question.type === 'I' && renderTypeI()}
 
       {/* Joker button for all types */}
       <div className="pt-2 border-t border-white/20">
