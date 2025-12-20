@@ -6,6 +6,7 @@ import { useGame } from '../context/GameContext';
 const REACTION_EMOJIS = ['❤️', '😂', '😮', '😢', '👏', '🔥', '😍', '🤔'] as const;
 
 // Special animated versions of emojis
+// @ts-ignore - complex animation types
 const EMOJI_ANIMATIONS: Record<string, { animation: object; transition: object }> = {
   '❤️': {
     animation: { scale: [1, 1.3, 1], rotate: [0, -10, 10, 0] },
