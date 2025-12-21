@@ -134,7 +134,7 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  'room:create': (data: { playerName: string; gender: Gender; questionCount?: number }, callback: (response: RoomResponse) => void) => void;
+  'room:create': (data: { playerName: string; gender: Gender; questionCount?: number; categories?: string[] }, callback: (response: RoomResponse) => void) => void;
   'room:join': (data: { code: string; playerName: string; gender: Gender }, callback: (response: RoomResponse) => void) => void;
   'room:leave': () => void;
   'game:start': (callback: (response: { success: boolean; error?: string }) => void) => void;

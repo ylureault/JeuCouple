@@ -70,7 +70,7 @@ interface PlayerConnection {
 
 const activeGames = new Map<string, GameState>();
 const playerConnections = new Map<string, PlayerConnection>();
-const roomSettings = new Map<string, { questionCount: number }>();
+const roomSettings = new Map<string, { questionCount: number; categories: string[] }>();
 
 const DEFAULT_QUESTION_COUNT = 10;
 
@@ -109,11 +109,13 @@ export function setupSocketHandlers(
           playerId: 1
         });
 
-        // Store room settings (question count)
+        // Store room settings (question count and categories)
         const questionCount = data.questionCount && data.questionCount >= 5 && data.questionCount <= 50
           ? data.questionCount
           : DEFAULT_QUESTION_COUNT;
-        roomSettings.set(room.code, { questionCount });
+        // If no categories specified or empty array, use all categories (auto mode)
+        const categories = data.categories && data.categories.length > 0 ? data.categories : [];
+        roomSettings.set(room.code, { questionCount, categories });
 
         callback({ success: true, room, playerId: 1 });
       } catch (error) {
@@ -258,7 +260,8 @@ export function setupSocketHandlers(
       // Get mixed questions based on room settings (ensures variety of question types)
       const settings = roomSettings.get(connection.roomCode);
       const questionCount = settings?.questionCount || DEFAULT_QUESTION_COUNT;
-      const questions = questionModel.getMixedQuestions(questionCount);
+      const categories = settings?.categories || [];
+      const questions = questionModel.getMixedQuestions(questionCount, categories);
       if (questions.length === 0) {
         callback({ success: false, error: 'No questions available' });
         return;

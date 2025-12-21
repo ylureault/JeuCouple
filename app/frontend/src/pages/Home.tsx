@@ -10,6 +10,18 @@ import type { Gender } from '../../../shared/types';
 
 type Mode = 'home' | 'create' | 'join';
 
+// Category configuration with display info
+const CATEGORY_CONFIG = [
+  { id: 'couple', label: 'Couple', emoji: '💑', color: 'pink' },
+  { id: 'sexy', label: 'Sexy', emoji: '🔥', color: 'red' },
+  { id: 'coquin', label: 'Coquin', emoji: '😈', color: 'purple' },
+  { id: 'habitudes', label: 'Habitudes', emoji: '🏠', color: 'blue' },
+  { id: 'souvenirs', label: 'Souvenirs', emoji: '📸', color: 'amber' },
+  { id: 'projets', label: 'Projets', emoji: '🎯', color: 'green' },
+  { id: 'fun', label: 'Fun', emoji: '🎉', color: 'yellow' },
+  { id: 'preferences', label: 'Goûts', emoji: '⭐', color: 'orange' },
+] as const;
+
 export default function Home() {
   const [mode, setMode] = useState<Mode>('home');
   const [playerName, setPlayerName] = useState('');
@@ -17,6 +29,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [questionCount, setQuestionCount] = useState(10);
   const [gender, setGender] = useState<Gender | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const { createRoom, joinRoom, error, connected } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
@@ -38,13 +51,22 @@ export default function Home() {
     setLoading(true);
     playSound('click');
     try {
-      await createRoom(playerName.trim(), gender, questionCount);
+      // Pass selected categories (empty array = all categories / auto mode)
+      await createRoom(playerName.trim(), gender, questionCount, selectedCategories);
       navigate('/game');
     } catch {
       // Error handled in context
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleCategory = (categoryId: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(categoryId)
+        ? prev.filter(c => c !== categoryId)
+        : [...prev, categoryId]
+    );
   };
 
   const handleJoin = async () => {
@@ -279,6 +301,40 @@ export default function Home() {
                       <span>25 min</span>
                       <span>∞ (200pts)</span>
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
+                      Catégories
+                      <span className="text-gray-400 font-normal normal-case ml-2">
+                        {selectedCategories.length === 0 ? '(toutes)' : `(${selectedCategories.length})`}
+                      </span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {CATEGORY_CONFIG.map((cat) => {
+                        const isSelected = selectedCategories.includes(cat.id);
+                        return (
+                          <motion.button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => toggleCategory(cat.id)}
+                            className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-all flex items-center gap-1 ${
+                              isSelected
+                                ? 'bg-[#864cbf] text-white shadow-md'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <span>{cat.emoji}</span>
+                            <span>{cat.label}</span>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2">
+                      Aucune sélection = mode automatique (toutes catégories)
+                    </p>
                   </div>
 
                   <motion.button
