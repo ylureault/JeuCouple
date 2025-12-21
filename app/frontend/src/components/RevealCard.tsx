@@ -748,7 +748,7 @@ function AnswerBlock({
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: delay + 0.2, type: 'spring', stiffness: 150 }}
         className={`
-          rounded-md p-2 text-center relative overflow-hidden
+          rounded-md p-3 text-center relative overflow-hidden
           ${displayAnswer ? 'bg-gradient-to-br from-[#46178f]/10 to-[#7c3aed]/10' : 'bg-gray-100'}
         `}
       >
@@ -767,9 +767,9 @@ function AnswerBlock({
           transition={{ delay: delay + 0.3 }}
           className={`
             font-bold relative z-10 break-words
-            ${questionType === 'D' ? 'text-3xl text-[#46178f]' : 'text-sm text-gray-900'}
-            ${questionType === 'C' ? 'text-xs text-gray-800 whitespace-pre-wrap' : ''}
-            ${!displayAnswer ? 'text-gray-400 italic text-xs' : ''}
+            ${questionType === 'D' ? 'text-4xl text-[#46178f]' : 'text-base sm:text-lg text-gray-900'}
+            ${questionType === 'C' ? 'text-sm text-gray-800 whitespace-pre-wrap' : ''}
+            ${!displayAnswer ? 'text-gray-400 italic text-sm' : ''}
           `}
         >
           {displayAnswer || 'Pas de réponse'}

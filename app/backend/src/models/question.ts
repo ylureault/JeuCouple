@@ -61,21 +61,32 @@ export function getRandomQuestions(count: number): Question[] {
  * Ensures variety by selecting proportionally from each type.
  * @param count Number of questions to fetch
  * @param categories Optional array of categories to filter by (empty = all categories)
+ * @param questionTypes Optional array of question types to filter by (empty = all types)
  */
-export function getMixedQuestions(count: number, categories: string[] = []): Question[] {
-  // Build category filter SQL
+export function getMixedQuestions(count: number, categories: string[] = [], questionTypes: string[] = []): Question[] {
+  // Build filters
   const hasCategories = categories.length > 0;
-  const categoryPlaceholders = hasCategories ? categories.map(() => '?').join(',') : '';
-  const categoryFilter = hasCategories ? `AND category IN (${categoryPlaceholders})` : '';
+  const hasTypes = questionTypes.length > 0;
 
-  // Get available question types and their counts (with category filter)
-  const statsQuery = hasCategories
-    ? `SELECT type, COUNT(*) as count FROM questions WHERE active = 1 AND category IN (${categoryPlaceholders}) GROUP BY type`
-    : `SELECT type, COUNT(*) as count FROM questions WHERE active = 1 GROUP BY type`;
+  // Build WHERE conditions
+  const conditions: string[] = ['active = 1'];
+  const params: (string | number)[] = [];
 
-  const statsRows = hasCategories
-    ? db.prepare(statsQuery).all(...categories) as { type: QuestionType; count: number }[]
-    : db.prepare(statsQuery).all() as { type: QuestionType; count: number }[];
+  if (hasCategories) {
+    conditions.push(`category IN (${categories.map(() => '?').join(',')})`);
+    params.push(...categories);
+  }
+
+  if (hasTypes) {
+    conditions.push(`type IN (${questionTypes.map(() => '?').join(',')})`);
+    params.push(...questionTypes);
+  }
+
+  const whereClause = conditions.join(' AND ');
+
+  // Get available question types and their counts
+  const statsQuery = `SELECT type, COUNT(*) as count FROM questions WHERE ${whereClause} GROUP BY type`;
+  const statsRows = db.prepare(statsQuery).all(...params) as { type: QuestionType; count: number }[];
 
   const availableTypes = statsRows
     .filter(row => row.count > 0)
@@ -98,13 +109,12 @@ export function getMixedQuestions(count: number, categories: string[] = []): Que
     // Add extra question to first few types to use the remainder
     const typeCount = questionsPerType + (i < remainder ? 1 : 0);
 
-    const typeQuery = hasCategories
-      ? `SELECT * FROM questions WHERE active = 1 AND type = ? AND category IN (${categoryPlaceholders}) ORDER BY RANDOM() LIMIT ?`
-      : `SELECT * FROM questions WHERE active = 1 AND type = ? ORDER BY RANDOM() LIMIT ?`;
+    // Build query for this type
+    const typeConditions = [...conditions, 'type = ?'];
+    const typeParams = [...params, type, typeCount];
 
-    const typeQuestions = hasCategories
-      ? db.prepare(typeQuery).all(type, ...categories, typeCount) as QuestionRow[]
-      : db.prepare(typeQuery).all(type, typeCount) as QuestionRow[];
+    const typeQuery = `SELECT * FROM questions WHERE ${typeConditions.join(' AND ')} ORDER BY RANDOM() LIMIT ?`;
+    const typeQuestions = db.prepare(typeQuery).all(...typeParams) as QuestionRow[];
 
     for (const row of typeQuestions) {
       if (!usedIds.has(row.id)) {
@@ -114,12 +124,12 @@ export function getMixedQuestions(count: number, categories: string[] = []): Que
     }
   }
 
-  // If we don't have enough questions, fill with random ones from the same categories
+  // If we don't have enough questions, fill with random ones from the same filters
   if (selectedQuestions.length < count) {
     const needed = count - selectedQuestions.length;
     const excludeIds = Array.from(usedIds);
 
-    let query = `SELECT * FROM questions WHERE active = 1 ${categoryFilter}`;
+    let query = `SELECT * FROM questions WHERE ${whereClause}`;
 
     if (excludeIds.length > 0) {
       query += ` AND id NOT IN (${excludeIds.join(',')})`;
@@ -127,9 +137,7 @@ export function getMixedQuestions(count: number, categories: string[] = []): Que
 
     query += ` ORDER BY RANDOM() LIMIT ?`;
 
-    const additionalRows = hasCategories
-      ? db.prepare(query).all(...categories, needed) as QuestionRow[]
-      : db.prepare(query).all(needed) as QuestionRow[];
+    const additionalRows = db.prepare(query).all(...params, needed) as QuestionRow[];
 
     for (const row of additionalRows) {
       selectedQuestions.push(rowToQuestion(row));

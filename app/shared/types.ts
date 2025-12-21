@@ -151,8 +151,20 @@ export const QUESTION_CATEGORIES = [
 ] as const;
 export type QuestionCategory = typeof QUESTION_CATEGORIES[number];
 
+// Question type configuration for room creation
+export const QUESTION_TYPE_CONFIG = [
+  { id: 'A', label: 'QCM Partenaire', emoji: '🎯', description: 'Deviner la réponse de ton partenaire' },
+  { id: 'B', label: 'QCM Commun', emoji: '🤝', description: 'Répondre ensemble à la même question' },
+  { id: 'C', label: 'Texte libre', emoji: '✍️', description: 'Écrire une réponse personnalisée' },
+  { id: 'D', label: 'Échelle 1-10', emoji: '📊', description: 'Noter sur une échelle de 1 à 10' },
+  { id: 'E', label: 'Choix binaire', emoji: '⚖️', description: 'Choisir entre deux options' },
+  { id: 'F', label: 'Qui de nous', emoji: '👫', description: 'Désigner toi, ton partenaire ou les deux' },
+  { id: 'G', label: 'Vrai ou Faux', emoji: '✅', description: 'Deviner si c\'est vrai ou faux' },
+  { id: 'H', label: 'Culture G.', emoji: '🧠', description: 'Questions de culture générale' },
+] as const;
+
 export interface ClientToServerEvents {
-  'room:create': (data: { playerName: string; gender: Gender; questionCount?: number; categories?: string[] }, callback: (response: RoomResponse) => void) => void;
+  'room:create': (data: { playerName: string; gender: Gender; questionCount?: number; categories?: string[]; questionTypes?: string[] }, callback: (response: RoomResponse) => void) => void;
   'room:join': (data: { code: string; playerName: string; gender: Gender }, callback: (response: RoomResponse) => void) => void;
   'room:leave': () => void;
   'game:start': (callback: (response: { success: boolean; error?: string }) => void) => void;

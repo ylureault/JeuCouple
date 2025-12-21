@@ -12,14 +12,26 @@ type Mode = 'home' | 'create' | 'join';
 
 // Category configuration with display info
 const CATEGORY_CONFIG = [
-  { id: 'couple', label: 'Couple', emoji: '💑', color: 'pink' },
-  { id: 'sexy', label: 'Sexy', emoji: '🔥', color: 'red' },
-  { id: 'coquin', label: 'Coquin', emoji: '😈', color: 'purple' },
-  { id: 'habitudes', label: 'Habitudes', emoji: '🏠', color: 'blue' },
-  { id: 'souvenirs', label: 'Souvenirs', emoji: '📸', color: 'amber' },
-  { id: 'projets', label: 'Projets', emoji: '🎯', color: 'green' },
-  { id: 'fun', label: 'Fun', emoji: '🎉', color: 'yellow' },
-  { id: 'preferences', label: 'Goûts', emoji: '⭐', color: 'orange' },
+  { id: 'couple', label: 'Couple', emoji: '💑' },
+  { id: 'sexy', label: 'Sexy', emoji: '🔥' },
+  { id: 'coquin', label: 'Coquin', emoji: '😈' },
+  { id: 'habitudes', label: 'Habitudes', emoji: '🏠' },
+  { id: 'souvenirs', label: 'Souvenirs', emoji: '📸' },
+  { id: 'projets', label: 'Projets', emoji: '🎯' },
+  { id: 'fun', label: 'Fun', emoji: '🎉' },
+  { id: 'preferences', label: 'Goûts', emoji: '⭐' },
+] as const;
+
+// Question type configuration
+const TYPE_CONFIG = [
+  { id: 'A', label: 'QCM', emoji: '🎯', desc: 'Devine ton partenaire' },
+  { id: 'B', label: 'Commun', emoji: '🤝', desc: 'Même question' },
+  { id: 'C', label: 'Texte', emoji: '✍️', desc: 'Réponse libre' },
+  { id: 'D', label: 'Échelle', emoji: '📊', desc: 'Note 1-10' },
+  { id: 'E', label: 'Binaire', emoji: '⚖️', desc: 'Choix A ou B' },
+  { id: 'F', label: 'Qui?', emoji: '👫', desc: 'Toi ou moi' },
+  { id: 'G', label: 'Vrai/Faux', emoji: '✅', desc: 'Deviner' },
+  { id: 'H', label: 'Culture', emoji: '🧠', desc: 'Quiz général' },
 ] as const;
 
 export default function Home() {
@@ -30,6 +42,7 @@ export default function Home() {
   const [questionCount, setQuestionCount] = useState(10);
   const [gender, setGender] = useState<Gender | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const { createRoom, joinRoom, error, connected } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
@@ -51,8 +64,8 @@ export default function Home() {
     setLoading(true);
     playSound('click');
     try {
-      // Pass selected categories (empty array = all categories / auto mode)
-      await createRoom(playerName.trim(), gender, questionCount, selectedCategories);
+      // Pass selected categories and types (empty array = all / auto mode)
+      await createRoom(playerName.trim(), gender, questionCount, selectedCategories, selectedTypes);
       navigate('/game');
     } catch {
       // Error handled in context
@@ -66,6 +79,14 @@ export default function Home() {
       prev.includes(categoryId)
         ? prev.filter(c => c !== categoryId)
         : [...prev, categoryId]
+    );
+  };
+
+  const toggleType = (typeId: string) => {
+    setSelectedTypes(prev =>
+      prev.includes(typeId)
+        ? prev.filter(t => t !== typeId)
+        : [...prev, typeId]
     );
   };
 
@@ -332,8 +353,42 @@ export default function Home() {
                         );
                       })}
                     </div>
-                    <p className="text-xs text-gray-400 mt-2">
-                      Aucune sélection = mode automatique (toutes catégories)
+                    <p className="text-xs text-gray-400 mt-1">
+                      Aucune sélection = toutes catégories
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
+                      Types de questions
+                      <span className="text-gray-400 font-normal normal-case ml-2">
+                        {selectedTypes.length === 0 ? '(tous)' : `(${selectedTypes.length})`}
+                      </span>
+                    </label>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {TYPE_CONFIG.map((type) => {
+                        const isSelected = selectedTypes.includes(type.id);
+                        return (
+                          <motion.button
+                            key={type.id}
+                            type="button"
+                            onClick={() => toggleType(type.id)}
+                            className={`p-2 rounded-lg text-center transition-all ${
+                              isSelected
+                                ? 'bg-[#864cbf] text-white shadow-md'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <span className="text-lg block">{type.emoji}</span>
+                            <span className="text-[10px] font-bold block leading-tight">{type.label}</span>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Aucune sélection = tous les types
                     </p>
                   </div>
 

@@ -71,7 +71,7 @@ interface PlayerConnection {
 
 const activeGames = new Map<string, GameState>();
 const playerConnections = new Map<string, PlayerConnection>();
-const roomSettings = new Map<string, { questionCount: number; categories: string[] }>();
+const roomSettings = new Map<string, { questionCount: number; categories: string[]; questionTypes: string[] }>();
 
 const DEFAULT_QUESTION_COUNT = 10;
 
@@ -110,13 +110,15 @@ export function setupSocketHandlers(
           playerId: 1
         });
 
-        // Store room settings (question count and categories)
+        // Store room settings (question count, categories, and question types)
         const questionCount = data.questionCount && data.questionCount >= 5 && data.questionCount <= 50
           ? data.questionCount
           : DEFAULT_QUESTION_COUNT;
         // If no categories specified or empty array, use all categories (auto mode)
         const categories = data.categories && data.categories.length > 0 ? data.categories : [];
-        roomSettings.set(room.code, { questionCount, categories });
+        // If no question types specified or empty array, use all types (auto mode)
+        const questionTypes = data.questionTypes && data.questionTypes.length > 0 ? data.questionTypes : [];
+        roomSettings.set(room.code, { questionCount, categories, questionTypes });
 
         callback({ success: true, room, playerId: 1 });
       } catch (error) {
@@ -263,7 +265,8 @@ export function setupSocketHandlers(
       const settings = roomSettings.get(connection.roomCode);
       const questionCount = settings?.questionCount || DEFAULT_QUESTION_COUNT;
       const categories = settings?.categories || [];
-      const questions = questionModel.getMixedQuestions(questionCount, categories);
+      const questionTypes = settings?.questionTypes || [];
+      const questions = questionModel.getMixedQuestions(questionCount, categories, questionTypes);
       if (questions.length === 0) {
         callback({ success: false, error: 'No questions available' });
         return;
@@ -802,7 +805,8 @@ function scheduleNextQuestion(
       // If we ran out of questions in unlimited mode, load more
       if (isUnlimitedMode) {
         const categories = settings?.categories || [];
-        const moreQuestions = questionModel.getMixedQuestions(20, categories);
+        const questionTypes = settings?.questionTypes || [];
+        const moreQuestions = questionModel.getMixedQuestions(20, categories, questionTypes);
         if (moreQuestions.length > 0) {
           gameState.questions = gameState.questions.concat(moreQuestions);
           sendQuestion(io, roomCode, gameState);
