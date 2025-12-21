@@ -322,6 +322,9 @@ export function setupSocketHandlers(
       const gameState = activeGames.get(connection.roomCode);
       if (!gameState || gameState.phase !== 'question') return;
 
+      // Don't accept answers if game is paused
+      if (gameState.paused) return;
+
       const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
       const answerTime = Date.now();
 
@@ -499,6 +502,9 @@ function sendQuestion(
   roomCode: string,
   gameState: GameState
 ) {
+  // Don't send question if game is paused
+  if (gameState.paused) return;
+
   const question = { ...gameState.questions[gameState.currentQuestionIndex] };
   gameState.phase = 'question';
   gameState.questionStartTime = Date.now();
@@ -761,7 +767,21 @@ function revealAnswers(
   });
 
   // Next question or finish
+  scheduleNextQuestion(io, roomCode, gameState);
+}
+
+function scheduleNextQuestion(
+  io: Server<ClientToServerEvents, ServerToClientEvents>,
+  roomCode: string,
+  gameState: GameState
+) {
   setTimeout(() => {
+    // If game is paused, wait and retry
+    if (gameState.paused) {
+      scheduleNextQuestion(io, roomCode, gameState);
+      return;
+    }
+
     gameState.currentQuestionIndex++;
 
     // Check if unlimited mode (question count = 50)
@@ -775,7 +795,8 @@ function revealAnswers(
     } else if (gameState.currentQuestionIndex >= gameState.questions.length) {
       // If we ran out of questions in unlimited mode, load more
       if (isUnlimitedMode) {
-        const moreQuestions = questionModel.getRandomQuestions(20);
+        const categories = settings?.categories || [];
+        const moreQuestions = questionModel.getMixedQuestions(20, categories);
         if (moreQuestions.length > 0) {
           gameState.questions = gameState.questions.concat(moreQuestions);
           sendQuestion(io, roomCode, gameState);
