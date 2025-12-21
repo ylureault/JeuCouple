@@ -37,6 +37,9 @@ interface GameState {
   finalResults: GameFinishedData | null;
   error: string | null;
   reactions: ReactionData[];
+  // Pause state when partner disconnects
+  gamePaused: boolean;
+  disconnectedPlayerName: string | null;
 }
 
 type GameAction =
@@ -57,6 +60,8 @@ type GameAction =
   | { type: 'CLEAR_ERROR' }
   | { type: 'ADD_REACTION'; reaction: ReactionData }
   | { type: 'CLEAR_REACTIONS' }
+  | { type: 'GAME_PAUSED'; playerName: string }
+  | { type: 'GAME_RESUMED' }
   | { type: 'RESET' };
 
 const initialState: GameState = {
@@ -76,7 +81,9 @@ const initialState: GameState = {
   scores: { player1: 0, player2: 0 },
   finalResults: null,
   error: null,
-  reactions: []
+  reactions: [],
+  gamePaused: false,
+  disconnectedPlayerName: null
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -204,6 +211,20 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'CLEAR_REACTIONS':
       return { ...state, reactions: [] };
+
+    case 'GAME_PAUSED':
+      return {
+        ...state,
+        gamePaused: true,
+        disconnectedPlayerName: action.playerName
+      };
+
+    case 'GAME_RESUMED':
+      return {
+        ...state,
+        gamePaused: false,
+        disconnectedPlayerName: null
+      };
 
     case 'RESET':
       return {
@@ -347,6 +368,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     socket.on('game:reaction', (data) => {
       dispatch({ type: 'ADD_REACTION', reaction: data });
+    });
+
+    socket.on('game:paused', (data) => {
+      console.log('Game paused, waiting for:', data.playerName);
+      dispatch({ type: 'GAME_PAUSED', playerName: data.playerName });
+    });
+
+    socket.on('game:resumed', (data) => {
+      console.log('Game resumed, player reconnected:', data.playerName);
+      dispatch({ type: 'GAME_RESUMED' });
     });
 
     socket.on('error', (data) => {

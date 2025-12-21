@@ -15,7 +15,7 @@ interface SoundContextType {
   stopLobbyMusic: () => void;
 }
 
-type SoundType = 'click' | 'correct' | 'wrong' | 'tick' | 'reveal' | 'fanfare' | 'countdown' | 'notification';
+type SoundType = 'click' | 'correct' | 'wrong' | 'tick' | 'reveal' | 'fanfare' | 'countdown' | 'notification' | 'reaction';
 
 // Web Audio API type
 type WebAudioContext = typeof window.AudioContext;
@@ -195,6 +195,34 @@ function createNotificationSound(): () => void {
   };
 }
 
+function createReactionSound(): () => void {
+  return () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: WebAudioContext }).webkitAudioContext)();
+      // Fun "pop" sound for emoji reactions
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.type = 'sine';
+      // Rising pitch pop sound
+      oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.08);
+      oscillator.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.12);
+
+      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.15);
+    } catch {
+      // Audio not supported
+    }
+  };
+}
+
 const sounds: Record<SoundType, () => void> = {
   click: createClickSound(),
   correct: createCorrectSound(),
@@ -203,7 +231,8 @@ const sounds: Record<SoundType, () => void> = {
   reveal: createRevealSound(),
   fanfare: createFanfareSound(),
   countdown: createTickSound(),
-  notification: createNotificationSound()
+  notification: createNotificationSound(),
+  reaction: createReactionSound()
 };
 
 // Procedural ambient music generator using Web Audio API

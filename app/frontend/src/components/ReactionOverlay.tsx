@@ -12,7 +12,7 @@ interface FloatingReaction extends ReactionData {
 }
 
 // Particle burst effect for reactions
-function ParticleBurst({ emoji, x }: { emoji: string; x: number }) {
+function ParticleBurst({ x }: { x: number }) {
   const particles = Array.from({ length: 6 }, (_, i) => ({
     id: i,
     angle: (i * 60) * (Math.PI / 180),
@@ -97,7 +97,7 @@ export default function ReactionOverlay() {
       {/* Particle bursts */}
       <AnimatePresence>
         {bursts.map((burst) => (
-          <ParticleBurst key={burst.id} emoji={burst.emoji} x={burst.x} />
+          <ParticleBurst key={burst.id} x={burst.x} />
         ))}
       </AnimatePresence>
 

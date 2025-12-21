@@ -11,7 +11,11 @@ const ICE_SERVERS: RTCConfiguration = {
   ]
 };
 
-export default function VoiceChat() {
+interface VoiceChatProps {
+  compact?: boolean;
+}
+
+export default function VoiceChat({ compact = false }: VoiceChatProps) {
   const { socket, playerId, room } = useGame();
   const [isEnabled, setIsEnabled] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -256,6 +260,44 @@ export default function VoiceChat() {
       default: return isEnabled ? 'En attente...' : 'Désactivé';
     }
   };
+
+  // Compact mode for header bar
+  if (compact) {
+    return (
+      <>
+        <audio ref={remoteAudioRef} autoPlay playsInline />
+        <motion.button
+          onClick={isEnabled ? stopVoiceChat : startVoiceChat}
+          whileTap={{ scale: 0.9 }}
+          className={`
+            w-8 h-8 rounded-full flex items-center justify-center text-sm
+            transition-colors
+            ${isEnabled
+              ? connectionState === 'connected' ? 'bg-green-500' : 'bg-yellow-500'
+              : 'bg-white/10 hover:bg-white/20'
+            }
+            ${permissionDenied ? 'bg-red-500/50' : ''}
+          `}
+        >
+          {isEnabled ? (isMuted ? '🔇' : '🎤') : '🎙️'}
+        </motion.button>
+        {isEnabled && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            onClick={toggleMute}
+            whileTap={{ scale: 0.9 }}
+            className={`
+              w-8 h-8 rounded-full flex items-center justify-center text-sm
+              ${isMuted ? 'bg-red-500' : 'bg-white/10 hover:bg-white/20'}
+            `}
+          >
+            {isMuted ? '🔇' : '🔊'}
+          </motion.button>
+        )}
+      </>
+    );
+  }
 
   return (
     <>

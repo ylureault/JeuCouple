@@ -125,6 +125,9 @@ export interface ServerToClientEvents {
   'game:finished': (data: GameFinishedData) => void;
   'game:restarted': () => void;
   'game:reaction': (data: ReactionData) => void;
+  // Player connection status
+  'game:paused': (data: { disconnectedPlayer: 1 | 2; playerName: string }) => void;
+  'game:resumed': (data: { reconnectedPlayer: 1 | 2; playerName: string }) => void;
   // Voice chat
   'voice:offer': (data: VoiceOffer) => void;
   'voice:answer': (data: VoiceAnswer) => void;

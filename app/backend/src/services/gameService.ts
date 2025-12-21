@@ -54,6 +54,12 @@ interface GameState {
   questionStartTime: number;
   gamification: GamificationState;
   questionHistory: QuestionHistoryItem[];
+  // Pause/resume state
+  paused: boolean;
+  pausedAt: number | null;
+  remainingTime: number | null;
+  connectedPlayers: Set<1 | 2>;
+  disconnectedPlayerName: string | null;
 }
 
 interface PlayerConnection {
@@ -174,6 +180,52 @@ export function setupSocketHandlers(
           playerId: data.playerId,
           gender: data.playerId === 1 ? room.player1_gender! : room.player2_gender!
         });
+
+        // Resume the game if it was paused waiting for this player
+        const gameState = activeGames.get(room.code);
+        if (gameState && gameState.paused) {
+          // Mark player as connected
+          gameState.connectedPlayers.add(data.playerId);
+
+          const playerName = data.playerId === 1 ? room.player1_name : room.player2_name;
+          console.log('Player', playerName, 'reconnected to room', room.code, '- resuming game');
+
+          gameState.paused = false;
+          gameState.disconnectedPlayerName = null;
+
+          // Notify all players that game is resumed
+          io.to(room.code).emit('game:resumed', {
+            reconnectedPlayer: data.playerId,
+            playerName: playerName || 'Joueur'
+          });
+
+          // Resume the timer if we were in question phase
+          if (gameState.phase === 'question' && gameState.remainingTime !== null) {
+            // Send the current question again so the reconnected player can answer
+            const question = { ...gameState.questions[gameState.currentQuestionIndex] };
+
+            // For Type G, use the stored target_player
+            if (question.type === 'G' && question.target_player) {
+              const targetName = question.target_player === 1 ? room.player1_name : room.player2_name;
+              question.text = question.text.replace(/\{player\}/gi, targetName || 'Joueur');
+            }
+
+            io.to(room.code).emit('game:question', {
+              question,
+              questionNumber: gameState.currentQuestionIndex + 1,
+              totalQuestions: gameState.questions.length
+            });
+
+            // Restart timer with remaining time
+            const remainingMs = gameState.remainingTime * 1000;
+            gameState.questionStartTime = Date.now() - ((question.timer - gameState.remainingTime) * 1000);
+            gameState.remainingTime = null;
+
+            gameState.timer = setTimeout(() => {
+              revealAnswers(io, room.code, gameState);
+            }, remainingMs + 3000); // Extra 3 seconds for network latency
+          }
+        }
       } catch (error) {
         callback({ success: false, error: 'Failed to reconnect' });
       }
@@ -237,7 +289,13 @@ export function setupSocketHandlers(
           categoryStats: new Map(),
           perfectMatches: 0
         },
-        questionHistory: []
+        questionHistory: [],
+        // Pause/resume state - both players connected at start
+        paused: false,
+        pausedAt: null,
+        remainingTime: null,
+        connectedPlayers: new Set([1, 2]),
+        disconnectedPlayerName: null
       };
 
       activeGames.set(room.code, gameState);
@@ -391,6 +449,42 @@ function handleDisconnect(
   socket.to(connection.roomCode).emit('room:player-left', {
     playerId: connection.playerId
   });
+
+  // Pause the game if it's active
+  const gameState = activeGames.get(connection.roomCode);
+  if (gameState && !gameState.paused) {
+    // Mark player as disconnected
+    gameState.connectedPlayers.delete(connection.playerId);
+
+    // Get room to find player name
+    const room = roomModel.getRoomByCode(connection.roomCode);
+    const playerName = room
+      ? (connection.playerId === 1 ? room.player1_name : room.player2_name) || 'Joueur'
+      : 'Joueur';
+
+    gameState.paused = true;
+    gameState.pausedAt = Date.now();
+    gameState.disconnectedPlayerName = playerName;
+
+    // Calculate remaining time if in question phase
+    if (gameState.phase === 'question' && gameState.timer) {
+      const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
+      const elapsed = (Date.now() - gameState.questionStartTime) / 1000;
+      gameState.remainingTime = Math.max(0, currentQuestion.timer - elapsed);
+
+      // Clear the timer
+      clearTimeout(gameState.timer);
+      gameState.timer = null;
+    }
+
+    console.log('Game paused in room', connection.roomCode, 'waiting for', playerName);
+
+    // Notify the other player that the game is paused
+    io.to(connection.roomCode).emit('game:paused', {
+      disconnectedPlayer: connection.playerId,
+      playerName
+    });
+  }
 
   // Clean up connection
   playerConnections.delete(socket.id);

@@ -29,7 +29,9 @@ export default function Game() {
     scores,
     submitAnswer,
     finalResults,
-    reactions
+    reactions,
+    gamePaused,
+    disconnectedPlayerName
   } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
@@ -148,8 +150,7 @@ export default function Game() {
   const theirName = playerId === 1 ? player2Name : player1Name;
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${theme.colors.background} flex flex-col pb-24`}>
-      <MuteButton />
+    <div className={`min-h-screen bg-gradient-to-br ${theme.colors.background} flex flex-col pb-20`}>
       <ReactionOverlay />
       <GameAlerts
         otherAnswered={otherAnswered}
@@ -160,42 +161,104 @@ export default function Game() {
         questionNumber={questionNumber}
       />
 
-      {/* Voice chat - top right */}
-      <div className="fixed top-4 right-16 z-50">
-        <VoiceChat />
-      </div>
+      {/* Pause overlay when partner disconnected */}
+      <AnimatePresence>
+        {gamePaused && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="text-center max-w-md mx-4"
+            >
+              {/* Pulsing pause icon */}
+              <motion.div
+                animate={{ scale: [1, 1.15, 1], opacity: [0.8, 1, 0.8] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="text-8xl mb-6"
+              >
+                ⏸️
+              </motion.div>
 
-      {/* Top bar */}
+              {/* Disconnected message */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="bg-red-500/20 border border-red-500/40 rounded-2xl p-4 mb-6"
+              >
+                <p className="text-red-400 text-lg font-bold flex items-center justify-center gap-2">
+                  <span className="animate-pulse">🔴</span>
+                  {disconnectedPlayerName} n'est plus connecté
+                </p>
+              </motion.div>
+
+              {/* Pause status */}
+              <h2 className="text-3xl font-black text-white mb-3">
+                Le jeu est en pause
+              </h2>
+
+              {/* Waiting message */}
+              <p className="text-white/70 text-lg mb-6">
+                En attente de <span className="font-bold text-yellow-400">{disconnectedPlayerName}</span>
+              </p>
+
+              {/* Loading dots */}
+              <div className="flex justify-center gap-2">
+                {[0, 1, 2].map((i) => (
+                  <motion.span
+                    key={i}
+                    className="w-4 h-4 bg-yellow-400 rounded-full"
+                    animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1, 0.8] }}
+                    transition={{ repeat: Infinity, duration: 1.4, delay: i * 0.2 }}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Compact top bar with all controls */}
       <motion.div
         initial={{ y: -50 }}
         animate={{ y: 0 }}
-        className="bg-black/20 px-4 py-3"
+        className="bg-black/30 px-2 py-2 sticky top-0 z-50"
       >
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          {/* Progress */}
-          <div className="flex items-center gap-3">
-            <span className="text-white/60 text-sm font-semibold hidden sm:block">Question</span>
-            <div className="bg-white/20 rounded-full px-4 py-1">
-              <span className="font-black text-white">
-                {questionNumber} <span className="text-white/50">/ {totalQuestions}</span>
-              </span>
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
+          {/* Left: Question progress */}
+          <div className="bg-white/20 rounded-full px-3 py-1 flex-shrink-0">
+            <span className="font-bold text-white text-sm">
+              {questionNumber}<span className="text-white/50">/{totalQuestions}</span>
+            </span>
+          </div>
+
+          {/* Center: Scores */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <span className="text-white/60 text-xs">Toi</span>
+              <div className="bg-[#26890c] rounded px-2 py-0.5">
+                <span className="font-bold text-white text-sm">{myScore}</span>
+              </div>
+            </div>
+            <span className="text-white/40">vs</span>
+            <div className="flex items-center gap-1">
+              <div className="bg-white/20 rounded px-2 py-0.5">
+                <span className="font-bold text-white text-sm">{theirScore}</span>
+              </div>
+              <span className="text-white/60 text-xs truncate max-w-[60px]">{theirName}</span>
             </div>
           </div>
 
-          {/* Scores */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-white/60 text-sm hidden sm:block">Toi</span>
-              <div className="bg-[#26890c] rounded-lg px-3 py-1">
-                <span className="font-black text-white">{myScore}</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-white/60 text-sm hidden sm:block">{theirName}</span>
-              <div className="bg-white/20 rounded-lg px-3 py-1">
-                <span className="font-bold text-white">{theirScore}</span>
-              </div>
-            </div>
+          {/* Right: Voice chat and mute */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <VoiceChat compact />
+            <MuteButton compact />
           </div>
         </div>
       </motion.div>
