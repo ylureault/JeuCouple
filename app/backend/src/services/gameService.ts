@@ -47,6 +47,7 @@ interface GameState {
   roomId: number;
   questions: Question[];
   currentQuestionIndex: number;
+  currentQuestion: Question | null; // The prepared question currently being played (with substitutions done)
   answers: Map<number, AnswerData>;
   scores: { player1: number; player2: number };
   timer: NodeJS.Timeout | null;
@@ -201,32 +202,33 @@ export function setupSocketHandlers(
             playerName: playerName || 'Joueur'
           });
 
+          // Always send current scores to keep players in sync
+          socket.emit('game:score-update', {
+            score1: gameState.scores.player1,
+            score2: gameState.scores.player2
+          });
+
           // Resume the timer if we were in question phase
-          if (gameState.phase === 'question' && gameState.remainingTime !== null) {
-            // Send the current question again so the reconnected player can answer
-            const question = { ...gameState.questions[gameState.currentQuestionIndex] };
-
-            // For Type G, use the stored target_player
-            if (question.type === 'G' && question.target_player) {
-              const targetName = question.target_player === 1 ? room.player1_name : room.player2_name;
-              question.text = question.text.replace(/\{player\}/gi, targetName || 'Joueur');
-            }
-
-            io.to(room.code).emit('game:question', {
-              question,
+          if (gameState.phase === 'question' && gameState.remainingTime !== null && gameState.currentQuestion) {
+            // Send the stored question ONLY to the reconnected player (not all players)
+            // This ensures sync - other player already has the same question
+            socket.emit('game:question', {
+              question: gameState.currentQuestion,
               questionNumber: gameState.currentQuestionIndex + 1,
               totalQuestions: gameState.questions.length
             });
 
             // Restart timer with remaining time
             const remainingMs = gameState.remainingTime * 1000;
-            gameState.questionStartTime = Date.now() - ((question.timer - gameState.remainingTime) * 1000);
+            gameState.questionStartTime = Date.now() - ((gameState.currentQuestion.timer - gameState.remainingTime) * 1000);
             gameState.remainingTime = null;
 
             gameState.timer = setTimeout(() => {
               revealAnswers(io, room.code, gameState);
             }, remainingMs + 3000); // Extra 3 seconds for network latency
           }
+          // If in reveal phase, the scheduleNextQuestion will handle sending the next question
+          // after the reveal timeout (it checks for paused state and retries)
         }
       } catch (error) {
         callback({ success: false, error: 'Failed to reconnect' });
@@ -277,6 +279,7 @@ export function setupSocketHandlers(
         roomId: room.id,
         questions,
         currentQuestionIndex: 0,
+        currentQuestion: null,
         answers: new Map(),
         scores: { player1: 0, player2: 0 },
         timer: null,
@@ -520,6 +523,9 @@ function sendQuestion(
       question.text = question.text.replace(/\{player\}/gi, targetName || 'Joueur');
     }
   }
+
+  // Store the prepared question so it can be re-sent on reconnect
+  gameState.currentQuestion = question;
 
   io.to(roomCode).emit('game:question', {
     question,
