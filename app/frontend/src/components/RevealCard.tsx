@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import type { Question, GameRevealData } from '../../../shared/types';
 import Confetti from './Confetti';
 import Fireworks from './Fireworks';
@@ -13,6 +13,51 @@ interface RevealCardProps {
   currentScore1: number;
   currentScore2: number;
 }
+
+// Animator messages - funny quotes and motivating text
+const MATCH_MESSAGES = [
+  "Vous êtes sur la même longueur d'onde ! 🌊",
+  "Télépathie de couple activée ! 🔮",
+  "C'est beau l'amour ! 💕",
+  "Incroyable synchronisation ! ⚡",
+  "Vous vous connaissez par cœur ! 💖",
+  "Match parfait ! Comme au premier jour ! 🎯",
+  "Les esprits se rencontrent ! 🧠💕🧠",
+];
+
+const MISMATCH_MESSAGES = [
+  "Oups... Faut qu'on parle ! 😅",
+  "C'est l'occasion de mieux se découvrir ! 💬",
+  "Pas grave, l'important c'est de communiquer ! 🗣️",
+  "Au moins vous apprenez quelque chose ! 📚",
+  "La vie serait ennuyeuse si on pensait pareil ! 🤷",
+  "C'est ça qui rend le couple intéressant ! ✨",
+];
+
+const FAKE_QUOTES = [
+  { author: "Albert Einstein", quote: "L'amour, c'est comme les maths... Ça ne s'explique pas." },
+  { author: "Confucius", quote: "Celui qui ne connaît pas son partenaire finit par dormir sur le canapé." },
+  { author: "Socrate", quote: "Je sais que je ne sais rien... surtout sur ma femme." },
+  { author: "Napoléon", quote: "En amour comme à la guerre, il faut savoir battre en retraite." },
+  { author: "Cléopâtre", quote: "Un couple qui joue ensemble reste ensemble." },
+  { author: "Shakespeare", quote: "Être ou ne pas être d'accord, telle est la question du couple." },
+  { author: "Marie Curie", quote: "La radioactivité dans un couple, c'est la passion !" },
+  { author: "De Vinci", quote: "L'art de l'amour se pratique à deux pinceaux." },
+];
+
+const getAnimatorMessage = (correct: boolean, streak: number, player1: string, player2: string) => {
+  if (correct && streak >= 3) {
+    return `🔥 ${player1} et ${player2} sont EN FEU ! Série de ${streak} !`;
+  }
+  if (correct) {
+    return MATCH_MESSAGES[Math.floor(Math.random() * MATCH_MESSAGES.length)];
+  }
+  return MISMATCH_MESSAGES[Math.floor(Math.random() * MISMATCH_MESSAGES.length)];
+};
+
+const getFakeQuote = () => {
+  return FAKE_QUOTES[Math.floor(Math.random() * FAKE_QUOTES.length)];
+};
 
 // Flying emojis component for celebrations
 function FlyingEmojis({ emojis, count = 8 }: { emojis: string[]; count?: number }) {
@@ -140,6 +185,13 @@ export default function RevealCard({
   const showPoints = questionType !== 'C' || basePoints > 0;
   const answersMatch = answer1 === answer2;
   const hasBonus = mySpeedBonus > 0 || myStreakBonus > 0;
+
+  // Memoized animator message and fake quote (so they don't change on re-render)
+  const animatorMessage = useMemo(
+    () => getAnimatorMessage(correct, myStreak, player1Name, player2Name),
+    [correct, myStreak, player1Name, player2Name]
+  );
+  const fakeQuote = useMemo(() => getFakeQuote(), []);
 
   // Lightning flash on reveal
   useEffect(() => {
@@ -307,6 +359,18 @@ export default function RevealCard({
           <StreakBadge streak={myStreak} />
         </div>
       )}
+
+      {/* Animator message */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg p-3 text-center"
+      >
+        <p className="text-white font-bold text-sm sm:text-base">
+          {animatorMessage}
+        </p>
+      </motion.div>
 
       {/* Wrong answer shake effect - applies to container */}
       <motion.div
@@ -581,17 +645,32 @@ export default function RevealCard({
         />
       )}
 
+      {/* Fake quote */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.5 }}
+        className="bg-white/5 rounded-lg p-3 text-center"
+      >
+        <p className="text-white/70 text-sm italic">
+          "{fakeQuote.quote}"
+        </p>
+        <p className="text-white/50 text-xs mt-1">
+          — {fakeQuote.author} (probablement)
+        </p>
+      </motion.div>
+
       {/* Next question indicator */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
+        transition={{ delay: 2 }}
         className="text-center"
       >
         <motion.p
           animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 1.5, repeat: Infinity }}
-          className="text-white/60 font-semibold"
+          className="text-white/60 font-semibold text-sm"
         >
           Question suivante dans un instant...
         </motion.p>
