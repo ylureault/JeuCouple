@@ -148,7 +148,7 @@ export default function Game() {
   const theirName = playerId === 1 ? player2Name : player1Name;
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${theme.colors.background} flex flex-col pb-20`}>
+    <div className={`min-h-screen bg-gradient-to-br ${theme.colors.background} flex flex-col pb-24`}>
       <MuteButton />
       <ReactionOverlay />
       <GameAlerts
@@ -201,7 +201,7 @@ export default function Game() {
       </motion.div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-start p-4 md:p-6 pb-8 overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center justify-start p-4 md:p-6 pb-20 overflow-y-auto">
         <AnimatePresence mode="wait">
           {/* INTRO SEQUENCE */}
           {showIntro && (
@@ -454,7 +454,7 @@ export default function Game() {
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed bottom-0 left-0 right-0 bg-black/30 backdrop-blur-sm py-3 px-4 border-t border-white/10 z-40"
+        className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-sm py-2 px-2 border-t border-white/10 z-40"
       >
         <ReactionBar />
       </motion.div>

@@ -66,22 +66,22 @@ export default function ReactionBar() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex justify-center gap-2 sm:gap-3 flex-wrap relative"
+      className="flex justify-center gap-1.5 sm:gap-2 relative"
     >
       {REACTION_EMOJIS.map((emoji, index) => (
         <motion.button
           key={emoji}
           initial={{ opacity: 0, scale: 0, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ delay: index * 0.05, type: 'spring', stiffness: 300 }}
+          transition={{ delay: index * 0.03, type: 'spring', stiffness: 300 }}
           onClick={() => handleClick(emoji)}
           whileHover={{
-            scale: 1.25,
-            y: -5,
+            scale: 1.2,
+            y: -3,
             transition: { type: 'spring', stiffness: 400 }
           }}
           whileTap={{ scale: 0.85 }}
-          className="relative w-11 h-11 sm:w-14 sm:h-14 bg-white/10 hover:bg-white/25 rounded-full flex items-center justify-center transition-colors group"
+          className="relative w-9 h-9 sm:w-11 sm:h-11 bg-white/10 hover:bg-white/25 rounded-full flex items-center justify-center transition-colors group"
         >
           {/* Glow effect on hover */}
           <motion.div
@@ -94,7 +94,7 @@ export default function ReactionBar() {
 
           {/* Emoji with animation */}
           <motion.span
-            className="text-2xl sm:text-3xl relative z-10"
+            className="text-lg sm:text-2xl relative z-10"
             animate={(lastClicked === emoji ? EMOJI_ANIMATIONS[emoji]?.animation : {}) as any}
             transition={(lastClicked === emoji ? EMOJI_ANIMATIONS[emoji]?.transition : {}) as any}
           >

@@ -706,35 +706,33 @@ export default function QuestionCard({
   // Joker button - available for all question types
   const renderJoker = () => (
     <motion.button
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5, type: 'spring', stiffness: 150 }}
+      transition={{ delay: 0.3, type: 'spring', stiffness: 150 }}
       onClick={() => !disabled && onAnswer('joker')}
       disabled={disabled}
       className={`
-        w-full relative overflow-hidden rounded-xl p-3
-        bg-gradient-to-br from-amber-600 to-amber-700 border-2 border-amber-400
+        w-full relative overflow-hidden rounded-lg p-2
+        bg-gradient-to-br from-amber-600 to-amber-700 border border-amber-400
         ${disabled && selectedAnswer !== 'joker' ? 'opacity-40' : ''}
-        ${selectedAnswer === 'joker' ? 'ring-4 ring-amber-300 ring-offset-2 scale-105' : ''}
-        shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
-        active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[2px]
+        ${selectedAnswer === 'joker' ? 'ring-2 ring-amber-300 scale-105' : ''}
+        shadow-[0_2px_0_0_rgba(0,0,0,0.3)]
+        active:shadow-none active:translate-y-[2px]
         transition-all duration-100
       `}
-      whileHover={disabled ? {} : { scale: 1.02, y: -2 }}
+      whileHover={disabled ? {} : { scale: 1.02 }}
       whileTap={disabled ? {} : { scale: 0.98 }}
     >
-      <div className="flex items-center justify-center gap-3">
-        <span className="text-2xl">🃏</span>
-        <div className="text-left">
-          <span className="text-white font-bold text-base">JOKER</span>
-          <span className="text-amber-200 text-xs ml-2">(-50 pts)</span>
-        </div>
+      <div className="flex items-center justify-center gap-2">
+        <span className="text-lg">🃏</span>
+        <span className="text-white font-bold text-sm">JOKER</span>
+        <span className="text-amber-200 text-xs">(-50 pts)</span>
       </div>
       {selectedAnswer === 'joker' && (
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="absolute top-2 right-2 text-xl"
+          className="absolute top-1 right-2 text-base"
         >
           ✓
         </motion.div>
@@ -743,7 +741,7 @@ export default function QuestionCard({
   );
 
   return (
-    <div className="space-y-6 w-full max-w-2xl mx-auto">
+    <div className="space-y-4 w-full max-w-2xl mx-auto">
       {(question.type === 'A' || question.type === 'B') && renderTypeAB()}
       {question.type === 'C' && renderTypeC()}
       {question.type === 'D' && renderTypeD()}
@@ -754,7 +752,7 @@ export default function QuestionCard({
       {question.type === 'I' && renderTypeI()}
 
       {/* Joker button for all types */}
-      <div className="pt-2 border-t border-white/20">
+      <div className="pt-1 border-t border-white/20">
         {renderJoker()}
       </div>
     </div>
