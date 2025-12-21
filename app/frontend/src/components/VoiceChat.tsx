@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
+import { useAudio } from '../context/AudioContext';
 import type { VoiceOffer, VoiceAnswer, IceCandidate } from '../../../shared/types';
 
 // ICE servers for WebRTC (using public STUN servers)
@@ -17,11 +18,13 @@ interface VoiceChatProps {
 
 export default function VoiceChat({ compact = false }: VoiceChatProps) {
   const { socket, playerId, room } = useGame();
+  const { playSound } = useAudio();
   const [isEnabled, setIsEnabled] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [peerEnabled, setPeerEnabled] = useState(false);
   const [connectionState, setConnectionState] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [showPeerNotification, setShowPeerNotification] = useState(false);
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -210,11 +213,22 @@ export default function VoiceChat({ compact = false }: VoiceChatProps) {
 
     const handlePeerToggle = (data: { playerId: 1 | 2; enabled: boolean }) => {
       if (data.playerId !== playerId) {
+        const wasEnabled = peerEnabled;
         setPeerEnabled(data.enabled);
+
+        // Show notification when partner enables voice chat
+        if (data.enabled && !wasEnabled && !isEnabled) {
+          setShowPeerNotification(true);
+          playSound('notification'); // Play sound to alert user
+          // Auto-hide after 5 seconds
+          setTimeout(() => setShowPeerNotification(false), 5000);
+        }
+
         if (!data.enabled) {
           // Peer disconnected, clean up
           cleanup();
           setIsEnabled(false);
+          setShowPeerNotification(false);
         }
       }
     };
@@ -374,6 +388,51 @@ export default function VoiceChat({ compact = false }: VoiceChatProps) {
           </motion.div>
         )}
       </motion.div>
+
+      {/* Notification when partner enables voice chat */}
+      <AnimatePresence>
+        {showPeerNotification && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            className="fixed top-16 left-1/2 -translate-x-1/2 z-50"
+          >
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-4 py-3 rounded-xl shadow-lg flex items-center gap-3">
+              <motion.span
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ repeat: Infinity, duration: 1 }}
+                className="text-2xl"
+              >
+                🎤
+              </motion.span>
+              <div>
+                <p className="text-white font-bold text-sm">
+                  {room?.player1_name && room?.player2_name
+                    ? (playerId === 1 ? room.player2_name : room.player1_name)
+                    : 'Partenaire'} veut te parler !
+                </p>
+                <p className="text-white/80 text-xs">Clique pour activer le vocal</p>
+              </div>
+              <button
+                onClick={() => {
+                  startVoiceChat();
+                  setShowPeerNotification(false);
+                }}
+                className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-white text-sm font-bold"
+              >
+                Rejoindre
+              </button>
+              <button
+                onClick={() => setShowPeerNotification(false)}
+                className="text-white/60 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
