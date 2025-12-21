@@ -506,6 +506,8 @@ export default function Game() {
                 player1Name={player1Name}
                 player2Name={player2Name}
                 playerId={playerId!}
+                currentScore1={scores.player1}
+                currentScore2={scores.player2}
               />
             </motion.div>
           )}

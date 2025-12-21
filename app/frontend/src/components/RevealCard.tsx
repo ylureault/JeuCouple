@@ -10,6 +10,8 @@ interface RevealCardProps {
   player1Name: string;
   player2Name: string;
   playerId: 1 | 2;
+  currentScore1: number;
+  currentScore2: number;
 }
 
 // Flying emojis component for celebrations
@@ -117,7 +119,9 @@ export default function RevealCard({
   revealData,
   player1Name,
   player2Name,
-  playerId
+  playerId,
+  currentScore1,
+  currentScore2
 }: RevealCardProps) {
   const {
     answer1, answer2, correct, points1, points2, questionType,
@@ -165,6 +169,9 @@ export default function RevealCard({
     }
   }, [myPoints]);
 
+  // Determine who's leading
+  const leader = currentScore1 > currentScore2 ? 1 : currentScore2 > currentScore1 ? 2 : 0;
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -192,7 +199,109 @@ export default function RevealCard({
         </>
       )}
 
-      {/* Streak badge at top */}
+      {/* Question reminder */}
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="bg-white/10 backdrop-blur rounded-lg p-2 mb-1"
+      >
+        <p className="text-white/90 text-sm text-center font-medium leading-tight">
+          {question.text}
+        </p>
+      </motion.div>
+
+      {/* Kahoot-style Scoreboard */}
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.1 }}
+        className="bg-black/40 backdrop-blur rounded-xl p-2 mb-2"
+      >
+        <div className="flex items-center justify-between gap-2">
+          {/* Player 1 score */}
+          <motion.div
+            className={`flex-1 rounded-lg p-2 text-center relative overflow-hidden ${
+              leader === 1 ? 'bg-gradient-to-r from-yellow-500/30 to-yellow-600/30 ring-2 ring-yellow-400' : 'bg-white/10'
+            }`}
+            animate={points1 > 0 ? { scale: [1, 1.05, 1] } : {}}
+            transition={{ delay: 0.3, duration: 0.3 }}
+          >
+            {leader === 1 && (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute -top-1 -left-1 text-lg"
+              >
+                👑
+              </motion.span>
+            )}
+            <p className="text-white/70 text-xs font-semibold truncate">{player1Name}</p>
+            <div className="flex items-center justify-center gap-1">
+              <motion.span
+                key={currentScore1}
+                initial={{ scale: 1.3, color: '#22c55e' }}
+                animate={{ scale: 1, color: '#ffffff' }}
+                className="text-xl font-black text-white"
+              >
+                {currentScore1}
+              </motion.span>
+              {points1 > 0 && (
+                <motion.span
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-green-400 text-xs font-bold"
+                >
+                  +{points1}
+                </motion.span>
+              )}
+            </div>
+          </motion.div>
+
+          {/* VS divider */}
+          <div className="text-white/40 font-bold text-sm">VS</div>
+
+          {/* Player 2 score */}
+          <motion.div
+            className={`flex-1 rounded-lg p-2 text-center relative overflow-hidden ${
+              leader === 2 ? 'bg-gradient-to-r from-yellow-500/30 to-yellow-600/30 ring-2 ring-yellow-400' : 'bg-white/10'
+            }`}
+            animate={points2 > 0 ? { scale: [1, 1.05, 1] } : {}}
+            transition={{ delay: 0.3, duration: 0.3 }}
+          >
+            {leader === 2 && (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute -top-1 -right-1 text-lg"
+              >
+                👑
+              </motion.span>
+            )}
+            <p className="text-white/70 text-xs font-semibold truncate">{player2Name}</p>
+            <div className="flex items-center justify-center gap-1">
+              <motion.span
+                key={currentScore2}
+                initial={{ scale: 1.3, color: '#22c55e' }}
+                animate={{ scale: 1, color: '#ffffff' }}
+                className="text-xl font-black text-white"
+              >
+                {currentScore2}
+              </motion.span>
+              {points2 > 0 && (
+                <motion.span
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-green-400 text-xs font-bold"
+                >
+                  +{points2}
+                </motion.span>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {/* Streak badge */}
       {myStreak >= 2 && correct && (
         <div className="flex justify-center mb-2">
           <StreakBadge streak={myStreak} />
