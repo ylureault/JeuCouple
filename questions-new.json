@@ -1,0 +1,872 @@
+{
+  "questions": [
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Quel est ton plus grand reve que tu n'as encore jamais partage ?",
+      "timer": 60
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Si tu pouvais changer une chose dans ton passe, que changerais-tu ?",
+      "timer": 60
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Qu'est-ce qui te fait te sentir vraiment vivant(e) ?",
+      "timer": 45
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Quelle est ta plus grande peur concernant notre relation ?",
+      "timer": 60
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Quel moment de notre relation t'a fait realiser que tu m'aimais profondement ?",
+      "timer": 60
+    },
+    {
+      "type": "D",
+      "category": "profond",
+      "text": "A quel point te sens-tu compris(e) par ton/ta partenaire ?",
+      "timer": 20
+    },
+    {
+      "type": "D",
+      "category": "profond",
+      "text": "A quel point es-tu satisfait(e) de l'equilibre entre vie de couple et vie personnelle ?",
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "profond",
+      "text": "Quelle est sa plus grande ambition secrete ?",
+      "options": ["Voyager le monde", "Creer son entreprise", "Ecrire un livre", "Avoir une grande famille"],
+      "timer": 25
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Si tu apprenais qu'il ne te restait qu'un an a vivre, que ferais-tu differemment ?",
+      "timer": 60
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Quel est le plus beau compliment que tu aies recu de ta vie ?",
+      "timer": 45
+    },
+    {
+      "type": "F",
+      "category": "profond",
+      "text": "Qui de vous deux a le plus peur de l'engagement ?",
+      "timer": 15
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Qu'est-ce que tu n'as jamais ose me dire mais que tu aimerais partager maintenant ?",
+      "timer": 60
+    },
+    {
+      "type": "D",
+      "category": "profond",
+      "text": "A quel point te sens-tu libre d'etre toi-meme dans notre relation ?",
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "profond",
+      "text": "Selon toi, quel est son plus grand regret ?",
+      "options": ["Une relation passee", "Un choix de carriere", "Ne pas avoir voyage", "Une dispute familiale"],
+      "timer": 25
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Quelle est la chose la plus courageuse que tu aies jamais faite ?",
+      "timer": 45
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Si tu pouvais revivre un moment de notre histoire, lequel choisirais-tu ?",
+      "timer": 45
+    },
+    {
+      "type": "F",
+      "category": "profond",
+      "text": "Qui de vous deux gere le mieux les conflits ?",
+      "timer": 15
+    },
+    {
+      "type": "D",
+      "category": "profond",
+      "text": "A quel point tes parents ont-ils influence ta vision de l'amour ?",
+      "timer": 20
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Quelle blessure emotionnelle du passe affecte encore ta vie aujourd'hui ?",
+      "timer": 60
+    },
+    {
+      "type": "A",
+      "category": "profond",
+      "text": "Quelle est la qualite qu'il/elle admire le plus chez ses parents ?",
+      "options": ["Leur amour durable", "Leur generosite", "Leur force de caractere", "Leur sens de l'humour"],
+      "timer": 25
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Si tu pouvais transmettre une seule valeur a nos futurs enfants, laquelle serait-ce ?",
+      "timer": 45
+    },
+    {
+      "type": "D",
+      "category": "profond",
+      "text": "A quel point te sens-tu soutenu(e) dans tes projets personnels ?",
+      "timer": 20
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Quel est le sacrifice le plus difficile que tu aies fait pour notre couple ?",
+      "timer": 60
+    },
+    {
+      "type": "F",
+      "category": "profond",
+      "text": "Qui de vous deux a le plus besoin de temps seul ?",
+      "timer": 15
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Quelle est ta definition de la reussite dans la vie ?",
+      "timer": 45
+    },
+    {
+      "type": "A",
+      "category": "profond",
+      "text": "Quel est son plus grand complexe ?",
+      "options": ["Son physique", "Son intelligence", "Sa reussite professionnelle", "Ses competences sociales"],
+      "timer": 25
+    },
+    {
+      "type": "D",
+      "category": "profond",
+      "text": "A quel point es-tu pret(e) a faire des compromis pour notre couple ?",
+      "timer": 20
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Qu'est-ce qui te manquerait le plus si on devait se separer ?",
+      "timer": 60
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Quel moment de ta vie t'a le plus change en tant que personne ?",
+      "timer": 45
+    },
+    {
+      "type": "F",
+      "category": "profond",
+      "text": "Qui de vous deux pardonne le plus facilement ?",
+      "timer": 15
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Si tu pouvais maitriser n'importe quelle competence instantanement, laquelle choisirais-tu ?",
+      "timer": 45
+    },
+    {
+      "type": "D",
+      "category": "profond",
+      "text": "A quel point te sens-tu epanoui(e) dans ta vie actuelle ?",
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "profond",
+      "text": "Quel type de vieillesse imagine-t-il/elle ?",
+      "options": ["Tranquille a la campagne", "Active en ville", "Voyageuse", "Entouree de famille"],
+      "timer": 25
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Quelle est la lecon la plus importante que la vie t'ait enseignee ?",
+      "timer": 60
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Qu'est-ce que tu aimerais accomplir avant tes 50 ans ?",
+      "timer": 45
+    },
+    {
+      "type": "F",
+      "category": "profond",
+      "text": "Qui de vous deux est le plus anxieux pour l'avenir ?",
+      "timer": 15
+    },
+    {
+      "type": "D",
+      "category": "profond",
+      "text": "A quel point es-tu fier/fiere de la personne que tu es devenue ?",
+      "timer": 20
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Si tu devais ecrire ta propre epitaphe, que dirait-elle ?",
+      "timer": 60
+    },
+    {
+      "type": "A",
+      "category": "profond",
+      "text": "Quelle est sa plus grande source de stress actuellement ?",
+      "options": ["Le travail", "Les finances", "La famille", "La sante"],
+      "timer": 25
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Quel conseil donnerais-tu a ton toi de 18 ans ?",
+      "timer": 45
+    },
+    {
+      "type": "D",
+      "category": "profond",
+      "text": "A quel point crois-tu au destin pour notre rencontre ?",
+      "timer": 20
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Quelle est la chose pour laquelle tu aimerais etre pardonne(e) ?",
+      "timer": 60
+    },
+    {
+      "type": "F",
+      "category": "profond",
+      "text": "Qui de vous deux a le plus change depuis votre rencontre ?",
+      "timer": 15
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Si l'argent n'etait pas un probleme, quelle vie construirais-tu pour nous ?",
+      "timer": 60
+    },
+    {
+      "type": "A",
+      "category": "profond",
+      "text": "Quel est son langage d'amour principal ?",
+      "options": ["Mots doux", "Gestes attentionnes", "Cadeaux", "Temps de qualite", "Contact physique"],
+      "timer": 25
+    },
+    {
+      "type": "D",
+      "category": "profond",
+      "text": "A quel point te sens-tu vulnerable avec ton/ta partenaire ?",
+      "timer": 20
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Qu'est-ce qui te rend le plus fier/fiere dans notre relation ?",
+      "timer": 45
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Si tu pouvais poser une question a ton toi dans 20 ans, que demanderais-tu ?",
+      "timer": 60
+    },
+    {
+      "type": "F",
+      "category": "profond",
+      "text": "Qui de vous deux fait le plus d'efforts pour maintenir la flamme ?",
+      "timer": 15
+    },
+    {
+      "type": "C",
+      "category": "profond",
+      "text": "Quelle tradition aimerais-tu creer pour notre couple ou famille ?",
+      "timer": 45
+    },
+    {
+      "type": "G",
+      "category": "couple",
+      "text": "{PLAYER} a deja pleure devant un film romantique.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "couple",
+      "text": "{PLAYER} serait capable de tout plaquer pour un tour du monde.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "couple",
+      "text": "{PLAYER} a deja menti pour eviter une dispute.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "couple",
+      "text": "{PLAYER} prefere les calins aux mots d'amour.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "couple",
+      "text": "{PLAYER} croit au coup de foudre.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "couple",
+      "text": "{PLAYER} a deja reve de son mariage.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "couple",
+      "text": "{PLAYER} serait jaloux/jalouse si l'autre dansait avec quelqu'un d'autre.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "couple",
+      "text": "{PLAYER} prefere recevoir des cadeaux plutot que des mots.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "habitudes",
+      "text": "{PLAYER} dort avec un doudou ou un oreiller special.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "habitudes",
+      "text": "{PLAYER} chante sous la douche.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "habitudes",
+      "text": "{PLAYER} pourrait manger du chocolat tous les jours.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "habitudes",
+      "text": "{PLAYER} a peur du noir.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "habitudes",
+      "text": "{PLAYER} est accro a son telephone.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "couple",
+      "text": "{PLAYER} pense souvent a notre premier rendez-vous.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "couple",
+      "text": "{PLAYER} a deja eu envie de vivre a l'etranger.",
+      "timer": 15
+    },
+    {
+      "type": "F",
+      "category": "couple",
+      "text": "Qui de vous deux est le plus romantique ?",
+      "timer": 15
+    },
+    {
+      "type": "F",
+      "category": "couple",
+      "text": "Qui de vous deux dit 'je t'aime' le plus souvent ?",
+      "timer": 15
+    },
+    {
+      "type": "F",
+      "category": "couple",
+      "text": "Qui de vous deux fait le premier pas pour se reconcilier ?",
+      "timer": 15
+    },
+    {
+      "type": "F",
+      "category": "couple",
+      "text": "Qui de vous deux est le plus patient ?",
+      "timer": 15
+    },
+    {
+      "type": "F",
+      "category": "habitudes",
+      "text": "Qui de vous deux cuisine le mieux ?",
+      "timer": 15
+    },
+    {
+      "type": "F",
+      "category": "habitudes",
+      "text": "Qui de vous deux est le plus bordélique ?",
+      "timer": 15
+    },
+    {
+      "type": "F",
+      "category": "habitudes",
+      "text": "Qui de vous deux passe le plus de temps sur les reseaux sociaux ?",
+      "timer": 15
+    },
+    {
+      "type": "F",
+      "category": "habitudes",
+      "text": "Qui de vous deux ronchonne le plus le matin ?",
+      "timer": 15
+    },
+    {
+      "type": "F",
+      "category": "habitudes",
+      "text": "Qui de vous deux oublie le plus les anniversaires ?",
+      "timer": 15
+    },
+    {
+      "type": "F",
+      "category": "couple",
+      "text": "Qui de vous deux est le plus jaloux ?",
+      "timer": 15
+    },
+    {
+      "type": "F",
+      "category": "couple",
+      "text": "Qui de vous deux a fait la plus belle declaration ?",
+      "timer": 15
+    },
+    {
+      "type": "F",
+      "category": "couple",
+      "text": "Qui de vous deux a les meilleurs conseils ?",
+      "timer": 15
+    },
+    {
+      "type": "F",
+      "category": "habitudes",
+      "text": "Qui de vous deux depense le plus d'argent ?",
+      "timer": 15
+    },
+    {
+      "type": "F",
+      "category": "habitudes",
+      "text": "Qui de vous deux est le plus gourmand ?",
+      "timer": 15
+    },
+    {
+      "type": "E",
+      "category": "fantasmes",
+      "text": "Avec quelle celebrite aurais-tu un pass gratuit ?",
+      "option_a": "Chris Hemsworth / Zendaya",
+      "option_b": "Ryan Gosling / Margot Robbie",
+      "timer": 15
+    },
+    {
+      "type": "A",
+      "category": "fantasmes",
+      "text": "Quel personnage de fiction ton/ta partenaire trouve-t-il/elle le plus attirant ?",
+      "options": ["Un super-heros (Thor, Wonder Woman...)", "Un vampire sexy (Edward, Lestat...)", "Un bad boy/girl (Tyler Durden, Lara Croft...)", "Un romantique (Mr Darcy, Anastasia...)"],
+      "timer": 20
+    },
+    {
+      "type": "E",
+      "category": "fantasmes",
+      "text": "Fantasme de lieu insolite ?",
+      "option_a": "Sur une plage deserte la nuit",
+      "option_b": "Dans un hotel 5 etoiles avec vue",
+      "timer": 15
+    },
+    {
+      "type": "D",
+      "category": "fantasmes",
+      "text": "A quel point serais-tu ouvert(e) a essayer un massage sensuel ?",
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "fantasmes",
+      "text": "Quelle celebrite lui fait le plus d'effet ?",
+      "options": ["Timothee Chalamet / Sydney Sweeney", "Bad Bunny / Dua Lipa", "Henry Cavill / Ana de Armas", "Harry Styles / Rihanna"],
+      "timer": 20
+    },
+    {
+      "type": "E",
+      "category": "fantasmes",
+      "text": "Jeux de role : quelle situation ?",
+      "option_a": "Inconnus qui se rencontrent dans un bar",
+      "option_b": "Patron(ne) et employe(e)",
+      "timer": 15
+    },
+    {
+      "type": "C",
+      "category": "fantasmes",
+      "text": "Decris ton fantasme le plus romantique.",
+      "timer": 60
+    },
+    {
+      "type": "F",
+      "category": "fantasmes",
+      "text": "Qui de vous deux est le plus aventurier au lit ?",
+      "timer": 15
+    },
+    {
+      "type": "E",
+      "category": "fantasmes",
+      "text": "Soiree a deux ideale ?",
+      "option_a": "Diner aux chandelles puis danse",
+      "option_b": "Netflix and chill... version hot",
+      "timer": 15
+    },
+    {
+      "type": "A",
+      "category": "fantasmes",
+      "text": "Quel acteur/actrice jouerait ton/ta partenaire dans un film ?",
+      "options": ["Quelqu'un de sexy et mysterieux", "Quelqu'un de drole et attachant", "Quelqu'un d'elegant et classe", "Quelqu'un d'intense et passionnel"],
+      "timer": 20
+    },
+    {
+      "type": "D",
+      "category": "fantasmes",
+      "text": "A quel point es-tu satisfait(e) de la frequence de vos moments intimes ?",
+      "timer": 20
+    },
+    {
+      "type": "E",
+      "category": "fantasmes",
+      "text": "Pour pimenter les choses ?",
+      "option_a": "Dessous sexy / Striptease",
+      "option_b": "Jeux et accessoires coquins",
+      "timer": 15
+    },
+    {
+      "type": "A",
+      "category": "fantasmes",
+      "text": "Quelle star de cinema lui donnerait des frissons ?",
+      "options": ["Jason Momoa / Scarlett Johansson", "Tom Holland / Florence Pugh", "Oscar Isaac / Salma Hayek", "Idris Elba / Beyonce"],
+      "timer": 20
+    },
+    {
+      "type": "C",
+      "category": "fantasmes",
+      "text": "Si tu pouvais organiser la nuit parfaite, a quoi ressemblerait-elle ?",
+      "timer": 60
+    },
+    {
+      "type": "E",
+      "category": "fantasmes",
+      "text": "Moment prefere de la journee pour les calins ?",
+      "option_a": "Le matin au reveil",
+      "option_b": "Le soir avant de dormir",
+      "timer": 15
+    },
+    {
+      "type": "F",
+      "category": "fantasmes",
+      "text": "Qui de vous deux est le plus timide pour exprimer ses envies ?",
+      "timer": 15
+    },
+    {
+      "type": "A",
+      "category": "fantasmes",
+      "text": "Quel type de fantasme l'attire le plus ?",
+      "options": ["Domination douce", "Romantisme extreme", "Aventure et risque", "Tendresse et sensualite"],
+      "timer": 20
+    },
+    {
+      "type": "D",
+      "category": "fantasmes",
+      "text": "A quel point serais-tu pret(e) a realiser un fantasme de ton/ta partenaire ?",
+      "timer": 20
+    },
+    {
+      "type": "E",
+      "category": "fantasmes",
+      "text": "Destination sexy pour un week-end ?",
+      "option_a": "Venise, la ville des amoureux",
+      "option_b": "Les Maldives, paradis tropical",
+      "timer": 15
+    },
+    {
+      "type": "C",
+      "category": "fantasmes",
+      "text": "Quel est le geste le plus seduisant que ton/ta partenaire puisse faire ?",
+      "timer": 45
+    },
+    {
+      "type": "A",
+      "category": "fantasmes",
+      "text": "Quelle celebrite le/la ferait craquer a coup sur ?",
+      "options": ["Brad Pitt / Angelina Jolie", "George Clooney / Jennifer Lopez", "Leonardo DiCaprio / Natalie Portman", "Keanu Reeves / Charlize Theron"],
+      "timer": 20
+    },
+    {
+      "type": "E",
+      "category": "fantasmes",
+      "text": "Ambiance ideale ?",
+      "option_a": "Bougies, musique douce, petales de rose",
+      "option_b": "Spontane, passionnel, imprevu",
+      "timer": 15
+    },
+    {
+      "type": "F",
+      "category": "fantasmes",
+      "text": "Qui de vous deux fait le plus de sous-entendus coquins ?",
+      "timer": 15
+    },
+    {
+      "type": "D",
+      "category": "fantasmes",
+      "text": "A quel point aimerais-tu recevoir plus de compliments sur ton physique ?",
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "fantasmes",
+      "text": "Quel personnage de serie lui fait de l'effet ?",
+      "options": ["Jon Snow / Daenerys (Game of Thrones)", "Tommy Shelby / Beth Dutton", "Derek Shepherd / Meredith Grey", "Lucifer / Mazikeen"],
+      "timer": 20
+    },
+    {
+      "type": "E",
+      "category": "fantasmes",
+      "text": "Message coquin ou appel vocal ?",
+      "option_a": "Sextos et photos suggestives",
+      "option_b": "Appel vocal avec voix sensuelle",
+      "timer": 15
+    },
+    {
+      "type": "C",
+      "category": "fantasmes",
+      "text": "Qu'est-ce qui t'excite le plus chez ton/ta partenaire ?",
+      "timer": 45
+    },
+    {
+      "type": "A",
+      "category": "fantasmes",
+      "text": "Quelle chanteuse/chanteur lui fait tourner la tete ?",
+      "options": ["The Weeknd / Taylor Swift", "Bruno Mars / Ariana Grande", "Justin Bieber / Selena Gomez", "Post Malone / Billie Eilish"],
+      "timer": 20
+    },
+    {
+      "type": "E",
+      "category": "fantasmes",
+      "text": "Fantasme de costume ?",
+      "option_a": "En uniforme (pompier, pilote...)",
+      "option_b": "En tenue de soiree chic",
+      "timer": 15
+    },
+    {
+      "type": "D",
+      "category": "fantasmes",
+      "text": "A quel point es-tu a l'aise pour parler de tes fantasmes ?",
+      "timer": 20
+    },
+    {
+      "type": "F",
+      "category": "fantasmes",
+      "text": "Qui de vous deux regarde le plus les autres ?",
+      "timer": 15
+    },
+    {
+      "type": "A",
+      "category": "fantasmes",
+      "text": "Quel sportif/sportive le/la fait fantasmer ?",
+      "options": ["Cristiano Ronaldo / Serena Williams", "David Beckham / Alex Morgan", "LeBron James / Lindsey Vonn", "Kylian Mbappe / Simone Biles"],
+      "timer": 20
+    },
+    {
+      "type": "E",
+      "category": "fantasmes",
+      "text": "Lieu inattendu qui te tenterait ?",
+      "option_a": "Dans un jacuzzi sous les etoiles",
+      "option_b": "Dans un train ou avion de nuit",
+      "timer": 15
+    },
+    {
+      "type": "C",
+      "category": "fantasmes",
+      "text": "Decris ce qui te met le plus dans l'ambiance.",
+      "timer": 45
+    },
+    {
+      "type": "A",
+      "category": "fantasmes",
+      "text": "Quel influenceur/influenceuse lui plait secretement ?",
+      "options": ["Quelqu'un de fitness", "Quelqu'un de mode/beaute", "Quelqu'un d'humour", "Il/elle ne suit pas les influenceurs"],
+      "timer": 20
+    },
+    {
+      "type": "E",
+      "category": "fantasmes",
+      "text": "Film a regarder ensemble en mode seduction ?",
+      "option_a": "Un film romantique classique",
+      "option_b": "Un film avec des scenes hot",
+      "timer": 15
+    },
+    {
+      "type": "D",
+      "category": "fantasmes",
+      "text": "A quel point les compliments sur ton corps t'excitent ?",
+      "timer": 20
+    },
+    {
+      "type": "F",
+      "category": "fantasmes",
+      "text": "Qui de vous deux a les fantasmes les plus fous ?",
+      "timer": 15
+    },
+    {
+      "type": "A",
+      "category": "fantasmes",
+      "text": "Quelle rock star ou rappeur lui fait de l'effet ?",
+      "options": ["Drake / Nicki Minaj", "Machine Gun Kelly / Megan Fox", "Travis Scott / Doja Cat", "Jared Leto / Lady Gaga"],
+      "timer": 20
+    },
+    {
+      "type": "E",
+      "category": "fantasmes",
+      "text": "Pour augmenter le desir ?",
+      "option_a": "Flirter toute la journee par messages",
+      "option_b": "Surprise romantique/coquine le soir",
+      "timer": 15
+    },
+    {
+      "type": "C",
+      "category": "fantasmes",
+      "text": "Si on pouvait tout essayer sans jugement, que proposerais-tu ?",
+      "timer": 60
+    },
+    {
+      "type": "A",
+      "category": "fantasmes",
+      "text": "Quel genre de scene de film l'emoustille le plus ?",
+      "options": ["La tension avant le baiser", "La scene de retrouvailles passionnelles", "La scene sous la pluie", "La scene de seduction lente"],
+      "timer": 20
+    },
+    {
+      "type": "E",
+      "category": "fantasmes",
+      "text": "Accessoire qui te tenterait ?",
+      "option_a": "Bandeau pour les yeux",
+      "option_b": "Huile de massage chauffante",
+      "timer": 15
+    },
+    {
+      "type": "D",
+      "category": "fantasmes",
+      "text": "A quel point le regard de ton/ta partenaire t'electrise ?",
+      "timer": 20
+    },
+    {
+      "type": "F",
+      "category": "fantasmes",
+      "text": "Qui de vous deux initie le plus souvent ?",
+      "timer": 15
+    },
+    {
+      "type": "A",
+      "category": "fantasmes",
+      "text": "Quelle celebrite incarne le mieux la seduction selon lui/elle ?",
+      "options": ["Rihanna / Johnny Depp", "Shakira / George Clooney", "Beyonce / Idris Elba", "Jennifer Aniston / Bradley Cooper"],
+      "timer": 20
+    },
+    {
+      "type": "G",
+      "category": "fantasmes",
+      "text": "{PLAYER} a deja eu un fantasme avec une celebrite.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "fantasmes",
+      "text": "{PLAYER} aimerait essayer un lieu public.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "fantasmes",
+      "text": "{PLAYER} prefere les surprises romantiques aux cadeaux.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "fantasmes",
+      "text": "{PLAYER} serait partant(e) pour un week-end improvise.",
+      "timer": 15
+    },
+    {
+      "type": "G",
+      "category": "fantasmes",
+      "text": "{PLAYER} est plus excite(e) par l'anticipation que par l'acte.",
+      "timer": 15
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Dans quel film y a-t-il la scene d'amour dans la poterie ?",
+      "options": ["Ghost", "Dirty Dancing", "Pretty Woman", "Titanic"],
+      "correct_answer": "Ghost",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel couple celebre s'est marie a Las Vegas en 2022 ?",
+      "options": ["Ben Affleck & Jennifer Lopez", "George Clooney & Amal", "Brad Pitt & Angelina Jolie", "Ryan Reynolds & Blake Lively"],
+      "correct_answer": "Ben Affleck & Jennifer Lopez",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Combien de temps dure en moyenne un premier rendez-vous ?",
+      "options": ["1-2 heures", "30 minutes", "3-4 heures", "5+ heures"],
+      "correct_answer": "1-2 heures",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel est le symbole de 10 ans de mariage ?",
+      "options": ["Etain", "Argent", "Or", "Diamant"],
+      "correct_answer": "Etain",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Dans quel pays offre-t-on traditionnellement 13 roses ?",
+      "options": ["Espagne", "France", "Italie", "Portugal"],
+      "correct_answer": "Espagne",
+      "timer": 20
+    }
+  ]
+}
