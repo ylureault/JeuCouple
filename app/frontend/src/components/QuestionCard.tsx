@@ -47,7 +47,7 @@ export default function QuestionCard({
   const [freeText, setFreeText] = useState('');
 
   const renderTypeAB = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       {question.options?.map((option, index) => {
         const style = buttonStyles[index % 4];
         const isSelected = selectedAnswer === option;
@@ -55,10 +55,10 @@ export default function QuestionCard({
         return (
           <motion.button
             key={index}
-            initial={{ opacity: 0, y: 30, scale: 0.9 }}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{
-              delay: index * 0.1,
+              delay: index * 0.08,
               type: 'spring',
               stiffness: 200,
               damping: 15
@@ -66,22 +66,22 @@ export default function QuestionCard({
             onClick={() => !disabled && onAnswer(option)}
             disabled={disabled}
             className={`
-              btn-answer ${style.bg} ${style.textColor || 'text-white'}
+              btn-answer ${style.bg} ${style.textColor || 'text-white'} py-3
               ${disabled && !isSelected ? 'btn-answer-disabled' : ''}
               ${isSelected ? 'btn-answer-selected' : ''}
             `}
-            whileHover={disabled ? {} : { scale: 1.03, y: -4 }}
-            whileTap={disabled ? {} : { scale: 0.97 }}
+            whileHover={disabled ? {} : { scale: 1.02, y: -2 }}
+            whileTap={disabled ? {} : { scale: 0.98 }}
           >
             <Shape type={style.shape} className={style.textColor ? 'text-gray-900' : 'text-white'} />
-            <span className="flex-1 text-left font-bold text-lg">
+            <span className="flex-1 text-left font-bold text-base">
               {option}
             </span>
             {isSelected && (
               <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="text-2xl"
+                className="text-xl"
               >
                 ✓
               </motion.span>
@@ -101,16 +101,16 @@ export default function QuestionCard({
 
     return (
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-4"
+        className="space-y-2"
       >
         <div className="bg-white rounded-xl p-1 shadow-lg">
           <textarea
             value={freeText}
             onChange={(e) => setFreeText(e.target.value)}
             placeholder="Écris ta réponse ici..."
-            className="w-full h-32 p-4 text-gray-900 text-lg font-semibold resize-none rounded-lg
+            className="w-full h-24 p-3 text-gray-900 text-base font-semibold resize-none rounded-lg
                        focus:outline-none placeholder-gray-400"
             disabled={disabled}
             maxLength={500}
@@ -119,12 +119,12 @@ export default function QuestionCard({
         <motion.button
           onClick={handleSubmit}
           disabled={disabled || !freeText.trim()}
-          className="btn-answer bg-[#26890c] w-full disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-answer bg-[#26890c] w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
           whileHover={disabled || !freeText.trim() ? {} : { scale: 1.02 }}
           whileTap={disabled || !freeText.trim() ? {} : { scale: 0.98 }}
         >
-          <span className="text-xl">✓</span>
-          <span>Valider ma réponse</span>
+          <span className="text-lg">✓</span>
+          <span className="text-sm">Valider ma réponse</span>
         </motion.button>
       </motion.div>
     );
@@ -137,27 +137,27 @@ export default function QuestionCard({
 
     return (
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-8"
+        className="space-y-4"
       >
         {/* Scale value display */}
         <div className="text-center">
           <motion.div
             key={scaleValue}
-            initial={{ scale: 1.5, opacity: 0 }}
+            initial={{ scale: 1.3, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="inline-block"
           >
-            <span className="text-8xl font-black text-white text-shadow-strong">
+            <span className="text-6xl font-black text-white text-shadow-strong">
               {scaleValue}
             </span>
           </motion.div>
-          <p className="text-white/60 text-lg mt-2">sur 10</p>
+          <p className="text-white/60 text-sm">sur 10</p>
         </div>
 
         {/* Slider */}
-        <div className="px-4">
+        <div className="px-2">
           <div className="relative">
             <input
               type="range"
@@ -166,20 +166,20 @@ export default function QuestionCard({
               value={scaleValue}
               onChange={(e) => setScaleValue(parseInt(e.target.value))}
               disabled={disabled}
-              className="w-full h-4 rounded-full cursor-pointer"
+              className="w-full h-3 rounded-full cursor-pointer"
             />
           </div>
-          <div className="flex justify-between text-white/70 font-bold mt-4">
+          <div className="flex justify-between text-white/70 font-bold mt-2 text-sm">
             <span className="flex flex-col items-center">
-              <span className="text-2xl">😢</span>
+              <span className="text-xl">😢</span>
               <span>1</span>
             </span>
             <span className="flex flex-col items-center">
-              <span className="text-2xl">😐</span>
+              <span className="text-xl">😐</span>
               <span>5</span>
             </span>
             <span className="flex flex-col items-center">
-              <span className="text-2xl">😍</span>
+              <span className="text-xl">😍</span>
               <span>10</span>
             </span>
           </div>
@@ -189,12 +189,12 @@ export default function QuestionCard({
         <motion.button
           onClick={handleSubmit}
           disabled={disabled}
-          className="btn-answer bg-[#26890c] w-full disabled:opacity-50"
+          className="btn-answer bg-[#26890c] w-full py-3 disabled:opacity-50"
           whileHover={disabled ? {} : { scale: 1.02 }}
           whileTap={disabled ? {} : { scale: 0.98 }}
         >
-          <span className="text-xl">✓</span>
-          <span>Valider</span>
+          <span className="text-lg">✓</span>
+          <span className="text-sm">Valider</span>
         </motion.button>
       </motion.div>
     );
@@ -206,29 +206,29 @@ export default function QuestionCard({
     const optionB = question.option_b || 'Option B';
 
     return (
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-2">
         {/* Option A */}
         <motion.button
-          initial={{ opacity: 0, x: -50, scale: 0.8 }}
+          initial={{ opacity: 0, x: -30, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 15 }}
           onClick={() => !disabled && onAnswer('A')}
           disabled={disabled}
           className={`
-            relative overflow-hidden rounded-2xl p-6 min-h-[140px]
+            relative overflow-hidden rounded-xl p-4 min-h-[100px]
             bg-gradient-to-br from-[#9b59b6] to-[#8e44ad]
             ${disabled && selectedAnswer !== 'A' ? 'opacity-50' : ''}
-            ${selectedAnswer === 'A' ? 'ring-4 ring-white ring-offset-2 ring-offset-transparent scale-105' : ''}
-            shadow-[0_8px_0_0_rgba(0,0,0,0.3)] hover:shadow-[0_6px_0_0_rgba(0,0,0,0.3)]
-            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[6px]
+            ${selectedAnswer === 'A' ? 'ring-2 ring-white scale-102' : ''}
+            shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[3px]
             transition-all duration-100
           `}
-          whileHover={disabled ? {} : { scale: 1.05, y: -4 }}
+          whileHover={disabled ? {} : { scale: 1.03, y: -2 }}
           whileTap={disabled ? {} : { scale: 0.98 }}
         >
-          <div className="absolute top-2 left-2 text-3xl">⬅️</div>
+          <div className="absolute top-1 left-1 text-xl">⬅️</div>
           <div className="flex flex-col items-center justify-center h-full">
-            <span className="text-white font-extrabold text-xl md:text-2xl text-center leading-tight">
+            <span className="text-white font-extrabold text-lg text-center leading-tight">
               {optionA}
             </span>
           </div>
@@ -236,7 +236,7 @@ export default function QuestionCard({
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute bottom-2 right-2 text-3xl"
+              className="absolute bottom-1 right-1 text-xl"
             >
               ✓
             </motion.div>
@@ -245,26 +245,26 @@ export default function QuestionCard({
 
         {/* Option B */}
         <motion.button
-          initial={{ opacity: 0, x: 50, scale: 0.8 }}
+          initial={{ opacity: 0, x: 30, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
           onClick={() => !disabled && onAnswer('B')}
           disabled={disabled}
           className={`
-            relative overflow-hidden rounded-2xl p-6 min-h-[140px]
+            relative overflow-hidden rounded-xl p-4 min-h-[100px]
             bg-gradient-to-br from-[#e91e63] to-[#c2185b]
             ${disabled && selectedAnswer !== 'B' ? 'opacity-50' : ''}
-            ${selectedAnswer === 'B' ? 'ring-4 ring-white ring-offset-2 ring-offset-transparent scale-105' : ''}
-            shadow-[0_8px_0_0_rgba(0,0,0,0.3)] hover:shadow-[0_6px_0_0_rgba(0,0,0,0.3)]
-            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[6px]
+            ${selectedAnswer === 'B' ? 'ring-2 ring-white scale-102' : ''}
+            shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[3px]
             transition-all duration-100
           `}
-          whileHover={disabled ? {} : { scale: 1.05, y: -4 }}
+          whileHover={disabled ? {} : { scale: 1.03, y: -2 }}
           whileTap={disabled ? {} : { scale: 0.98 }}
         >
-          <div className="absolute top-2 right-2 text-3xl">➡️</div>
+          <div className="absolute top-1 right-1 text-xl">➡️</div>
           <div className="flex flex-col items-center justify-center h-full">
-            <span className="text-white font-extrabold text-xl md:text-2xl text-center leading-tight">
+            <span className="text-white font-extrabold text-lg text-center leading-tight">
               {optionB}
             </span>
           </div>
@@ -272,7 +272,7 @@ export default function QuestionCard({
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute bottom-2 left-2 text-3xl"
+              className="absolute bottom-1 left-1 text-xl"
             >
               ✓
             </motion.div>
@@ -288,43 +288,43 @@ export default function QuestionCard({
     const theirName = playerId === 1 ? player2Name : player1Name;
 
     return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2">
           {/* Moi */}
           <motion.button
-            initial={{ opacity: 0, y: 50, scale: 0.8 }}
+            initial={{ opacity: 0, y: 30, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15 }}
             onClick={() => !disabled && onAnswer(playerId === 1 ? 'player1' : 'player2')}
             disabled={disabled}
             className={`
-              relative overflow-hidden rounded-2xl p-6 min-h-[140px]
+              relative overflow-hidden rounded-xl p-3 min-h-[90px]
               bg-gradient-to-br from-[#00bcd4] to-[#0097a7]
               ${disabled && selectedAnswer !== (playerId === 1 ? 'player1' : 'player2') ? 'opacity-50' : ''}
-              ${selectedAnswer === (playerId === 1 ? 'player1' : 'player2') ? 'ring-4 ring-white ring-offset-2 scale-105' : ''}
-              shadow-[0_8px_0_0_rgba(0,0,0,0.3)]
-              active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[6px]
+              ${selectedAnswer === (playerId === 1 ? 'player1' : 'player2') ? 'ring-2 ring-white scale-102' : ''}
+              shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
+              active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[3px]
               transition-all duration-100
             `}
-            whileHover={disabled ? {} : { scale: 1.05, y: -4 }}
+            whileHover={disabled ? {} : { scale: 1.03, y: -2 }}
             whileTap={disabled ? {} : { scale: 0.98 }}
           >
-            <div className="flex flex-col items-center justify-center h-full gap-2">
+            <div className="flex flex-col items-center justify-center h-full gap-1">
               <motion.span
-                className="text-5xl"
+                className="text-3xl"
                 animate={{ rotate: [0, 10, -10, 0] }}
                 transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
               >
                 🙋
               </motion.span>
-              <span className="text-white font-extrabold text-lg">MOI</span>
+              <span className="text-white font-extrabold text-base">MOI</span>
               <span className="text-white/70 text-xs">({myName})</span>
             </div>
             {selectedAnswer === (playerId === 1 ? 'player1' : 'player2') && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="absolute top-2 right-2 text-2xl"
+                className="absolute top-1 right-1 text-lg"
               >
                 ✓
               </motion.div>
@@ -333,39 +333,39 @@ export default function QuestionCard({
 
           {/* Lui/Elle */}
           <motion.button
-            initial={{ opacity: 0, y: 50, scale: 0.8 }}
+            initial={{ opacity: 0, y: 30, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
             onClick={() => !disabled && onAnswer(playerId === 1 ? 'player2' : 'player1')}
             disabled={disabled}
             className={`
-              relative overflow-hidden rounded-2xl p-6 min-h-[140px]
+              relative overflow-hidden rounded-xl p-3 min-h-[90px]
               bg-gradient-to-br from-[#ff5722] to-[#e64a19]
               ${disabled && selectedAnswer !== (playerId === 1 ? 'player2' : 'player1') ? 'opacity-50' : ''}
-              ${selectedAnswer === (playerId === 1 ? 'player2' : 'player1') ? 'ring-4 ring-white ring-offset-2 scale-105' : ''}
-              shadow-[0_8px_0_0_rgba(0,0,0,0.3)]
-              active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[6px]
+              ${selectedAnswer === (playerId === 1 ? 'player2' : 'player1') ? 'ring-2 ring-white scale-102' : ''}
+              shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
+              active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[3px]
               transition-all duration-100
             `}
-            whileHover={disabled ? {} : { scale: 1.05, y: -4 }}
+            whileHover={disabled ? {} : { scale: 1.03, y: -2 }}
             whileTap={disabled ? {} : { scale: 0.98 }}
           >
-            <div className="flex flex-col items-center justify-center h-full gap-2">
+            <div className="flex flex-col items-center justify-center h-full gap-1">
               <motion.span
-                className="text-5xl"
+                className="text-3xl"
                 animate={{ rotate: [0, -10, 10, 0] }}
                 transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
               >
                 💑
               </motion.span>
-              <span className="text-white font-extrabold text-lg">LUI/ELLE</span>
+              <span className="text-white font-extrabold text-base">LUI/ELLE</span>
               <span className="text-white/70 text-xs">({theirName})</span>
             </div>
             {selectedAnswer === (playerId === 1 ? 'player2' : 'player1') && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="absolute top-2 left-2 text-2xl"
+                className="absolute top-1 left-1 text-lg"
               >
                 ✓
               </motion.div>
@@ -375,32 +375,32 @@ export default function QuestionCard({
 
         {/* Nous deux */}
         <motion.button
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
           onClick={() => !disabled && onAnswer('both')}
           disabled={disabled}
           className={`
-            w-full relative overflow-hidden rounded-xl p-4
+            w-full relative overflow-hidden rounded-lg p-3
             bg-gradient-to-br from-[#9c27b0] to-[#7b1fa2]
             ${disabled && selectedAnswer !== 'both' ? 'opacity-50' : ''}
-            ${selectedAnswer === 'both' ? 'ring-4 ring-white ring-offset-2 scale-105' : ''}
-            shadow-[0_6px_0_0_rgba(0,0,0,0.3)]
-            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[4px]
+            ${selectedAnswer === 'both' ? 'ring-2 ring-white scale-102' : ''}
+            shadow-[0_3px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[2px]
             transition-all duration-100
           `}
-          whileHover={disabled ? {} : { scale: 1.02, y: -2 }}
+          whileHover={disabled ? {} : { scale: 1.02, y: -1 }}
           whileTap={disabled ? {} : { scale: 0.98 }}
         >
-          <div className="flex items-center justify-center gap-3">
-            <span className="text-3xl">👫</span>
-            <span className="text-white font-bold text-lg">Nous deux</span>
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-2xl">👫</span>
+            <span className="text-white font-bold text-base">Nous deux</span>
           </div>
           {selectedAnswer === 'both' && (
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute top-2 right-2 text-2xl"
+              className="absolute top-1 right-1 text-lg"
             >
               ✓
             </motion.div>
@@ -409,32 +409,32 @@ export default function QuestionCard({
 
         {/* Je ne sais pas */}
         <motion.button
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.3 }}
           onClick={() => !disabled && onAnswer('dontknow')}
           disabled={disabled}
           className={`
-            w-full relative overflow-hidden rounded-xl p-4
+            w-full relative overflow-hidden rounded-lg p-3
             bg-gradient-to-br from-gray-500 to-gray-600
             ${disabled && selectedAnswer !== 'dontknow' ? 'opacity-50' : ''}
-            ${selectedAnswer === 'dontknow' ? 'ring-4 ring-white ring-offset-2 scale-105' : ''}
-            shadow-[0_6px_0_0_rgba(0,0,0,0.3)]
-            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[4px]
+            ${selectedAnswer === 'dontknow' ? 'ring-2 ring-white scale-102' : ''}
+            shadow-[0_3px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[2px]
             transition-all duration-100
           `}
-          whileHover={disabled ? {} : { scale: 1.02, y: -2 }}
+          whileHover={disabled ? {} : { scale: 1.02, y: -1 }}
           whileTap={disabled ? {} : { scale: 0.98 }}
         >
-          <div className="flex items-center justify-center gap-3">
-            <span className="text-3xl">🤷</span>
-            <span className="text-white font-bold text-lg">Je ne sais pas</span>
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-2xl">🤷</span>
+            <span className="text-white font-bold text-base">Je ne sais pas</span>
           </div>
           {selectedAnswer === 'dontknow' && (
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute top-2 right-2 text-2xl"
+              className="absolute top-1 right-1 text-lg"
             >
               ✓
             </motion.div>
@@ -447,35 +447,35 @@ export default function QuestionCard({
   // Type G: "Vrai ou Faux" - True or false about a specific player
   const renderTypeG = () => {
     return (
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-2">
         {/* Vrai */}
         <motion.button
-          initial={{ opacity: 0, x: -50, scale: 0.8 }}
+          initial={{ opacity: 0, x: -30, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 15 }}
           onClick={() => !disabled && onAnswer('vrai')}
           disabled={disabled}
           className={`
-            relative overflow-hidden rounded-2xl p-6 min-h-[140px]
+            relative overflow-hidden rounded-xl p-4 min-h-[100px]
             bg-gradient-to-br from-[#26890c] to-[#1a6b08]
             ${disabled && selectedAnswer !== 'vrai' ? 'opacity-50' : ''}
-            ${selectedAnswer === 'vrai' ? 'ring-4 ring-white ring-offset-2 ring-offset-transparent scale-105' : ''}
-            shadow-[0_8px_0_0_rgba(0,0,0,0.3)] hover:shadow-[0_6px_0_0_rgba(0,0,0,0.3)]
-            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[6px]
+            ${selectedAnswer === 'vrai' ? 'ring-2 ring-white scale-102' : ''}
+            shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[3px]
             transition-all duration-100
           `}
-          whileHover={disabled ? {} : { scale: 1.05, y: -4 }}
+          whileHover={disabled ? {} : { scale: 1.03, y: -2 }}
           whileTap={disabled ? {} : { scale: 0.98 }}
         >
-          <div className="flex flex-col items-center justify-center h-full gap-2">
+          <div className="flex flex-col items-center justify-center h-full gap-1">
             <motion.span
-              className="text-5xl"
+              className="text-3xl"
               animate={{ scale: [1, 1.1, 1] }}
               transition={{ duration: 1, repeat: Infinity }}
             >
               ✅
             </motion.span>
-            <span className="text-white font-extrabold text-2xl">
+            <span className="text-white font-extrabold text-xl">
               VRAI
             </span>
           </div>
@@ -483,7 +483,7 @@ export default function QuestionCard({
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute top-2 right-2 text-3xl"
+              className="absolute top-1 right-1 text-xl"
             >
               ✓
             </motion.div>
@@ -492,32 +492,32 @@ export default function QuestionCard({
 
         {/* Faux */}
         <motion.button
-          initial={{ opacity: 0, x: 50, scale: 0.8 }}
+          initial={{ opacity: 0, x: 30, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
           onClick={() => !disabled && onAnswer('faux')}
           disabled={disabled}
           className={`
-            relative overflow-hidden rounded-2xl p-6 min-h-[140px]
+            relative overflow-hidden rounded-xl p-4 min-h-[100px]
             bg-gradient-to-br from-[#e21b3c] to-[#b01530]
             ${disabled && selectedAnswer !== 'faux' ? 'opacity-50' : ''}
-            ${selectedAnswer === 'faux' ? 'ring-4 ring-white ring-offset-2 ring-offset-transparent scale-105' : ''}
-            shadow-[0_8px_0_0_rgba(0,0,0,0.3)] hover:shadow-[0_6px_0_0_rgba(0,0,0,0.3)]
-            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[6px]
+            ${selectedAnswer === 'faux' ? 'ring-2 ring-white scale-102' : ''}
+            shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[3px]
             transition-all duration-100
           `}
-          whileHover={disabled ? {} : { scale: 1.05, y: -4 }}
+          whileHover={disabled ? {} : { scale: 1.03, y: -2 }}
           whileTap={disabled ? {} : { scale: 0.98 }}
         >
-          <div className="flex flex-col items-center justify-center h-full gap-2">
+          <div className="flex flex-col items-center justify-center h-full gap-1">
             <motion.span
-              className="text-5xl"
+              className="text-3xl"
               animate={{ scale: [1, 1.1, 1] }}
               transition={{ duration: 1, repeat: Infinity, delay: 0.5 }}
             >
               ❌
             </motion.span>
-            <span className="text-white font-extrabold text-2xl">
+            <span className="text-white font-extrabold text-xl">
               FAUX
             </span>
           </div>
@@ -525,7 +525,7 @@ export default function QuestionCard({
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute top-2 left-2 text-3xl"
+              className="absolute top-1 left-1 text-xl"
             >
               ✓
             </motion.div>
@@ -545,7 +545,7 @@ export default function QuestionCard({
     ];
 
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {question.options?.map((option, index) => {
           const style = qcmStyles[index % 4];
           const isSelected = selectedAnswer === option;
@@ -553,10 +553,10 @@ export default function QuestionCard({
           return (
             <motion.button
               key={index}
-              initial={{ opacity: 0, y: 30, scale: 0.9 }}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{
-                delay: index * 0.1,
+                delay: index * 0.08,
                 type: 'spring',
                 stiffness: 200,
                 damping: 15
@@ -564,29 +564,29 @@ export default function QuestionCard({
               onClick={() => !disabled && onAnswer(option)}
               disabled={disabled}
               className={`
-                relative overflow-hidden rounded-xl p-4 min-h-[70px]
+                relative overflow-hidden rounded-lg p-3 min-h-[56px]
                 ${style.bg} text-white
                 ${disabled && !isSelected ? 'opacity-50' : ''}
-                ${isSelected ? 'ring-4 ring-white ring-offset-2 scale-105' : ''}
-                shadow-[0_6px_0_0_rgba(0,0,0,0.3)]
-                active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[4px]
+                ${isSelected ? 'ring-2 ring-white scale-102' : ''}
+                shadow-[0_3px_0_0_rgba(0,0,0,0.3)]
+                active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[2px]
                 transition-all duration-100
               `}
-              whileHover={disabled ? {} : { scale: 1.03, y: -3 }}
-              whileTap={disabled ? {} : { scale: 0.97 }}
+              whileHover={disabled ? {} : { scale: 1.02, y: -2 }}
+              whileTap={disabled ? {} : { scale: 0.98 }}
             >
-              <div className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-black text-xl">
+              <div className="flex items-center gap-2">
+                <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-black text-base flex-shrink-0">
                   {style.letter}
                 </span>
-                <span className="flex-1 text-left font-bold text-lg">
+                <span className="flex-1 text-left font-bold text-sm leading-tight">
                   {option}
                 </span>
                 {isSelected && (
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="text-2xl"
+                    className="text-lg"
                   >
                     ✓
                   </motion.span>
@@ -607,30 +607,30 @@ export default function QuestionCard({
     const emojiB = question.emoji_b || '⛰️';
 
     return (
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-2">
         {/* Option A with large emoji */}
         <motion.button
-          initial={{ opacity: 0, x: -50, scale: 0.8, rotateY: -30 }}
-          animate={{ opacity: 1, x: 0, scale: 1, rotateY: 0 }}
+          initial={{ opacity: 0, x: -30, scale: 0.9 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 15 }}
           onClick={() => !disabled && onAnswer('A')}
           disabled={disabled}
           className={`
-            relative overflow-hidden rounded-2xl p-4 min-h-[180px]
+            relative overflow-hidden rounded-xl p-3 min-h-[120px]
             bg-gradient-to-br from-[#ff6b6b] via-[#ee5a5a] to-[#ff4757]
             ${disabled && selectedAnswer !== 'A' ? 'opacity-50' : ''}
-            ${selectedAnswer === 'A' ? 'ring-4 ring-white ring-offset-2 ring-offset-transparent scale-105' : ''}
-            shadow-[0_10px_0_0_rgba(0,0,0,0.3)] hover:shadow-[0_8px_0_0_rgba(0,0,0,0.3)]
-            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[8px]
+            ${selectedAnswer === 'A' ? 'ring-2 ring-white scale-102' : ''}
+            shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[3px]
             transition-all duration-100
           `}
-          whileHover={disabled ? {} : { scale: 1.05, y: -6, rotateY: 5 }}
+          whileHover={disabled ? {} : { scale: 1.03, y: -2 }}
           whileTap={disabled ? {} : { scale: 0.98 }}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-          <div className="relative flex flex-col items-center justify-center h-full gap-2">
+          <div className="relative flex flex-col items-center justify-center h-full gap-1">
             <motion.span
-              className="text-6xl md:text-7xl filter drop-shadow-lg"
+              className="text-4xl md:text-5xl filter drop-shadow-lg"
               animate={{
                 scale: [1, 1.1, 1],
                 rotate: [0, 5, -5, 0]
@@ -639,44 +639,44 @@ export default function QuestionCard({
             >
               {emojiA}
             </motion.span>
-            <span className="text-white font-extrabold text-lg md:text-xl text-center leading-tight text-shadow-strong px-1">
+            <span className="text-white font-extrabold text-base text-center leading-tight text-shadow-strong px-1">
               {optionA}
             </span>
           </div>
           {selectedAnswer === 'A' && (
             <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              className="absolute top-2 right-2 bg-white rounded-full p-1"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute top-1 right-1 bg-white rounded-full p-0.5"
             >
-              <span className="text-green-500 text-2xl font-bold">✓</span>
+              <span className="text-green-500 text-lg font-bold">✓</span>
             </motion.div>
           )}
         </motion.button>
 
         {/* Option B with large emoji */}
         <motion.button
-          initial={{ opacity: 0, x: 50, scale: 0.8, rotateY: 30 }}
-          animate={{ opacity: 1, x: 0, scale: 1, rotateY: 0 }}
+          initial={{ opacity: 0, x: 30, scale: 0.9 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
           onClick={() => !disabled && onAnswer('B')}
           disabled={disabled}
           className={`
-            relative overflow-hidden rounded-2xl p-4 min-h-[180px]
+            relative overflow-hidden rounded-xl p-3 min-h-[120px]
             bg-gradient-to-br from-[#5f27cd] via-[#6c3ad1] to-[#341f97]
             ${disabled && selectedAnswer !== 'B' ? 'opacity-50' : ''}
-            ${selectedAnswer === 'B' ? 'ring-4 ring-white ring-offset-2 ring-offset-transparent scale-105' : ''}
-            shadow-[0_10px_0_0_rgba(0,0,0,0.3)] hover:shadow-[0_8px_0_0_rgba(0,0,0,0.3)]
-            active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] active:translate-y-[8px]
+            ${selectedAnswer === 'B' ? 'ring-2 ring-white scale-102' : ''}
+            shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[3px]
             transition-all duration-100
           `}
-          whileHover={disabled ? {} : { scale: 1.05, y: -6, rotateY: -5 }}
+          whileHover={disabled ? {} : { scale: 1.03, y: -2 }}
           whileTap={disabled ? {} : { scale: 0.98 }}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-          <div className="relative flex flex-col items-center justify-center h-full gap-2">
+          <div className="relative flex flex-col items-center justify-center h-full gap-1">
             <motion.span
-              className="text-6xl md:text-7xl filter drop-shadow-lg"
+              className="text-4xl md:text-5xl filter drop-shadow-lg"
               animate={{
                 scale: [1, 1.1, 1],
                 rotate: [0, -5, 5, 0]
@@ -685,17 +685,17 @@ export default function QuestionCard({
             >
               {emojiB}
             </motion.span>
-            <span className="text-white font-extrabold text-lg md:text-xl text-center leading-tight text-shadow-strong px-1">
+            <span className="text-white font-extrabold text-base text-center leading-tight text-shadow-strong px-1">
               {optionB}
             </span>
           </div>
           {selectedAnswer === 'B' && (
             <motion.div
-              initial={{ scale: 0, rotate: 180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              className="absolute top-2 left-2 bg-white rounded-full p-1"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute top-1 left-1 bg-white rounded-full p-0.5"
             >
-              <span className="text-green-500 text-2xl font-bold">✓</span>
+              <span className="text-green-500 text-lg font-bold">✓</span>
             </motion.div>
           )}
         </motion.button>
@@ -741,7 +741,7 @@ export default function QuestionCard({
   );
 
   return (
-    <div className="space-y-4 w-full max-w-2xl mx-auto">
+    <div className="space-y-2 w-full max-w-2xl mx-auto">
       {(question.type === 'A' || question.type === 'B') && renderTypeAB()}
       {question.type === 'C' && renderTypeC()}
       {question.type === 'D' && renderTypeD()}

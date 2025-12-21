@@ -264,7 +264,7 @@ export default function Game() {
       </motion.div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-start p-4 md:p-6 pb-20 overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center justify-start p-2 sm:p-4 pb-16 overflow-y-auto">
         <AnimatePresence mode="wait">
           {/* INTRO SEQUENCE */}
           {showIntro && (
@@ -350,32 +350,32 @@ export default function Game() {
               <motion.div
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                className="mb-6"
+                className="mb-3"
               >
-                <div className="question-card relative">
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <div className="question-card relative py-3 px-4">
+                  <div className="absolute -top-2 left-1/2 -translate-x-1/2">
                     <CategoryBadge category={currentQuestion.category} />
                   </div>
-                  <p className="text-xl md:text-2xl pt-4">
+                  <p className="text-lg md:text-xl pt-3">
                     {currentQuestion.text}
                   </p>
                   {currentQuestion.type === 'A' && (
-                    <p className="text-gray-500 text-sm mt-3">
+                    <p className="text-gray-500 text-xs mt-1">
                       Devine ce que {theirName} va répondre !
                     </p>
                   )}
                   {currentQuestion.type === 'B' && (
-                    <p className="text-gray-500 text-sm mt-3">
+                    <p className="text-gray-500 text-xs mt-1">
                       Points si vos réponses concordent !
                     </p>
                   )}
                   {currentQuestion.type === 'G' && (
-                    <p className="text-gray-500 text-sm mt-3">
+                    <p className="text-gray-500 text-xs mt-1">
                       Vrai ou Faux ? Points si vos réponses concordent !
                     </p>
                   )}
                   {currentQuestion.type === 'H' && (
-                    <p className="text-gray-500 text-sm mt-3">
+                    <p className="text-gray-500 text-xs mt-1">
                       Culture G : chacun gagne des points s'il a la bonne réponse !
                     </p>
                   )}
@@ -383,7 +383,7 @@ export default function Game() {
               </motion.div>
 
               {/* Countdown */}
-              <div className="flex justify-center mb-6">
+              <div className="flex justify-center mb-3">
                 <Countdown
                   timeLeft={timeLeft}
                   maxTime={currentQuestion.timer}
@@ -404,19 +404,19 @@ export default function Game() {
               {/* Other player status */}
               {myAnswer && (
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 text-center"
+                  className="mt-3 text-center"
                 >
-                  <div className="inline-flex items-center gap-3 bg-[#26890c] rounded-full px-6 py-3">
+                  <div className="inline-flex items-center gap-2 bg-[#26890c] rounded-full px-4 py-2">
                     <motion.span
                       animate={{ scale: [1, 1.2, 1] }}
                       transition={{ repeat: Infinity, duration: 1 }}
-                      className="text-xl"
+                      className="text-base"
                     >
                       ✓
                     </motion.span>
-                    <span className="text-white font-bold">
+                    <span className="text-white font-bold text-sm">
                       Réponse enregistrée !
                     </span>
                   </div>
@@ -424,10 +424,10 @@ export default function Game() {
                     <motion.p
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="text-white/60 mt-3 flex items-center justify-center gap-2"
+                      className="text-white/60 mt-2 text-sm flex items-center justify-center gap-1"
                     >
                       <span>En attente de {theirName}</span>
-                      <span className="flex gap-1">
+                      <span className="flex">
                         {[0, 1, 2].map((i) => (
                           <motion.span
                             key={i}
@@ -444,7 +444,7 @@ export default function Game() {
                     <motion.p
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      className="text-[#26890c] mt-3 font-bold"
+                      className="text-[#26890c] mt-2 font-bold text-sm"
                     >
                       {theirName} a répondu ! Révélation imminente...
                     </motion.p>
@@ -464,11 +464,11 @@ export default function Game() {
               className="text-center"
             >
               <motion.div
-                className="bg-white/10 backdrop-blur rounded-3xl p-10"
+                className="bg-white/10 backdrop-blur rounded-2xl p-6"
                 animate={{
                   boxShadow: [
                     '0 0 0 0 rgba(255,255,255,0)',
-                    '0 0 0 20px rgba(255,255,255,0.1)',
+                    '0 0 0 15px rgba(255,255,255,0.1)',
                     '0 0 0 0 rgba(255,255,255,0)',
                   ],
                 }}
@@ -477,14 +477,14 @@ export default function Game() {
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                  className="text-6xl mb-6"
+                  className="text-4xl mb-3"
                 >
                   ⏳
                 </motion.div>
-                <p className="text-2xl font-bold text-white mb-2">
+                <p className="text-xl font-bold text-white mb-1">
                   {myAnswer ? 'Réponse envoyée !' : 'Temps écoulé !'}
                 </p>
-                <p className="text-white/60">
+                <p className="text-white/60 text-sm">
                   En attente de {theirName}...
                 </p>
               </motion.div>

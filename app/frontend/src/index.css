@@ -149,8 +149,8 @@ body {
 /* Countdown circle - Kahoot style */
 .countdown-container {
   position: relative;
-  width: 140px;
-  height: 140px;
+  width: 100px;
+  height: 100px;
   margin: 0 auto;
 }
 
@@ -179,9 +179,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 3.5rem;
+  font-size: 2.5rem;
   font-weight: 900;
-  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.2);
 }
 
 /* Pulsing animation for countdown */

@@ -67,9 +67,9 @@ export default function ReactionBar() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex justify-center gap-1.5 sm:gap-2 relative"
+      className="flex justify-center gap-1 sm:gap-1.5 relative"
     >
       {REACTION_EMOJIS.map((emoji, index) => (
         <motion.button
@@ -84,20 +84,20 @@ export default function ReactionBar() {
             transition: { type: 'spring', stiffness: 400 }
           }}
           whileTap={{ scale: 0.85 }}
-          className="relative w-9 h-9 sm:w-11 sm:h-11 bg-white/10 hover:bg-white/25 rounded-full flex items-center justify-center transition-colors group"
+          className="relative w-8 h-8 sm:w-10 sm:h-10 bg-white/10 hover:bg-white/25 rounded-full flex items-center justify-center transition-colors group"
         >
           {/* Glow effect on hover */}
           <motion.div
             className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
             style={{
               background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)',
-              filter: 'blur(8px)'
+              filter: 'blur(6px)'
             }}
           />
 
           {/* Emoji with animation */}
           <motion.span
-            className="text-lg sm:text-2xl relative z-10"
+            className="text-base sm:text-xl relative z-10"
             animate={(lastClicked === emoji ? EMOJI_ANIMATIONS[emoji]?.animation : {}) as any}
             transition={(lastClicked === emoji ? EMOJI_ANIMATIONS[emoji]?.transition : {}) as any}
           >
@@ -126,10 +126,10 @@ export default function ReactionBar() {
           <motion.div
             key={effect.id}
             initial={{ opacity: 1, y: 0, scale: 1 }}
-            animate={{ opacity: 0, y: -60, scale: 0.5 }}
+            animate={{ opacity: 0, y: -40, scale: 0.5 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="absolute top-0 left-1/2 -translate-x-1/2 text-3xl pointer-events-none"
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="absolute top-0 left-1/2 -translate-x-1/2 text-2xl pointer-events-none"
           >
             {effect.emoji}
           </motion.div>

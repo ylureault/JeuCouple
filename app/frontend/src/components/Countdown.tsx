@@ -10,7 +10,7 @@ interface CountdownProps {
 export default function Countdown({ timeLeft, maxTime, onTimeUp }: CountdownProps) {
   const [prevTime, setPrevTime] = useState(timeLeft);
   const progress = timeLeft / maxTime;
-  const radius = 58;
+  const radius = 40;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - progress);
 
@@ -50,17 +50,17 @@ export default function Countdown({ timeLeft, maxTime, onTimeUp }: CountdownProp
       />
 
       {/* SVG Circle */}
-      <svg className="countdown-circle w-full h-full" viewBox="0 0 140 140">
+      <svg className="countdown-circle w-full h-full" viewBox="0 0 100 100">
         <circle
           className="countdown-bg"
-          cx="70"
-          cy="70"
+          cx="50"
+          cy="50"
           r={radius}
         />
         <motion.circle
           className="countdown-progress"
-          cx="70"
-          cy="70"
+          cx="50"
+          cy="50"
           r={radius}
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
@@ -104,9 +104,9 @@ export default function Countdown({ timeLeft, maxTime, onTimeUp }: CountdownProp
           {[...Array(12)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-1 h-3 bg-white/30 rounded-full"
+              className="absolute w-0.5 h-2 bg-white/30 rounded-full"
               style={{
-                transform: `rotate(${i * 30}deg) translateY(-60px)`,
+                transform: `rotate(${i * 30}deg) translateY(-42px)`,
               }}
             />
           ))}
