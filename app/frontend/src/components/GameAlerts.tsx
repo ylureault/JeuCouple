@@ -137,32 +137,31 @@ export default function GameAlerts({
   };
 
   return (
-    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none">
+    <div className="fixed top-14 right-2 z-40 flex flex-col items-end gap-1 pointer-events-none max-w-[280px] sm:max-w-[350px]">
       <AnimatePresence mode="popLayout">
         {alerts.map((alert) => (
           <motion.div
             key={alert.id}
-            initial={{ opacity: 0, y: -50, scale: 0.8, rotateX: -90 }}
-            animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-            exit={{ opacity: 0, y: -20, scale: 0.8, transition: { duration: 0.2 } }}
+            initial={{ opacity: 0, x: 100, scale: 0.8 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 50, scale: 0.8, transition: { duration: 0.2 } }}
             transition={{ type: 'spring', damping: 15, stiffness: 200 }}
             className={`
               bg-gradient-to-r ${getAlertStyle(alert.type)}
-              px-6 py-3 rounded-full shadow-2xl border-2
-              flex items-center gap-3
+              px-3 py-1.5 rounded-lg shadow-lg border
+              flex items-center gap-2
             `}
           >
             <motion.span
               animate={{
-                scale: [1, 1.3, 1],
-                rotate: [0, 10, -10, 0]
+                scale: [1, 1.2, 1]
               }}
               transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1 }}
-              className="text-2xl"
+              className="text-base"
             >
               {alert.emoji}
             </motion.span>
-            <span className="text-white font-bold text-sm md:text-base whitespace-nowrap">
+            <span className="text-white font-semibold text-xs leading-tight">
               {alert.text}
             </span>
           </motion.div>
