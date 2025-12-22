@@ -1,0 +1,928 @@
+{
+  "questions": [
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Selon toi, comment reagirait-il/elle si tu oubliais son anniversaire ?",
+      "options": ["Tres vexe(e), silence glacial", "Decu(e) mais compréhensif/ve", "Ferait semblant que ca va", "En rigolerait"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu lui faisais une surprise romantique ?",
+      "options": ["Super enthousiaste", "Gene(e) mais touche(e)", "Sceptique au debut", "Pleurerait de joie"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si vous etiez perdus dans une ville inconnue ?",
+      "options": ["Prendrait les choses en main", "Demanderait son chemin", "Utiliserait le GPS obstinement", "Paniquerait un peu"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle face a une araignee geante ?",
+      "options": ["Hurlerait et fuirait", "La tuerait sans hesiter", "La capturerait pour la mettre dehors", "Ne bougerait plus, fige(e)"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si quelqu'un te draguait devant lui/elle ?",
+      "options": ["Marquerait son territoire", "Resterait zen et confiant(e)", "Serait jaloux/jalouse mais le cacherait", "Trouverait ca flatteur pour toi"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu lui disais que tu veux demenager a l'etranger ?",
+      "options": ["Pret(e) a te suivre partout", "Aurait besoin de temps pour reflechir", "Proposerait un compromis", "Refuserait categoriquement"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si vous gagniez au loto ?",
+      "options": ["Acheterait une maison", "Ferait le tour du monde", "Investirait prudemment", "Feterait ca comme un fou/folle"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu lui avouais un mensonge ?",
+      "options": ["Tres en colere", "Decu(e) mais pardonnerait", "Voudrait comprendre pourquoi", "Hausserait les epaules"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle coincé(e) dans un ascenseur ?",
+      "options": ["Resterait calme et patient(e)", "Appellerait a l'aide immediatement", "Commencerait a stresser", "En profiterait pour un moment intime"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu changeais radicalement de look ?",
+      "options": ["Adorerait le changement", "Serait surpris(e) mais s'adapterait", "Prefererait l'ancien look", "Te soutiendrait quoi qu'il arrive"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si un ami te critiquait devant lui/elle ?",
+      "options": ["Te defendrait fermement", "Resterait neutre", "En parlerait avec toi apres", "Changerait de sujet"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu lui proposais un saut en parachute ?",
+      "options": ["Partant(e) a 100%", "Hesitant(e) mais accepterait", "Refuserait poliment", "Fuirait en courant"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle lors d'une panne de courant ?",
+      "options": ["Allumerait des bougies romantiques", "Chercherait une solution", "Se plaindrait", "Irait dormir directement"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu recevais une promotion avec plus de travail ?",
+      "options": ["Serait tres fier/fiere de toi", "S'inquieterait pour votre temps ensemble", "Te soutiendrait totalement", "Aurait des sentiments mitiges"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si vous deviez monter un meuble IKEA ensemble ?",
+      "options": ["Prendrait les commandes", "Lirait les instructions calmement", "S'enerverait rapidement", "Appellerait quelqu'un a l'aide"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu voulais adopter un animal ?",
+      "options": ["Enthousiaste immediat", "Voudrait en discuter d'abord", "Hesitant(e) sur la responsabilite", "Refuserait net"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si vous etiez en retard a un evenement important ?",
+      "options": ["Stresserait enormement", "Resterait zen", "Blamerait quelqu'un", "Accelererait le pas sans paniquer"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tes parents debarquaient a l'improviste ?",
+      "options": ["Les accueillerait chaleureusement", "Serait un peu stresse(e)", "Ferait bonne figure", "Serait agace(e) par la surprise"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle face a un conflit avec un voisin bruyant ?",
+      "options": ["Irait lui parler calmement", "Appellerait les autorites", "Subirait en silence", "Ferait du bruit en retour"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu lui demandais d'aller en therapie de couple ?",
+      "options": ["Serait ouvert(e) a l'idee", "S'inquieterait de ce que ca signifie", "Refuserait d'en parler", "Proposerait d'essayer autre chose d'abord"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si vous etiez en desaccord sur un film a regarder ?",
+      "options": ["Cederait pour te faire plaisir", "Insisterait pour son choix", "Proposerait un compromis", "Regarderait chacun son truc"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu te blessais ?",
+      "options": ["Paniquerait completement", "Garderait son calme et t'aiderait", "Appellerait immediatement les secours", "Ferait des blagues pour dedramatiser"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si on lui offrait un voyage surprise ?",
+      "options": ["Serait aux anges", "Voudrait connaitre tous les details", "S'inquieterait de l'organisation", "Prefererait choisir la destination"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu lui disais que tu n'aimes pas ses amis ?",
+      "options": ["Essaierait de comprendre pourquoi", "Se vexerait", "Ferait des efforts pour integrer tout le monde", "Respecterait ton avis sans changer"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si le serveur se trompait de commande ?",
+      "options": ["Le signalerait poliment", "Mangerait quand meme", "Serait agace(e) mais ne dirait rien", "Ferait une scene"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu lui proposais de rencontrer tes parents ?",
+      "options": ["Tres enthousiaste", "Un peu nerveux/nerveuse", "Demanderait plus de temps", "Eviterait le sujet"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si tu pleurais sans raison apparente ?",
+      "options": ["Te prendrait dans ses bras", "Essaierait de comprendre", "Te laisserait de l'espace", "Serait mal a l'aise"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si vous deviez faire un long trajet en voiture ?",
+      "options": ["Conduirait avec plaisir", "Prefererait etre passager", "Voudrait alterner", "Se plaindrait du trajet"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si tu oubliais de faire quelque chose d'important ?",
+      "options": ["Te le rappellerait gentiment", "Serait frustre(e)", "Le ferait a ta place", "N'y accorderait pas d'importance"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu lui proposais un week-end chez ses beaux-parents ?",
+      "options": ["Accepterait avec joie", "Hesiterait un peu", "Proposerait une alternative", "Refuserait poliment"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si tu rentrais tres tard sans prevenir ?",
+      "options": ["S'inquieterait beaucoup", "Serait en colere", "Te ferait confiance", "Dormirait deja"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu lui faisais un petit-dejeuner au lit ?",
+      "options": ["Serait super touche(e)", "Trouverait ca romantique", "Prefererait manger a table", "Se rendormirait apres"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si vous croisiez son ex dans la rue ?",
+      "options": ["Dirait bonjour poliment", "Ferait comme si de rien n'etait", "Serait mal a l'aise", "Te presenterait fierement"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu lui disais que tu veux moins sortir ?",
+      "options": ["Comprendrait parfaitement", "Serait un peu decu(e)", "Proposerait un equilibre", "Sortirait sans toi parfois"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si le wifi tombait en panne ?",
+      "options": ["Resterait zen", "Essaierait de le reparer", "Deviendrait fou/folle", "En profiterait pour faire autre chose"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu lui offrais un cadeau qu'il/elle n'aime pas ?",
+      "options": ["Ferait semblant d'adorer", "Te le dirait honnetement", "L'echangerait discretement", "L'utiliserait quand meme pour te faire plaisir"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si quelqu'un l'insultait ?",
+      "options": ["Resterait calme et ignorerait", "Repondrait du tac au tac", "Serait blesse(e) en silence", "Demanderait des explications"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu voulais faire chambre a part une nuit ?",
+      "options": ["Comprendrait sans probleme", "Se poserait des questions", "Serait vexe(e)", "Te demanderait pourquoi"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si vous etiez temoins d'une injustice ?",
+      "options": ["Interviendrait immediatement", "Appellerait a l'aide", "Filmerait la scene", "Passerait son chemin"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu lui disais que tu veux changer de travail ?",
+      "options": ["Te soutiendrait a 100%", "S'inquieterait pour les finances", "Poserait beaucoup de questions", "Te conseillerait de reflechir"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle lors d'une dispute avec toi ?",
+      "options": ["Hausserait le ton", "Resterait calme et discuterait", "Se fermerait et se tairait", "Quitterait la piece pour se calmer"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu lui faisais une declaration publique ?",
+      "options": ["Adorerait l'attention", "Serait gene(e) mais touche(e)", "Prefererait en prive", "Te ferait une declaration en retour"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si son telephone tombait dans l'eau ?",
+      "options": ["Paniquerait totalement", "Essaierait de le sauver calmement", "Accepterait la perte", "Acheterait un nouveau immediatement"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu voulais faire un tatouage ?",
+      "options": ["T'encouragerait", "Donnerait son avis honnete", "N'aimerait pas l'idee", "Voudrait en faire un aussi"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si vous deviez economiser pour un grand projet ?",
+      "options": ["Serait tres discipline(e)", "Ferait des ecarts parfois", "Trouverait ca difficile", "Etablirait un budget strict"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si tu lui avouais une phobie ridicule ?",
+      "options": ["Te comprendrait sans juger", "Rirait gentiment", "Essaierait de t'aider a la surmonter", "Te taquinerait avec"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si vous etiez invites a une soiree ou il/elle ne connait personne ?",
+      "options": ["Resterait proche de toi", "Irait vers les autres facilement", "Voudrait partir rapidement", "Ferait un effort pour s'integrer"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle face a un bebe qui pleure ?",
+      "options": ["Essaierait de le calmer", "Serait mal a l'aise", "Le trouverait mignon quand meme", "Passerait le relais"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Que ferait-il/elle si tu lui disais que tu as besoin d'espace ?",
+      "options": ["Respecterait ton besoin", "Se poserait des questions", "Serait blesse(e)", "Te demanderait combien de temps"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "comportement",
+      "text": "Comment reagirait-il/elle si vous deviez vivre avec moins d'argent ?",
+      "options": ["S'adapterait facilement", "Trouverait ca stressant", "Chercherait des solutions", "Se plaindrait souvent"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses 3 cocktails preferes ?",
+      "options": ["Mojito, Margarita, Pina Colada", "Whisky Sour, Old Fashioned, Negroni", "Spritz, Moscow Mule, Cosmopolitan", "Il/elle ne boit pas de cocktails"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses plats preferes au restaurant ?",
+      "options": ["Burger, pizza, pates", "Sushi, poke bowl, ramen", "Viande grillee, poisson, legumes", "Cuisine exotique variee"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles sont ses series Netflix preferees ?",
+      "options": ["Thriller/policier", "Comedie/sitcom", "Drame romantique", "Science-fiction/fantasy"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses artistes musicaux preferes ?",
+      "options": ["Pop/variete francaise", "Rap/hip-hop", "Rock/indie", "Electro/dance"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles sont ses destinations de vacances de reve ?",
+      "options": ["Plage paradisiaque (Maldives, Bali)", "Ville culturelle (New York, Tokyo)", "Nature et aventure (Islande, Patagonie)", "Road trip decouverte"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses parfums de glace preferes ?",
+      "options": ["Chocolat, vanille, caramel", "Fruits rouges, citron, mangue", "Pistache, noisette, cafe", "Sorbet sans lait"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types de films l'attirent le plus ?",
+      "options": ["Comedies et feel-good movies", "Action et super-heros", "Horreur et thriller", "Drames et films d'auteur"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles sont ses activites preferees le week-end ?",
+      "options": ["Dormir et se reposer", "Sport et nature", "Sorties entre amis", "Netflix et cocooning"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses restaurants preferes ?",
+      "options": ["Fast-food (McDo, KFC...)", "Restaurants gastronomiques", "Bistrots et brasseries", "Cuisine du monde (thai, indien...)"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles sont ses boissons chaudes preferees ?",
+      "options": ["Cafe noir intense", "Latte, cappuccino", "The vert ou infusion", "Chocolat chaud"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sports aime-t-il/elle regarder ?",
+      "options": ["Football, rugby", "Tennis, F1", "Basketball, handball", "Il/elle n'aime pas le sport"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses reseaux sociaux preferes ?",
+      "options": ["Instagram, TikTok", "Twitter/X, Reddit", "Facebook, LinkedIn", "Il/elle n'utilise pas les reseaux"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles sont ses cuisines du monde preferees ?",
+      "options": ["Italienne, francaise", "Japonaise, chinoise", "Mexicaine, americaine", "Indienne, thai"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels genres de musique deteste-t-il/elle ?",
+      "options": ["Metal, hard rock", "Classique, opera", "Rap, trap", "Electro, techno"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles marques de vetements prefere-t-il/elle ?",
+      "options": ["Zara, H&M, Mango", "Nike, Adidas, sportswear", "Luxe (Gucci, Louis Vuitton)", "Vintage et friperies"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses snacks preferes ?",
+      "options": ["Chips, cacahuetes", "Chocolat, bonbons", "Fruits, yaourt", "Fromage, charcuterie"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles applications utilise-t-il/elle le plus ?",
+      "options": ["Reseaux sociaux", "Jeux mobiles", "Streaming (Spotify, Netflix)", "Productivite et travail"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses livres ou genres preferes ?",
+      "options": ["Romans d'amour", "Thrillers/polars", "Science-fiction/fantasy", "Developpement personnel"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses podcasts ou chaines YouTube preferes ?",
+      "options": ["Humour et divertissement", "True crime, mysteres", "Science et culture", "Il/elle n'en ecoute/regarde pas"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles sont ses saisons preferees ?",
+      "options": ["Ete (soleil, plage)", "Printemps (renouveau)", "Automne (cocooning)", "Hiver (neige, fetes)"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses plats du dimanche preferes ?",
+      "options": ["Brunch gourmand", "Poulet roti traditionnel", "Pizza ou fast-food", "Repas leger et healthy"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels animaux de compagnie prefere-t-il/elle ?",
+      "options": ["Chien, fidele compagnon", "Chat, independant", "Animaux exotiques", "Pas d'animaux"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles sont ses fleurs preferees ?",
+      "options": ["Roses classiques", "Pivoines, tulipes", "Fleurs sauvages", "Il/elle s'en fiche des fleurs"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels parfums (fragrance) prefere-t-il/elle ?",
+      "options": ["Boise, musque", "Floral, leger", "Sucre, gourmand", "Frais, aquatique"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles sont ses pizzas preferees ?",
+      "options": ["Margherita, 4 fromages", "Pepperoni, viande", "Vegetarienne, legumes", "Originales (chevre miel, saumon...)"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels jeux de societe prefere-t-il/elle ?",
+      "options": ["Strategie (Monopoly, Risk)", "Ambiance (Time's Up, Blanc Manger Coco)", "Cartes (Uno, poker)", "Il/elle n'aime pas les jeux"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types de vacances prefere-t-il/elle ?",
+      "options": ["All inclusive, tranquille", "Backpacking, aventure", "City trip culturel", "Camping nature"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses fruits preferes ?",
+      "options": ["Fraises, framboises", "Mangue, ananas", "Pommes, bananes", "Agrumes (orange, clementine)"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sports aimerait-il/elle pratiquer ?",
+      "options": ["Sports collectifs (foot, basket)", "Fitness, musculation", "Sports de combat", "Sports aquatiques"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles emissions TV regarde-t-il/elle ?",
+      "options": ["Tele-realite", "Jeux TV (Koh-Lanta, Top Chef)", "Documentaires", "Pas de TV"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses fast-foods preferes ?",
+      "options": ["McDonald's", "Burger King", "KFC, Five Guys", "Il/elle evite le fast-food"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles boissons alcoolisees prefere-t-il/elle ?",
+      "options": ["Vin rouge, blanc", "Biere, cidre", "Spiritueux (vodka, whisky)", "Il/elle ne boit pas d'alcool"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types de restaurants pour un date ?",
+      "options": ["Restaurant chic et romantique", "Petit bistrot sympa", "Street food ou food truck", "Cuisiner ensemble a la maison"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels pays reve-t-il/elle de visiter ?",
+      "options": ["Japon, Coree du Sud", "Etats-Unis, Canada", "Australie, Nouvelle-Zelande", "Pays d'Amerique du Sud"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses desserts preferes ?",
+      "options": ["Fondant au chocolat", "Tarte aux fruits", "Tiramisu, cheesecake", "Glaces et sorbets"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels genres de jeux video prefere-t-il/elle ?",
+      "options": ["FPS, action", "RPG, aventure", "Sport, simulation", "Il/elle ne joue pas aux jeux video"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles couleurs porte-t-il/elle le plus ?",
+      "options": ["Noir, gris, blanc", "Bleu, vert", "Couleurs vives", "Il/elle varie beaucoup"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types de petit-dejeuner prefere-t-il/elle ?",
+      "options": ["Croissant, pain au chocolat", "Oeufs, bacon, sale", "Cereales, yaourt", "Juste un cafe, pas faim"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles chansons le/la font danser ?",
+      "options": ["Hits des annees 80-90", "Pop actuelle", "Classiques francais", "Il/elle ne danse pas"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types d'hebergement prefere-t-il/elle en vacances ?",
+      "options": ["Hotel confortable", "Airbnb, appartement", "Camping, van", "Resort all inclusive"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles sont ses chaines de streaming preferees ?",
+      "options": ["Netflix, Disney+", "Prime Video, Apple TV", "YouTube, Twitch", "Il/elle ne streame pas"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses hobbies secrets ?",
+      "options": ["Gaming, geek culture", "Cuisine, patisserie", "Sport, fitness", "Arts creatifs"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles musiques ecoute-t-il/elle pour se detendre ?",
+      "options": ["Lo-fi, ambient", "Pop douce, acoustique", "Classique, jazz", "Podcasts plutot que musique"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses fromages preferes ?",
+      "options": ["Camembert, brie", "Comte, emmental", "Chevre, roquefort", "Il/elle n'aime pas le fromage"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles activites prefere-t-il/elle pour un premier rendez-vous ?",
+      "options": ["Diner au restaurant", "Balade et pique-nique", "Activite originale (bowling, escape game)", "Cinema ou concert"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels cadeaux lui feraient le plus plaisir ?",
+      "options": ["Experiences (voyage, spa)", "Objets (bijoux, tech)", "Cadeaux faits main", "Temps de qualite ensemble"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles sont ses peurs alimentaires ?",
+      "options": ["Fruits de mer, poisson cru", "Viande saignante", "Plats trop epices", "Il/elle mange de tout"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types de fetes prefere-t-il/elle ?",
+      "options": ["Grandes soirees avec plein de monde", "Petites soirees entre amis proches", "Diners intimes", "Il/elle n'aime pas faire la fete"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses moyens de transport preferes ?",
+      "options": ["Voiture, liberte", "Train, confort", "Avion, rapidite", "Velo, trottinette"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles sont ses emissions de cuisine preferees ?",
+      "options": ["Top Chef", "MasterChef", "Le Meilleur Patissier", "Il/elle ne regarde pas"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels artistes francais prefere-t-il/elle ?",
+      "options": ["Stromae, Angele", "Jul, Ninho", "Edith Piaf, Aznavour", "Il/elle prefere la musique internationale"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles sont ses activites detente preferees ?",
+      "options": ["Bain chaud, spa", "Lecture, musique", "Meditation, yoga", "Jeux video, series"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types de bijoux prefere-t-il/elle ?",
+      "options": ["Or, classique", "Argent, moderne", "Fantaisie, colore", "Pas de bijoux"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles viandes prefere-t-il/elle ?",
+      "options": ["Boeuf, steak", "Poulet, dinde", "Porc, agneau", "Il/elle est vegetarien(ne)"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types de comedy shows prefere-t-il/elle ?",
+      "options": ["Stand-up", "One-man-show francais", "Sketches, humour absurde", "Il/elle ne regarde pas"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles activites en plein air prefere-t-il/elle ?",
+      "options": ["Randonnee, trekking", "Plage, baignade", "Velo, roller", "Pique-nique, parc"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses super-heros preferes ?",
+      "options": ["Spider-Man, Batman", "Iron Man, Captain America", "Wonder Woman, Black Widow", "Il/elle n'aime pas les super-heros"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles chaussures porte-t-il/elle le plus ?",
+      "options": ["Sneakers", "Chaussures habillees", "Sandales, claquettes", "Boots, bottines"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types de sushi prefere-t-il/elle ?",
+      "options": ["Saumon, thon classique", "California rolls, maki", "Sashimi pur", "Il/elle n'aime pas les sushis"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles fetes de l'annee prefere-t-il/elle ?",
+      "options": ["Noel, magie des fetes", "Nouvel An, faire la fete", "Anniversaire personnel", "Saint-Valentin, romantisme"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types de pain prefere-t-il/elle ?",
+      "options": ["Baguette tradition", "Pain complet, cereales", "Pain de mie", "Il/elle ne mange pas de pain"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses animateurs TV preferes ?",
+      "options": ["Cyril Hanouna", "Karine Le Marchand", "Nagui, Drucker", "Il/elle ne regarde pas la TV"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles activites prefere-t-il/elle quand il pleut ?",
+      "options": ["Netflix et couverture", "Cuisine, patisserie", "Lecture, jeux de societe", "Sortir quand meme"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types de sauces prefere-t-il/elle ?",
+      "options": ["Ketchup, mayonnaise", "Moutarde, vinaigrette", "Sauces piquantes", "Pas de sauce"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles sont ses marques tech preferees ?",
+      "options": ["Apple, iPhone", "Samsung, Android", "Autres marques", "Il/elle s'en fiche de la tech"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses legumes preferes ?",
+      "options": ["Tomates, courgettes", "Brocolis, haricots verts", "Carottes, pommes de terre", "Il/elle n'aime pas les legumes"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles musiques l'emouvent le plus ?",
+      "options": ["Ballades romantiques", "Chansons francaises nostalgiques", "Musique de films", "Le silence"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sports extremes l'attirent ?",
+      "options": ["Parachutisme, saut a l'elastique", "Surf, ski", "Escalade, via ferrata", "Aucun, trop dangereux"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles chaines YouTube regarde-t-il/elle ?",
+      "options": ["Gaming, divertissement", "Tutoriels, DIY", "Vlogs, lifestyle", "Il/elle ne regarde pas YouTube"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types de plats sales au petit-dej ?",
+      "options": ["Oeufs brouilles, bacon", "Avocado toast", "Croque-monsieur", "Jamais de sale le matin"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles sont ses activites romantiques preferees ?",
+      "options": ["Diner aux chandelles", "Balade main dans la main", "Regarder les etoiles", "Message surprise"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types de documentaires l'interessent ?",
+      "options": ["Nature, animaux", "True crime, enquetes", "Histoire, civilisations", "Il/elle n'aime pas les docs"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles boissons sans alcool prefere-t-il/elle ?",
+      "options": ["Coca, sodas", "Jus de fruits frais", "Eau plate ou gazeuse", "Thes glaces, limonade"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types de vetements prefere-t-il/elle porter ?",
+      "options": ["Casual, decontracte", "Chic, elegant", "Sportswear, confortable", "Ca depend de l'humeur"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles plateformes de musique utilise-t-il/elle ?",
+      "options": ["Spotify", "Apple Music, Deezer", "YouTube Music", "Il/elle n'ecoute pas de musique en streaming"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types de voitures l'attirent ?",
+      "options": ["SUV, 4x4", "Sportives, bolides", "Electriques, eco", "Il/elle s'en fiche des voitures"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles applis de dating a-t-il/elle utilisees ?",
+      "options": ["Tinder, Bumble", "Hinge, Happn", "Pas d'appli, rencontre IRL", "Il/elle n'a jamais utilise d'appli"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types de cadeaux fait-il/elle ?",
+      "options": ["Bien reflechis et personnels", "Pratiques et utiles", "Spontanes et surprenants", "Il/elle prefere offrir des experiences"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles sont ses habitudes de sommeil ?",
+      "options": ["Couche-tot, leve-tot", "Couche-tard, leve-tard", "Peu de sommeil suffit", "Besoin de beaucoup dormir"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels types de spectacles aime-t-il/elle ?",
+      "options": ["Concerts, festivals", "Theatre, comedie", "Opera, ballet", "Il/elle n'aime pas les spectacles"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quelles activites de groupe prefere-t-il/elle ?",
+      "options": ["Escape game, laser game", "Soiree jeux de societe", "Karaoke, danse", "Diner entre amis"],
+      "timer": 20
+    },
+    {
+      "type": "A",
+      "category": "preferences",
+      "text": "Quels sont ses comiques preferes ?",
+      "options": ["Gad Elmaleh, Jamel", "Florence Foresti, Blanche Gardin", "Kev Adams, Malik Bentalha", "Humoristes americains/anglais"],
+      "timer": 20
+    }
+  ]
+}
