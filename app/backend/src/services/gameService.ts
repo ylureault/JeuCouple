@@ -61,6 +61,9 @@ interface GameState {
   remainingTime: number | null;
   connectedPlayers: Set<1 | 2>;
   disconnectedPlayerName: string | null;
+  // Grace period for reconnection (don't pause immediately)
+  disconnectGraceTimer: ReturnType<typeof setTimeout> | null;
+  pendingDisconnectPlayer: 1 | 2 | null;
 }
 
 interface PlayerConnection {
@@ -186,51 +189,63 @@ export function setupSocketHandlers(
           gender: data.playerId === 1 ? room.player1_gender! : room.player2_gender!
         });
 
-        // Resume the game if it was paused waiting for this player
+        // Handle reconnection - either during grace period or after pause
         const gameState = activeGames.get(room.code);
-        if (gameState && gameState.paused) {
+        if (gameState) {
           // Mark player as connected
           gameState.connectedPlayers.add(data.playerId);
 
           const playerName = data.playerId === 1 ? room.player1_name : room.player2_name;
-          console.log('Player', playerName, 'reconnected to room', room.code, '- resuming game');
 
-          gameState.paused = false;
-          gameState.disconnectedPlayerName = null;
+          // Cancel any pending grace timer (player reconnected quickly)
+          if (gameState.disconnectGraceTimer) {
+            clearTimeout(gameState.disconnectGraceTimer);
+            gameState.disconnectGraceTimer = null;
+            gameState.pendingDisconnectPlayer = null;
+            console.log('Player', playerName, 'reconnected within grace period - no pause needed');
+          }
 
-          // Notify all players that game is resumed
-          io.to(room.code).emit('game:resumed', {
-            reconnectedPlayer: data.playerId,
-            playerName: playerName || 'Joueur'
-          });
+          // Resume if game was actually paused
+          if (gameState.paused) {
+            console.log('Player', playerName, 'reconnected to room', room.code, '- resuming game');
 
-          // Always send current scores to keep players in sync
-          socket.emit('game:score-update', {
-            score1: gameState.scores.player1,
-            score2: gameState.scores.player2
-          });
+            gameState.paused = false;
+            gameState.disconnectedPlayerName = null;
 
-          // Resume the timer if we were in question phase
-          if (gameState.phase === 'question' && gameState.remainingTime !== null && gameState.currentQuestion) {
-            // Send the stored question ONLY to the reconnected player (not all players)
-            // This ensures sync - other player already has the same question
-            socket.emit('game:question', {
-              question: gameState.currentQuestion,
-              questionNumber: gameState.currentQuestionIndex + 1,
-              totalQuestions: gameState.questions.length
+            // Notify all players that game is resumed
+            io.to(room.code).emit('game:resumed', {
+              reconnectedPlayer: data.playerId,
+              playerName: playerName || 'Joueur'
             });
 
-            // Restart timer with remaining time
-            const remainingMs = gameState.remainingTime * 1000;
-            gameState.questionStartTime = Date.now() - ((gameState.currentQuestion.timer - gameState.remainingTime) * 1000);
-            gameState.remainingTime = null;
+            // Always send current scores to keep players in sync
+            socket.emit('game:score-update', {
+              score1: gameState.scores.player1,
+              score2: gameState.scores.player2
+            });
 
-            gameState.timer = setTimeout(() => {
-              revealAnswers(io, room.code, gameState);
-            }, remainingMs + 3000); // Extra 3 seconds for network latency
+            // Resume the timer if we were in question phase
+            if (gameState.phase === 'question' && gameState.remainingTime !== null && gameState.currentQuestion) {
+              // Send the stored question ONLY to the reconnected player (not all players)
+              // This ensures sync - other player already has the same question
+              socket.emit('game:question', {
+                question: gameState.currentQuestion,
+                questionNumber: gameState.currentQuestionIndex + 1,
+                totalQuestions: gameState.questions.length
+              });
+
+              // Restart timer with remaining time
+              const remainingMs = gameState.remainingTime * 1000;
+              gameState.questionStartTime = Date.now() - ((gameState.currentQuestion.timer - gameState.remainingTime) * 1000);
+              gameState.remainingTime = null;
+
+              gameState.timer = setTimeout(() => {
+                revealAnswers(io, room.code, gameState);
+              }, remainingMs + 3000); // Extra 3 seconds for network latency
+            }
+            // If in reveal phase, the scheduleNextQuestion will handle sending the next question
+            // after the reveal timeout (it checks for paused state and retries)
           }
-          // If in reveal phase, the scheduleNextQuestion will handle sending the next question
-          // after the reveal timeout (it checks for paused state and retries)
         }
       } catch (error) {
         callback({ success: false, error: 'Failed to reconnect' });
@@ -304,7 +319,9 @@ export function setupSocketHandlers(
         pausedAt: null,
         remainingTime: null,
         connectedPlayers: new Set([1, 2]),
-        disconnectedPlayerName: null
+        disconnectedPlayerName: null,
+        disconnectGraceTimer: null,
+        pendingDisconnectPlayer: null
       };
 
       activeGames.set(room.code, gameState);
@@ -448,6 +465,9 @@ export function setupSocketHandlers(
   });
 }
 
+// Grace period before pausing (5 seconds)
+const DISCONNECT_GRACE_PERIOD = 5000;
+
 function handleDisconnect(
   socket: Socket,
   io: Server<ClientToServerEvents, ServerToClientEvents>
@@ -462,10 +482,10 @@ function handleDisconnect(
     playerId: connection.playerId
   });
 
-  // Pause the game if it's active
+  // Handle game pause with grace period
   const gameState = activeGames.get(connection.roomCode);
   if (gameState && !gameState.paused) {
-    // Mark player as disconnected
+    // Mark player as temporarily disconnected
     gameState.connectedPlayers.delete(connection.playerId);
 
     // Get room to find player name
@@ -474,28 +494,49 @@ function handleDisconnect(
       ? (connection.playerId === 1 ? room.player1_name : room.player2_name) || 'Joueur'
       : 'Joueur';
 
-    gameState.paused = true;
-    gameState.pausedAt = Date.now();
-    gameState.disconnectedPlayerName = playerName;
-
-    // Calculate remaining time if in question phase
-    if (gameState.phase === 'question' && gameState.timer) {
-      const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
-      const elapsed = (Date.now() - gameState.questionStartTime) / 1000;
-      gameState.remainingTime = Math.max(0, currentQuestion.timer - elapsed);
-
-      // Clear the timer
-      clearTimeout(gameState.timer);
-      gameState.timer = null;
+    // Clear any existing grace timer for this player
+    if (gameState.disconnectGraceTimer) {
+      clearTimeout(gameState.disconnectGraceTimer);
     }
 
-    console.log('Game paused in room', connection.roomCode, 'waiting for', playerName);
+    // Store pending disconnect info
+    gameState.pendingDisconnectPlayer = connection.playerId;
 
-    // Notify the other player that the game is paused
-    io.to(connection.roomCode).emit('game:paused', {
-      disconnectedPlayer: connection.playerId,
-      playerName
-    });
+    console.log('Player', playerName, 'disconnected, starting grace period...');
+
+    // Start grace period - only pause if they don't reconnect within 5 seconds
+    gameState.disconnectGraceTimer = setTimeout(() => {
+      // Check if game still exists and player still disconnected
+      const currentGameState = activeGames.get(connection.roomCode);
+      if (!currentGameState || currentGameState.paused) return;
+      if (currentGameState.connectedPlayers.has(connection.playerId)) return;
+
+      // Grace period expired - now actually pause
+      currentGameState.paused = true;
+      currentGameState.pausedAt = Date.now();
+      currentGameState.disconnectedPlayerName = playerName;
+      currentGameState.disconnectGraceTimer = null;
+      currentGameState.pendingDisconnectPlayer = null;
+
+      // Calculate remaining time if in question phase
+      if (currentGameState.phase === 'question' && currentGameState.timer) {
+        const currentQuestion = currentGameState.questions[currentGameState.currentQuestionIndex];
+        const elapsed = (Date.now() - currentGameState.questionStartTime) / 1000;
+        currentGameState.remainingTime = Math.max(0, currentQuestion.timer - elapsed);
+
+        // Clear the timer
+        clearTimeout(currentGameState.timer);
+        currentGameState.timer = null;
+      }
+
+      console.log('Game paused in room', connection.roomCode, 'after grace period, waiting for', playerName);
+
+      // Notify the other player that the game is paused
+      io.to(connection.roomCode).emit('game:paused', {
+        disconnectedPlayer: connection.playerId,
+        playerName
+      });
+    }, DISCONNECT_GRACE_PERIOD);
   }
 
   // Clean up connection

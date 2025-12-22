@@ -170,17 +170,23 @@ export default function Home() {
           </p>
         </motion.div>
 
-        {/* Connection status */}
-        {!connected && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-black/30 backdrop-blur rounded-xl px-6 py-3 mb-6 flex items-center gap-3"
-          >
-            <div className="spinner w-5 h-5" />
-            <p className="text-white font-semibold">Connexion au serveur...</p>
-          </motion.div>
-        )}
+        {/* Connection status indicator */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={`rounded-full px-4 py-2 mb-4 flex items-center gap-2 ${
+            connected
+              ? 'bg-green-500/20 border border-green-400/50'
+              : 'bg-yellow-500/20 border border-yellow-400/50'
+          }`}
+        >
+          <div className={`w-3 h-3 rounded-full ${
+            connected ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-pulse'
+          }`} />
+          <p className="text-white text-sm font-medium">
+            {connected ? 'Connecté' : 'Connexion...'}
+          </p>
+        </motion.div>
 
         {/* Error message */}
         {error && (
@@ -205,28 +211,28 @@ export default function Home() {
               className="w-full max-w-md space-y-3"
             >
               <motion.button
-                onClick={() => switchMode('create')}
-                disabled={!connected}
-                className="btn-create w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                onClick={() => connected && switchMode('create')}
+                className={`btn-create w-full ${!connected ? 'opacity-70 cursor-wait' : ''}`}
+                whileHover={connected ? { scale: 1.02 } : {}}
+                whileTap={connected ? { scale: 0.98 } : {}}
               >
                 <span className="flex items-center justify-center gap-3">
                   <span className="text-2xl">🎮</span>
                   Créer une partie
+                  {!connected && <span className="text-sm opacity-70">(connexion...)</span>}
                 </span>
               </motion.button>
 
               <motion.button
-                onClick={() => switchMode('join')}
-                disabled={!connected}
-                className="btn-join w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                onClick={() => connected && switchMode('join')}
+                className={`btn-join w-full ${!connected ? 'opacity-70 cursor-wait' : ''}`}
+                whileHover={connected ? { scale: 1.02 } : {}}
+                whileTap={connected ? { scale: 0.98 } : {}}
               >
                 <span className="flex items-center justify-center gap-3">
                   <span className="text-2xl">🔗</span>
                   Rejoindre avec un code
+                  {!connected && <span className="text-sm opacity-70">(connexion...)</span>}
                 </span>
               </motion.button>
             </motion.div>
