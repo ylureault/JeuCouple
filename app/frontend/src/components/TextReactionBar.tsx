@@ -2,7 +2,16 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
-import { TEXT_REACTIONS } from '../../../shared/types';
+
+// Define locally to avoid Vite import issues with shared folder values
+const TEXT_REACTIONS = [
+  { id: 'ptitcon', text: "P'tit con", emoji: '😏' },
+  { id: 'viellepeau', text: 'Vieille peau', emoji: '👵' },
+  { id: 'jattends', text: "J'attends", emoji: '⏳' },
+  { id: 'comprends', text: 'Je comprends pas', emoji: '🤷' },
+  { id: 'allez', text: 'Allez !', emoji: '💪' },
+  { id: 'habon', text: 'Ah bon ?', emoji: '🤨' },
+] as const;
 
 export default function TextReactionBar() {
   const { sendTextReaction } = useGame();
