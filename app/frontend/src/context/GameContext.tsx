@@ -18,7 +18,10 @@ import type {
   ReactionEmoji,
   ReactionData,
   TextReactionData,
-  TextReactionId
+  TextReactionId,
+  SoundReactionData,
+  SoundReactionId,
+  ChatMessage
 } from '../../../shared/types';
 
 interface GameState {
@@ -40,6 +43,9 @@ interface GameState {
   error: string | null;
   reactions: ReactionData[];
   textReactions: TextReactionData[];
+  soundReactions: SoundReactionData[];
+  // Chat messages for lobby
+  chatMessages: ChatMessage[];
   // Pause state when partner disconnects
   gamePaused: boolean;
   disconnectedPlayerName: string | null;
@@ -63,7 +69,10 @@ type GameAction =
   | { type: 'CLEAR_ERROR' }
   | { type: 'ADD_REACTION'; reaction: ReactionData }
   | { type: 'ADD_TEXT_REACTION'; textReaction: TextReactionData }
+  | { type: 'ADD_SOUND_REACTION'; soundReaction: SoundReactionData }
   | { type: 'CLEAR_REACTIONS' }
+  | { type: 'ADD_CHAT_MESSAGE'; message: ChatMessage }
+  | { type: 'CLEAR_CHAT_MESSAGES' }
   | { type: 'GAME_PAUSED'; playerName: string }
   | { type: 'GAME_RESUMED' }
   | { type: 'RESET' };
@@ -87,6 +96,8 @@ const initialState: GameState = {
   error: null,
   reactions: [],
   textReactions: [],
+  soundReactions: [],
+  chatMessages: [],
   gamePaused: false,
   disconnectedPlayerName: null
 };
@@ -201,6 +212,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         error: null,
         reactions: [],
         textReactions: [],
+        soundReactions: [],
+        chatMessages: [],
         gamePaused: false,
         disconnectedPlayerName: null
       };
@@ -225,8 +238,23 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         .slice(-5); // Max 5 text reactions
       return { ...state, textReactions: newTextReactions };
 
+    case 'ADD_SOUND_REACTION':
+      // Keep only recent sound reactions (last 3, auto-cleanup old ones)
+      const newSoundReactions = [...state.soundReactions, action.soundReaction]
+        .filter(r => Date.now() - r.timestamp < 3000) // Keep reactions from last 3 seconds
+        .slice(-3); // Max 3 sound reactions
+      return { ...state, soundReactions: newSoundReactions };
+
     case 'CLEAR_REACTIONS':
-      return { ...state, reactions: [], textReactions: [] };
+      return { ...state, reactions: [], textReactions: [], soundReactions: [] };
+
+    case 'ADD_CHAT_MESSAGE':
+      // Keep last 50 messages
+      const newChatMessages = [...state.chatMessages, action.message].slice(-50);
+      return { ...state, chatMessages: newChatMessages };
+
+    case 'CLEAR_CHAT_MESSAGES':
+      return { ...state, chatMessages: [] };
 
     case 'GAME_PAUSED':
       return {
@@ -264,6 +292,8 @@ interface GameContextType extends GameState {
   restartGame: () => Promise<void>;
   sendReaction: (emoji: ReactionEmoji) => void;
   sendTextReaction: (reactionId: TextReactionId) => void;
+  sendSoundReaction: (reactionId: SoundReactionId) => void;
+  sendChatMessage: (message: string) => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -391,6 +421,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'ADD_TEXT_REACTION', textReaction: data });
     });
 
+    socket.on('game:sound-reaction', (data) => {
+      dispatch({ type: 'ADD_SOUND_REACTION', soundReaction: data });
+    });
+
+    socket.on('lobby:chat', (data) => {
+      dispatch({ type: 'ADD_CHAT_MESSAGE', message: data });
+    });
+
     socket.on('game:paused', (data) => {
       console.log('Game paused, waiting for:', data.playerName);
       dispatch({ type: 'GAME_PAUSED', playerName: data.playerName });
@@ -516,6 +554,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
     state.socket.emit('game:text-reaction', { reactionId });
   }, [state.socket]);
 
+  const sendSoundReaction = useCallback((reactionId: SoundReactionId) => {
+    if (!state.socket) return;
+    state.socket.emit('game:sound-reaction', { reactionId });
+  }, [state.socket]);
+
+  const sendChatMessage = useCallback((message: string) => {
+    if (!state.socket) return;
+    const trimmed = message.trim();
+    if (!trimmed) return;
+    state.socket.emit('lobby:chat', { message: trimmed });
+  }, [state.socket]);
+
   return (
     <GameContext.Provider
       value={{
@@ -528,7 +578,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         resetGame,
         restartGame,
         sendReaction,
-        sendTextReaction
+        sendTextReaction,
+        sendSoundReaction,
+        sendChatMessage
       }}
     >
       {children}

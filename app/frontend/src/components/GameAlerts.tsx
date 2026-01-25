@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAudio } from '../context/AudioContext';
 
 interface AlertMessage {
   id: string;
@@ -25,6 +26,7 @@ export default function GameAlerts({
   theirName,
   questionNumber
 }: GameAlertsProps) {
+  const { playSound } = useAudio();
   const [alerts, setAlerts] = useState<AlertMessage[]>([]);
   const [lastScoreDiff, setLastScoreDiff] = useState(0);
   const [lastOtherAnswered, setLastOtherAnswered] = useState(false);
@@ -43,6 +45,8 @@ export default function GameAlerts({
   // Alert when other player answers first
   useEffect(() => {
     if (otherAnswered && !lastOtherAnswered && !myAnswer) {
+      // Play ding sound to notify
+      playSound('ding');
       const messages = [
         `${theirName} vient de répondre... et toi ?! 🤔`,
         `${theirName} a été plus rapide ! Dépêche-toi !`,
@@ -52,7 +56,7 @@ export default function GameAlerts({
       addAlert(messages[Math.floor(Math.random() * messages.length)], '⚡', 'warning');
     }
     setLastOtherAnswered(otherAnswered);
-  }, [otherAnswered, myAnswer, theirName]);
+  }, [otherAnswered, myAnswer, theirName, playSound]);
 
   // Score difference alerts
   useEffect(() => {

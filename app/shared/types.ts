@@ -86,7 +86,7 @@ export interface Answer {
 }
 
 // Emoji reactions
-export const REACTION_EMOJIS = ['❤️', '😂', '😮', '😢', '👏', '🔥', '😍', '🤔'] as const;
+export const REACTION_EMOJIS = ['❤️', '😂', '😮', '😢', '👏', '🔥', '😍', '🤔', '💋', '🤗'] as const;
 export type ReactionEmoji = typeof REACTION_EMOJIS[number];
 
 // Text quick reactions
@@ -97,6 +97,12 @@ export const TEXT_REACTIONS = [
   { id: 'comprends', text: 'Je comprends pas', emoji: '🤷' },
   { id: 'allez', text: 'Allez !', emoji: '💪' },
   { id: 'habon', text: 'Ah bon ?', emoji: '🤨' },
+  { id: 'jetaime', text: "Je t'aime", emoji: '❤️' },
+  { id: 'bisou', text: 'Bisou !', emoji: '💋' },
+  { id: 'bravo', text: 'Bravo !', emoji: '👏' },
+  { id: 'mechant', text: "T'es méchant(e)", emoji: '😤' },
+  { id: 'parfait', text: 'Parfait !', emoji: '✨' },
+  { id: 'nul', text: "T'es nul(le)", emoji: '😜' },
 ] as const;
 export type TextReactionId = typeof TEXT_REACTIONS[number]['id'];
 
@@ -111,6 +117,30 @@ export interface TextReactionData {
   reactionId: TextReactionId;
   text: string;
   emoji: string;
+  timestamp: number;
+}
+
+// Sound reactions (klaxon, applause, etc.)
+export const SOUND_REACTIONS = [
+  { id: 'klaxon', label: 'Klaxon', emoji: '📯', sound: 'klaxon' },
+  { id: 'applause', label: 'Applaudissements', emoji: '👏', sound: 'applause' },
+  { id: 'kiss', label: 'Bisou', emoji: '💋', sound: 'kiss' },
+  { id: 'laugh', label: 'Rire', emoji: '😂', sound: 'laugh' },
+] as const;
+export type SoundReactionId = typeof SOUND_REACTIONS[number]['id'];
+
+export interface SoundReactionData {
+  playerId: 1 | 2;
+  reactionId: SoundReactionId;
+  timestamp: number;
+}
+
+// Chat messages for lobby
+export interface ChatMessage {
+  id: string;
+  playerId: 1 | 2;
+  playerName: string;
+  message: string;
   timestamp: number;
 }
 
@@ -145,6 +175,9 @@ export interface ServerToClientEvents {
   'game:restarted': () => void;
   'game:reaction': (data: ReactionData) => void;
   'game:text-reaction': (data: TextReactionData) => void;
+  'game:sound-reaction': (data: SoundReactionData) => void;
+  // Lobby chat
+  'lobby:chat': (data: ChatMessage) => void;
   // Player connection status
   'game:paused': (data: { disconnectedPlayer: 1 | 2; playerName: string }) => void;
   'game:resumed': (data: { reconnectedPlayer: 1 | 2; playerName: string }) => void;
@@ -193,6 +226,9 @@ export interface ClientToServerEvents {
   'room:reconnect': (data: { code: string; playerId: 1 | 2 }, callback: (response: RoomResponse) => void) => void;
   'game:reaction': (data: { emoji: ReactionEmoji }) => void;
   'game:text-reaction': (data: { reactionId: TextReactionId }) => void;
+  'game:sound-reaction': (data: { reactionId: SoundReactionId }) => void;
+  // Lobby chat
+  'lobby:chat': (data: { message: string }) => void;
   // Voice chat
   'voice:offer': (data: VoiceOffer) => void;
   'voice:answer': (data: VoiceAnswer) => void;

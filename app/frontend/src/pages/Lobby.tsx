@@ -9,7 +9,10 @@ import ReactionBar from '../components/ReactionBar';
 import ReactionOverlay from '../components/ReactionOverlay';
 import TextReactionBar from '../components/TextReactionBar';
 import TextReactionOverlay from '../components/TextReactionOverlay';
+import SoundReactionBar from '../components/SoundReactionBar';
+import SoundReactionHandler from '../components/SoundReactionHandler';
 import VoiceChat from '../components/VoiceChat';
+import LobbyChat from '../components/LobbyChat';
 import type { Gender } from '../../../shared/types';
 
 export default function Lobby() {
@@ -113,13 +116,13 @@ export default function Lobby() {
       <MuteButton />
       <ReactionOverlay />
       <TextReactionOverlay />
+      <SoundReactionHandler />
 
-      {/* Voice chat - top right */}
-      {bothPlayersReady && (
-        <div className="fixed top-4 right-16 z-50">
-          <VoiceChat />
-        </div>
-      )}
+      {/* Voice chat & Lobby chat - top right */}
+      <div className="fixed top-4 right-16 z-50 flex items-center gap-2">
+        <LobbyChat />
+        {bothPlayersReady && <VoiceChat />}
+      </div>
 
       {/* Animated background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -363,6 +366,7 @@ export default function Lobby() {
         animate={{ opacity: 1, y: 0 }}
         className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-sm py-2 px-2 border-t border-white/10 z-40 space-y-1.5"
       >
+        <SoundReactionBar />
         <TextReactionBar />
         <ReactionBar />
       </motion.div>

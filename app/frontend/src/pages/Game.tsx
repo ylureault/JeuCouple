@@ -13,6 +13,8 @@ import ReactionBar from '../components/ReactionBar';
 import ReactionOverlay from '../components/ReactionOverlay';
 import TextReactionBar from '../components/TextReactionBar';
 import TextReactionOverlay from '../components/TextReactionOverlay';
+import SoundReactionBar from '../components/SoundReactionBar';
+import SoundReactionHandler from '../components/SoundReactionHandler';
 import VoiceChat from '../components/VoiceChat';
 import GameAlerts from '../components/GameAlerts';
 import Lobby from './Lobby';
@@ -34,11 +36,12 @@ export default function Game() {
     gamePaused,
     disconnectedPlayerName
   } = useGame();
-  const { playSound } = useAudio();
+  const { playSound, playGameMusic, stopGameMusic, setMusicIntensity } = useAudio();
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(0);
   const [showIntro, setShowIntro] = useState(true);
   const [introStep, setIntroStep] = useState<'number' | 'category' | 'question'>('number');
+  const [currentStreak, setCurrentStreak] = useState(0);
 
   useEffect(() => {
     if (!room) {
@@ -48,9 +51,26 @@ export default function Game() {
 
   useEffect(() => {
     if (phase === 'finished' && finalResults) {
+      stopGameMusic();
       navigate('/results');
     }
-  }, [phase, finalResults, navigate]);
+  }, [phase, finalResults, navigate, stopGameMusic]);
+
+  // Start game music when game starts
+  useEffect(() => {
+    if (phase === 'question' && questionNumber === 1) {
+      playGameMusic();
+    }
+  }, [phase, questionNumber, playGameMusic]);
+
+  // Update music intensity based on streak from reveal data
+  useEffect(() => {
+    if (revealData) {
+      const myStreak = playerId === 1 ? revealData.streak1 : revealData.streak2;
+      setCurrentStreak(myStreak);
+      setMusicIntensity(myStreak);
+    }
+  }, [revealData, playerId, setMusicIntensity]);
 
   useEffect(() => {
     if (currentQuestion) {
@@ -141,6 +161,7 @@ export default function Game() {
     <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col pb-20`}>
       <ReactionOverlay />
       <TextReactionOverlay />
+      <SoundReactionHandler />
       <GameAlerts
         otherAnswered={otherAnswered}
         myAnswer={myAnswer}
@@ -510,6 +531,7 @@ export default function Game() {
         animate={{ opacity: 1, y: 0 }}
         className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-sm py-2 px-2 border-t border-white/10 z-40 space-y-1.5"
       >
+        <SoundReactionBar />
         <TextReactionBar />
         <ReactionBar />
       </motion.div>

@@ -13,9 +13,12 @@ interface SoundContextType {
   playSound: (sound: SoundType) => void;
   playLobbyMusic: () => void;
   stopLobbyMusic: () => void;
+  setMusicIntensity: (intensity: number) => void;
+  playGameMusic: () => void;
+  stopGameMusic: () => void;
 }
 
-type SoundType = 'click' | 'correct' | 'wrong' | 'tick' | 'reveal' | 'fanfare' | 'countdown' | 'notification' | 'reaction' | 'reactionReceived';
+type SoundType = 'click' | 'correct' | 'wrong' | 'tick' | 'reveal' | 'fanfare' | 'countdown' | 'notification' | 'reaction' | 'reactionReceived' | 'klaxon' | 'applause' | 'ding' | 'kiss' | 'laugh';
 
 // Web Audio API type
 type WebAudioContext = typeof window.AudioContext;
@@ -259,6 +262,162 @@ function createReactionReceivedSound(): () => void {
   };
 }
 
+function createKlaxonSound(): () => void {
+  return () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: WebAudioContext }).webkitAudioContext)();
+      // Car horn sound - alternating tones
+      const oscillator1 = audioCtx.createOscillator();
+      const oscillator2 = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator1.connect(gainNode);
+      oscillator2.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator1.type = 'sawtooth';
+      oscillator2.type = 'square';
+
+      // Classic two-tone horn (A4 and F4)
+      oscillator1.frequency.setValueAtTime(440, audioCtx.currentTime);
+      oscillator2.frequency.setValueAtTime(349.23, audioCtx.currentTime);
+
+      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime + 0.15);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+      oscillator1.start(audioCtx.currentTime);
+      oscillator2.start(audioCtx.currentTime);
+      oscillator1.stop(audioCtx.currentTime + 0.5);
+      oscillator2.stop(audioCtx.currentTime + 0.5);
+    } catch {
+      // Audio not supported
+    }
+  };
+}
+
+function createApplauseSound(): () => void {
+  return () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: WebAudioContext }).webkitAudioContext)();
+      // Simulated applause using white noise bursts
+      const bufferSize = audioCtx.sampleRate * 0.8;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      // Create noise pattern that sounds like clapping
+      for (let i = 0; i < bufferSize; i++) {
+        const time = i / audioCtx.sampleRate;
+        // Modulate noise to create rhythmic clapping pattern
+        const envelope = Math.sin(time * 25) > 0.3 ? 1 : 0.1;
+        data[i] = (Math.random() * 2 - 1) * envelope * 0.5;
+      }
+
+      const source = audioCtx.createBufferSource();
+      const gainNode = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(2000, audioCtx.currentTime);
+      filter.Q.setValueAtTime(0.5, audioCtx.currentTime);
+
+      source.buffer = buffer;
+      source.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
+
+      source.start(audioCtx.currentTime);
+    } catch {
+      // Audio not supported
+    }
+  };
+}
+
+function createDingSound(): () => void {
+  return () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: WebAudioContext }).webkitAudioContext)();
+      // Pleasant "ding" notification bell sound
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.type = 'sine';
+      // High bell-like tone
+      oscillator.frequency.setValueAtTime(1318.51, audioCtx.currentTime); // E6
+
+      gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.5);
+    } catch {
+      // Audio not supported
+    }
+  };
+}
+
+function createKissSound(): () => void {
+  return () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: WebAudioContext }).webkitAudioContext)();
+      // Cute "kiss" popping sound
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.type = 'sine';
+      // Quick descending "mwah" sound
+      oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.15);
+
+      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.2);
+    } catch {
+      // Audio not supported
+    }
+  };
+}
+
+function createLaughSound(): () => void {
+  return () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: WebAudioContext }).webkitAudioContext)();
+      // Fun bouncy laugh-like sound
+      const notes = [523.25, 659.25, 783.99, 659.25, 523.25]; // Ha-ha-ha pattern
+
+      notes.forEach((freq, i) => {
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.1);
+
+        gainNode.gain.setValueAtTime(0.25, audioCtx.currentTime + i * 0.1);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.12);
+
+        oscillator.start(audioCtx.currentTime + i * 0.1);
+        oscillator.stop(audioCtx.currentTime + i * 0.1 + 0.12);
+      });
+    } catch {
+      // Audio not supported
+    }
+  };
+}
+
 const sounds: Record<SoundType, () => void> = {
   click: createClickSound(),
   correct: createCorrectSound(),
@@ -269,7 +428,12 @@ const sounds: Record<SoundType, () => void> = {
   countdown: createTickSound(),
   notification: createNotificationSound(),
   reaction: createReactionSound(),
-  reactionReceived: createReactionReceivedSound()
+  reactionReceived: createReactionReceivedSound(),
+  klaxon: createKlaxonSound(),
+  applause: createApplauseSound(),
+  ding: createDingSound(),
+  kiss: createKissSound(),
+  laugh: createLaughSound()
 };
 
 // Procedural ambient music generator using Web Audio API
@@ -341,12 +505,137 @@ function stopAmbientMusic() {
   }
 }
 
+// Game music with intensity that changes based on streak
+let gameAudioContext: AudioContext | null = null;
+let gameGainNode: GainNode | null = null;
+let gameOscillators: OscillatorNode[] = [];
+let isGameMusicPlaying = false;
+let currentIntensity = 0;
+
+function startGameMusic(volume: number = 0.06) {
+  if (isGameMusicPlaying) return;
+
+  try {
+    gameAudioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    gameGainNode = gameAudioContext.createGain();
+    gameGainNode.gain.setValueAtTime(volume, gameAudioContext.currentTime);
+    gameGainNode.connect(gameAudioContext.destination);
+
+    // Base game music - rhythmic pulse
+    const baseFreqs = [110, 138.59, 164.81]; // A2, C#3, E3 - A major chord
+
+    baseFreqs.forEach((freq, i) => {
+      const osc = gameAudioContext!.createOscillator();
+      const oscGain = gameAudioContext!.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, gameAudioContext!.currentTime);
+
+      // Rhythmic pulse LFO
+      const lfo = gameAudioContext!.createOscillator();
+      const lfoGain = gameAudioContext!.createGain();
+      lfo.type = 'sine';
+      lfo.frequency.setValueAtTime(2 + i * 0.5, gameAudioContext!.currentTime); // Faster pulse
+      lfoGain.gain.setValueAtTime(0.3, gameAudioContext!.currentTime);
+      lfo.connect(lfoGain);
+      lfoGain.connect(oscGain.gain);
+      lfo.start();
+
+      oscGain.gain.setValueAtTime(0.1 - i * 0.02, gameAudioContext!.currentTime);
+      osc.connect(oscGain);
+      oscGain.connect(gameGainNode!);
+      osc.start();
+
+      gameOscillators.push(osc, lfo);
+    });
+
+    isGameMusicPlaying = true;
+    currentIntensity = 0;
+  } catch {
+    // Audio not supported
+  }
+}
+
+function updateGameMusicIntensity(intensity: number) {
+  if (!isGameMusicPlaying || !gameAudioContext || !gameGainNode) return;
+
+  currentIntensity = Math.max(0, Math.min(5, intensity));
+
+  try {
+    // Intensity 0-5 maps to different music characteristics
+    // Higher intensity = higher volume, more harmonics
+    const baseVolume = 0.06;
+    const intensityBonus = currentIntensity * 0.02;
+    const newVolume = Math.min(0.2, baseVolume + intensityBonus);
+
+    gameGainNode.gain.linearRampToValueAtTime(
+      newVolume,
+      gameAudioContext.currentTime + 0.3
+    );
+
+    // Add extra tension oscillators at high intensity
+    if (currentIntensity >= 3 && gameOscillators.length < 8) {
+      // Add high tension notes
+      const tensionFreqs = [440, 554.37]; // A4, C#5
+
+      tensionFreqs.forEach((freq, i) => {
+        const osc = gameAudioContext!.createOscillator();
+        const oscGain = gameAudioContext!.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, gameAudioContext!.currentTime);
+
+        // Tremolo for tension
+        const tremolo = gameAudioContext!.createOscillator();
+        const tremoloGain = gameAudioContext!.createGain();
+        tremolo.type = 'sine';
+        tremolo.frequency.setValueAtTime(4 + currentIntensity, gameAudioContext!.currentTime);
+        tremoloGain.gain.setValueAtTime(0.5, gameAudioContext!.currentTime);
+        tremolo.connect(tremoloGain);
+        tremoloGain.connect(oscGain.gain);
+        tremolo.start();
+
+        oscGain.gain.setValueAtTime(0.05 * (currentIntensity - 2), gameAudioContext!.currentTime);
+        osc.connect(oscGain);
+        oscGain.connect(gameGainNode!);
+        osc.start();
+
+        gameOscillators.push(osc, tremolo);
+      });
+    }
+  } catch {
+    // Ignore errors
+  }
+}
+
+function stopGameMusic() {
+  if (!isGameMusicPlaying) return;
+
+  try {
+    gameOscillators.forEach(osc => {
+      try { osc.stop(); } catch { /* ignore */ }
+    });
+    gameOscillators = [];
+
+    if (gameAudioContext) {
+      gameAudioContext.close();
+      gameAudioContext = null;
+    }
+    gameGainNode = null;
+    isGameMusicPlaying = false;
+    currentIntensity = 0;
+  } catch {
+    // Ignore cleanup errors
+  }
+}
+
 export function AudioProvider({ children }: { children: ReactNode }) {
   const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
     return () => {
       stopAmbientMusic();
+      stopGameMusic();
     };
   }, []);
 
@@ -355,6 +644,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       const newMuted = !prev;
       if (newMuted) {
         stopAmbientMusic();
+        stopGameMusic();
       }
       return newMuted;
     });
@@ -376,6 +666,22 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     stopAmbientMusic();
   }, []);
 
+  const playGameMusic = useCallback(() => {
+    if (!isMuted) {
+      startGameMusic(0.06);
+    }
+  }, [isMuted]);
+
+  const stopGameMusicCb = useCallback(() => {
+    stopGameMusic();
+  }, []);
+
+  const setMusicIntensity = useCallback((intensity: number) => {
+    if (!isMuted) {
+      updateGameMusicIntensity(intensity);
+    }
+  }, [isMuted]);
+
   return (
     <SoundContext.Provider
       value={{
@@ -383,7 +689,10 @@ export function AudioProvider({ children }: { children: ReactNode }) {
         toggleMute,
         playSound,
         playLobbyMusic,
-        stopLobbyMusic
+        stopLobbyMusic,
+        playGameMusic,
+        stopGameMusic: stopGameMusicCb,
+        setMusicIntensity
       }}
     >
       {children}

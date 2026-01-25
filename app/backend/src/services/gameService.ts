@@ -9,9 +9,10 @@ import type {
   GameFinishedData,
   CategoryScore,
   ReactionEmoji,
-  TextReactionId
+  TextReactionId,
+  SoundReactionId
 } from '../types.js';
-import { REACTION_EMOJIS, TEXT_REACTIONS } from '../types.js';
+import { REACTION_EMOJIS, TEXT_REACTIONS, SOUND_REACTIONS } from '../types.js';
 import * as roomModel from '../models/room.js';
 import * as gameModel from '../models/game.js';
 import * as questionModel from '../models/question.js';
@@ -450,6 +451,49 @@ export function setupSocketHandlers(
         reactionId: data.reactionId as TextReactionId,
         text: reaction.text,
         emoji: reaction.emoji,
+        timestamp: Date.now()
+      });
+    });
+
+    // Sound reactions (klaxon, applause, etc.)
+    socket.on('game:sound-reaction', (data) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+
+      // Validate sound reaction
+      const reaction = SOUND_REACTIONS.find(r => r.id === data.reactionId);
+      if (!reaction) return;
+
+      // Broadcast sound reaction to the room
+      io.to(connection.roomCode).emit('game:sound-reaction', {
+        playerId: connection.playerId,
+        reactionId: data.reactionId as SoundReactionId,
+        timestamp: Date.now()
+      });
+    });
+
+    // Lobby chat
+    socket.on('lobby:chat', (data) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+
+      // Get room to find player name
+      const room = roomModel.getRoomByCode(connection.roomCode);
+      if (!room) return;
+
+      const playerName = connection.playerId === 1 ? room.player1_name : room.player2_name;
+      if (!playerName) return;
+
+      // Sanitize message (limit length, trim)
+      const message = data.message.trim().slice(0, 200);
+      if (!message) return;
+
+      // Broadcast chat message to the room
+      io.to(connection.roomCode).emit('lobby:chat', {
+        id: `${Date.now()}-${connection.playerId}-${Math.random().toString(36).slice(2, 8)}`,
+        playerId: connection.playerId,
+        playerName,
+        message,
         timestamp: Date.now()
       });
     });
