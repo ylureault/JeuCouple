@@ -276,17 +276,21 @@ export function setupSocketHandlers(
 
     // Start game
     socket.on('game:start', (callback) => {
+      console.log('[GAME:START] Received game:start event');
       const connection = playerConnections.get(socket.id);
       if (!connection) {
+        console.log('[GAME:START] ERROR: No connection found');
         callback({ success: false, error: 'Not in a room' });
         return;
       }
 
       // Check if game already exists for this room (prevent double start)
       if (activeGames.has(connection.roomCode)) {
+        console.log('[GAME:START] ERROR: Game already exists for room', connection.roomCode);
         callback({ success: false, error: 'Game already started' });
         return;
       }
+      console.log('[GAME:START] Starting game for room', connection.roomCode);
 
       const room = roomModel.getRoomByCode(connection.roomCode);
       if (!room || !room.player1_name || !room.player2_name) {
@@ -369,14 +373,19 @@ export function setupSocketHandlers(
       const gameState = activeGames.get(connection.roomCode);
       if (!gameState) return;
 
+      console.log(`[ANSWER] Player ${connection.playerId} answering - Room: ${connection.roomCode}, Phase: ${gameState.phase}, Question: ${gameState.currentQuestionIndex + 1}`);
+
       // Only accept answers in question phase
       if (gameState.phase !== 'question') {
-        console.log('Answer rejected - not in question phase:', gameState.phase);
+        console.log(`[ANSWER] REJECTED - Phase is ${gameState.phase}, not question`);
         return;
       }
 
       // Don't accept answers if game is paused
-      if (gameState.paused) return;
+      if (gameState.paused) {
+        console.log('[ANSWER] REJECTED - Game paused');
+        return;
+      }
 
       const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
       const answerTime = Date.now();
@@ -386,13 +395,14 @@ export function setupSocketHandlers(
 
       // Prevent duplicate answers from same player
       if (connection.playerId === 1 && questionAnswers.answer1 !== undefined) {
-        console.log('Duplicate answer from player 1 rejected');
+        console.log('[ANSWER] REJECTED - Duplicate from player 1');
         return;
       }
       if (connection.playerId === 2 && questionAnswers.answer2 !== undefined) {
-        console.log('Duplicate answer from player 2 rejected');
+        console.log('[ANSWER] REJECTED - Duplicate from player 2');
         return;
       }
+      console.log(`[ANSWER] ACCEPTED - Player ${connection.playerId}, answer: ${data.answer?.substring(0, 20)}...`);
 
       if (connection.playerId === 1) {
         questionAnswers.answer1 = data.answer;
@@ -735,11 +745,17 @@ function sendQuestion(
   roomCode: string,
   gameState: GameState
 ) {
+  console.log(`[SEND_QUESTION] Room ${roomCode} - Question ${gameState.currentQuestionIndex + 1}/${gameState.questions.length} - Phase: ${gameState.phase}`);
+
   // Don't send question if game is paused
-  if (gameState.paused) return;
+  if (gameState.paused) {
+    console.log('[SEND_QUESTION] Game paused, skipping');
+    return;
+  }
 
   // Clear any existing question timer to prevent duplicates
   if (gameState.timer) {
+    console.log('[SEND_QUESTION] Clearing existing timer');
     clearTimeout(gameState.timer);
     gameState.timer = null;
   }
@@ -747,6 +763,7 @@ function sendQuestion(
   const question = { ...gameState.questions[gameState.currentQuestionIndex] };
   gameState.phase = 'question';
   gameState.questionStartTime = Date.now();
+  console.log(`[SEND_QUESTION] Sending question ID ${question.id}, type ${question.type}`);
 
   // For Type G, assign a random target player and substitute {player} in the text
   if (question.type === 'G') {
@@ -796,18 +813,22 @@ function revealAnswers(
   roomCode: string,
   gameState: GameState
 ) {
+  console.log(`[REVEAL] Room ${roomCode} - Question ${gameState.currentQuestionIndex + 1} - Current phase: ${gameState.phase}`);
+
   // Prevent double reveal (race condition protection)
   if (gameState.phase === 'reveal') {
-    console.log('Reveal already in progress, skipping duplicate call');
+    console.log('[REVEAL] SKIPPED - Already in reveal phase');
     return;
   }
 
   // Clear any pending question timer
   if (gameState.timer) {
+    console.log('[REVEAL] Clearing question timer');
     clearTimeout(gameState.timer);
     gameState.timer = null;
   }
 
+  console.log('[REVEAL] Setting phase to reveal');
   gameState.phase = 'reveal';
   const question = gameState.questions[gameState.currentQuestionIndex];
   const answers = gameState.answers.get(question.id) || {};
@@ -1073,27 +1094,33 @@ function scheduleNextQuestion(
   roomCode: string,
   gameState: GameState
 ) {
+  console.log(`[SCHEDULE] Room ${roomCode} - Scheduling next question from index ${gameState.currentQuestionIndex}`);
+
   // Don't schedule if game is paused - will be called when resumed
   if (gameState.paused) {
-    console.log('Game paused, not scheduling next question');
+    console.log('[SCHEDULE] Game paused, not scheduling');
     return;
   }
 
   // Clear any existing timer
   if (gameState.nextQuestionTimer) {
+    console.log('[SCHEDULE] Clearing existing nextQuestionTimer');
     clearTimeout(gameState.nextQuestionTimer);
   }
 
+  console.log('[SCHEDULE] Setting timer for 10 seconds');
   gameState.nextQuestionTimer = setTimeout(() => {
+    console.log(`[SCHEDULE] Timer fired - Room ${roomCode}`);
     gameState.nextQuestionTimer = null;
 
     // Double-check pause state (might have changed during timeout)
     if (gameState.paused) {
-      console.log('Game became paused during reveal, stopping');
+      console.log('[SCHEDULE] Game became paused, stopping');
       return;
     }
 
     gameState.currentQuestionIndex++;
+    console.log(`[SCHEDULE] Incremented index to ${gameState.currentQuestionIndex}`);
 
     // Check if unlimited mode (question count = 50)
     const settings = roomSettings.get(roomCode);
