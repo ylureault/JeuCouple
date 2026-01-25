@@ -184,12 +184,9 @@ const rooms = new Map<string, Room>();
 const roomsByCode = new Map<string, Room>();
 
 function generateCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
+  // Generate 4-digit code (0000-9999)
+  const code = Math.floor(Math.random() * 10000);
+  return code.toString().padStart(4, '0');
 }
 
 function createRoom(player1Name: string): Room {
@@ -735,7 +732,7 @@ describe('Jeu Couples - Tests Fonctionnels', () => {
       });
 
       expect(response.success).toBe(true);
-      expect(response.room.code).toHaveLength(6);
+      expect(response.room.code).toHaveLength(4); // 4-digit code
       expect(response.playerId).toBe(1);
 
       socket.disconnect();

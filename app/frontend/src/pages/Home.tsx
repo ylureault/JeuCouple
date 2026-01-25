@@ -524,17 +524,17 @@ export default function Home() {
 
                   <div>
                     <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
-                      Code du salon
+                      Code du salon (4 chiffres)
                     </label>
                     <input
                       type="text"
                       value={roomCode}
-                      onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                      placeholder="ABC123"
-                      className="input-kahoot text-center text-3xl tracking-[0.3em] font-black"
-                      maxLength={6}
-                      inputMode="text"
-                      autoCapitalize="characters"
+                      onChange={(e) => setRoomCode(e.target.value.replace(/\D/g, ''))}
+                      placeholder="1234"
+                      className="input-kahoot text-center text-4xl tracking-[0.5em] font-black"
+                      maxLength={4}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       autoComplete="off"
                       onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
                     />
@@ -542,7 +542,7 @@ export default function Home() {
 
                   <motion.button
                     onClick={handleJoin}
-                    disabled={!playerName.trim() || !gender || roomCode.length !== 6 || loading}
+                    disabled={!playerName.trim() || !gender || roomCode.length !== 4 || loading}
                     className="btn-join w-full disabled:opacity-50 disabled:cursor-not-allowed mt-6"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}

@@ -2,12 +2,9 @@ import { db } from '../database.js';
 import type { Room, Gender } from '../types.js';
 
 function generateCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluded confusing chars
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
+  // Generate 4-digit code (0000-9999)
+  const code = Math.floor(Math.random() * 10000);
+  return code.toString().padStart(4, '0');
 }
 
 export function createRoom(player1Name: string, player1Gender: Gender): Room {
