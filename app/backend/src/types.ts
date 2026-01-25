@@ -1,15 +1,33 @@
 // Types partagés entre frontend et backend
 
-// Extended question types: A, B, C, D + new E (binary choice), F (who of us), G (vrai ou faux about player), H (culture générale QCM)
-export type QuestionType = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H';
+// Extended question types
+// A-I: existing types
+// J: Date exacte (deviner une date/mois d'un souvenir)
+// K: Durée (il y a combien de temps?)
+// L: Avant/Après (ordre chronologique de 2 événements)
+// M: Top 3 (classer 3 éléments dans l'ordre de préférence)
+// N: Plus/Moins (ce chiffre est-il plus ou moins que X?)
+// O: Scénario (que ferais-tu si - hypothétique)
+// P: Superpouvoir (quel superpouvoir choisirait ton partenaire?)
+// Q: Humeur (deviner l'humeur de l'autre sur une échelle)
+// R: Pet Peeves (qu'est-ce qui agace ton partenaire?)
+// S: Hot Take (opinion controversée - d'accord ou pas)
+export type QuestionType = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S';
 
 // Scoring modes for question types
 // 'individual' for Type H: each player scores independently based on correct answer
-export type ScoringMode = 'match' | 'consensus' | 'proximity' | 'none' | 'individual';
+// 'ranking' for Type M: partial points based on how many items match positions
+export type ScoringMode = 'match' | 'consensus' | 'proximity' | 'none' | 'individual' | 'ranking';
 
 // Input types for questions
 // 'qcm' for Type H: multiple choice with one correct answer
-export type InputType = 'options' | 'binary' | 'scale' | 'text' | 'who' | 'qcm';
+// 'image_choice' for Type I: visual emoji-based choice between two options
+// 'month_select' for Type J: select a month/year
+// 'duration' for Type K: select a duration (months/years ago)
+// 'ranking' for Type M: order 3 items
+// 'plus_moins' for Type N: plus or moins choice
+// 'agree_disagree' for Type S: d'accord or pas d'accord
+export type InputType = 'options' | 'binary' | 'scale' | 'text' | 'who' | 'qcm' | 'image_choice' | 'month_select' | 'duration' | 'ranking' | 'plus_moins' | 'agree_disagree';
 
 // Question Type Configuration (administrable)
 export interface QuestionTypeConfig {
@@ -44,8 +62,15 @@ export interface Question {
   options?: string[];
   option_a?: string;  // For type E (binary choice)
   option_b?: string;  // For type E (binary choice)
+  emoji_a?: string;   // For type I (image choice) - visual emoji for option A
+  emoji_b?: string;   // For type I (image choice) - visual emoji for option B
   target_player?: 1 | 2;  // For type G (vrai ou faux about a specific player)
   correct_answer?: string;  // For type H (culture générale QCM - the correct option)
+  // New fields for types J-S
+  ranking_items?: string[];  // For type M (Top 3) - items to rank
+  reference_value?: number;  // For type N (Plus/Moins) - the reference number
+  scenario_context?: string;  // For type O (Scénario) - additional context
+  hot_take_statement?: string;  // For type S (Hot Take) - the controversial statement
   timer: number;
   active: boolean;
 }

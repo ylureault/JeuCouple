@@ -96,6 +96,7 @@ const STREAK_MULTIPLIERS: Record<number, number> = {
 };
 const TYPE_C_THOUGHTFUL_BONUS = 50;  // Bonus for answers > 20 chars
 const JOKER_PENALTY = -50;  // Penalty for using joker
+const NO_ANSWER_PENALTY = -50;  // Penalty for not answering
 const UNLIMITED_MODE_QUESTION_COUNT = 50;  // When set to 50, it's unlimited
 const UNLIMITED_MODE_GAP_TO_WIN = 200;  // 200 point gap to win in unlimited
 
@@ -685,11 +686,13 @@ function revealAnswers(
   const answers = gameState.answers.get(question.id) || {};
   const { gamification } = gameState;
 
-  // Check for joker and dontknow answers
+  // Check for joker, dontknow, and no answers
   const isJoker1 = answers.answer1 === 'joker';
   const isJoker2 = answers.answer2 === 'joker';
   const isDontKnow1 = answers.answer1 === 'dontknow';
   const isDontKnow2 = answers.answer2 === 'dontknow';
+  const noAnswer1 = answers.answer1 === undefined;
+  const noAnswer2 = answers.answer2 === undefined;
 
   // For scoring purposes, joker and dontknow are treated as no valid answer
   const effectiveAnswer1 = (isJoker1 || isDontKnow1) ? undefined : answers.answer1;
@@ -719,10 +722,12 @@ function revealAnswers(
     : null;
 
   // Calculate speed bonuses (only if correct and not Type C)
+  // Speed bonus is now SHARED - both players get the same bonus based on their combined speed
+  // This encourages teamwork and removes advantage for first responder
   let speedBonus1 = 0;
   let speedBonus2 = 0;
   if (isTypeH) {
-    // For Type H, speed bonus based on individual correctness
+    // For Type H, speed bonus based on individual correctness (keep individual)
     if (individualPoints1 > 0 && answers.time1) {
       speedBonus1 = Math.round(individualPoints1 * calculateSpeedBonus(answers.time1, gameState.questionStartTime));
     }
@@ -730,12 +735,16 @@ function revealAnswers(
       speedBonus2 = Math.round(individualPoints2 * calculateSpeedBonus(answers.time2, gameState.questionStartTime));
     }
   } else if (correct && question.type !== 'C' && basePoints > 0) {
-    if (answers.time1) {
-      speedBonus1 = Math.round(basePoints * calculateSpeedBonus(answers.time1, gameState.questionStartTime));
+    // For matching questions, calculate shared speed bonus based on the SLOWER player's time
+    // This encourages both to be fast, not just one
+    if (answers.time1 && answers.time2) {
+      // Use the slower time (when both answered) for fair bonus calculation
+      const slowerTime = Math.max(answers.time1, answers.time2);
+      const sharedSpeedBonus = Math.round(basePoints * calculateSpeedBonus(slowerTime, gameState.questionStartTime));
+      speedBonus1 = sharedSpeedBonus;
+      speedBonus2 = sharedSpeedBonus;
     }
-    if (answers.time2) {
-      speedBonus2 = Math.round(basePoints * calculateSpeedBonus(answers.time2, gameState.questionStartTime));
-    }
+    // If only one answered, no speed bonus (need both to answer for bonus)
   }
 
   // Update streaks
@@ -821,12 +830,41 @@ function revealAnswers(
     points2 = basePoints + speedBonus2 + streakBonus2;
   }
 
-  // Apply joker penalty
+  // Apply penalties for no answer (-50 points)
+  if (noAnswer1 && !isJoker1) {
+    points1 = NO_ANSWER_PENALTY;
+    // Reset streak when no answer
+    gamification.streak1 = 0;
+  }
+  if (noAnswer2 && !isJoker2) {
+    points2 = NO_ANSWER_PENALTY;
+    gamification.streak2 = 0;
+  }
+
+  // Apply joker penalty (overrides no answer if both)
   if (isJoker1) {
     points1 = JOKER_PENALTY;
   }
   if (isJoker2) {
     points2 = JOKER_PENALTY;
+  }
+
+  // Anti-tie mechanism: Add micro-bonus (1-3 points) based on answer speed
+  // Only applies when both players would get the same score
+  if (points1 === points2 && points1 > 0 && answerTime1 !== null && answerTime2 !== null) {
+    // Player who answered faster gets a small bonus (1-3 points based on time difference)
+    const timeDiff = Math.abs(answerTime1 - answerTime2);
+    const microBonus = Math.min(3, Math.max(1, Math.ceil(timeDiff)));
+    if (answerTime1 < answerTime2) {
+      points1 += microBonus;
+    } else if (answerTime2 < answerTime1) {
+      points2 += microBonus;
+    }
+    // If exactly same time (extremely rare), both get +1
+    else {
+      points1 += 1;
+      points2 += 2; // Give slight edge to player 2 to avoid tie
+    }
   }
 
   // Update speed bonus totals
@@ -983,6 +1021,13 @@ function calculateBasePoints(
     case 'E':
     case 'F':
     case 'G':
+    case 'I':  // Image choice - same as binary
+    case 'L':  // Avant/Après - binary choice
+    case 'N':  // Plus/Moins - binary choice
+    case 'O':  // Scénario - match answer
+    case 'P':  // Superpouvoir - match answer
+    case 'R':  // Pet Peeves - match answer
+    case 'S':  // Hot Take - agree/disagree match
       if (answer1 === answer2) {
         basePoints = BASE_POINTS;
         correct = true;
@@ -996,7 +1041,8 @@ function calculateBasePoints(
       break;
 
     case 'D':
-      // Type D: Scale comparison
+    case 'Q':  // Humeur - scale comparison like type D
+      // Type D/Q: Scale comparison
       const val1 = parseInt(answer1, 10);
       const val2 = parseInt(answer2, 10);
       if (!isNaN(val1) && !isNaN(val2)) {
@@ -1008,6 +1054,67 @@ function calculateBasePoints(
           basePoints = 50;
           correct = true;
         }
+      }
+      break;
+
+    case 'J':
+      // Type J: Date exacte - compare month/year format (YYYY-MM)
+      if (answer1 === answer2) {
+        basePoints = BASE_POINTS;
+        correct = true;
+      } else {
+        // Partial points if same year
+        const [year1] = answer1.split('-');
+        const [year2] = answer2.split('-');
+        if (year1 === year2) {
+          basePoints = 50;
+          correct = true;
+        }
+      }
+      break;
+
+    case 'K':
+      // Type K: Duration - proximity scoring (months ago)
+      const months1 = parseInt(answer1, 10);
+      const months2 = parseInt(answer2, 10);
+      if (!isNaN(months1) && !isNaN(months2)) {
+        const monthDiff = Math.abs(months1 - months2);
+        if (monthDiff === 0) {
+          basePoints = BASE_POINTS;
+          correct = true;
+        } else if (monthDiff <= 3) {
+          basePoints = 75;
+          correct = true;
+        } else if (monthDiff <= 6) {
+          basePoints = 50;
+          correct = true;
+        } else if (monthDiff <= 12) {
+          basePoints = 25;
+          correct = true;
+        }
+      }
+      break;
+
+    case 'M':
+      // Type M: Top 3 ranking - partial points based on matches
+      // Format: "item1,item2,item3"
+      const ranking1 = answer1.split(',');
+      const ranking2 = answer2.split(',');
+      let matchCount = 0;
+      for (let i = 0; i < Math.min(ranking1.length, ranking2.length); i++) {
+        if (ranking1[i] === ranking2[i]) {
+          matchCount++;
+        }
+      }
+      if (matchCount === 3) {
+        basePoints = BASE_POINTS;
+        correct = true;
+      } else if (matchCount === 2) {
+        basePoints = 70;
+        correct = true;
+      } else if (matchCount === 1) {
+        basePoints = 30;
+        correct = true;
       }
       break;
   }
@@ -1026,14 +1133,42 @@ function finishGame(
 
   const { gamification } = gameState;
 
-  // Determine winner
+  // Determine winner - with tie-breakers
   let winner: 1 | 2 | 'tie';
   if (gameState.scores.player1 > gameState.scores.player2) {
     winner = 1;
   } else if (gameState.scores.player2 > gameState.scores.player1) {
     winner = 2;
   } else {
-    winner = 'tie';
+    // Tie-breaker 1: Max streak wins
+    if (gamification.maxStreak1 > gamification.maxStreak2) {
+      winner = 1;
+    } else if (gamification.maxStreak2 > gamification.maxStreak1) {
+      winner = 2;
+    } else {
+      // Tie-breaker 2: Total speed bonus wins
+      if (gamification.speedBonusTotal1 > gamification.speedBonusTotal2) {
+        winner = 1;
+      } else if (gamification.speedBonusTotal2 > gamification.speedBonusTotal1) {
+        winner = 2;
+      } else {
+        // Tie-breaker 3: Count total answers given (who participated more)
+        let answersCount1 = 0;
+        let answersCount2 = 0;
+        gameState.answers.forEach(ans => {
+          if (ans.answer1 !== undefined) answersCount1++;
+          if (ans.answer2 !== undefined) answersCount2++;
+        });
+        if (answersCount1 > answersCount2) {
+          winner = 1;
+        } else if (answersCount2 > answersCount1) {
+          winner = 2;
+        } else {
+          // Final tie-breaker: Random (extremely rare case)
+          winner = Math.random() < 0.5 ? 1 : 2;
+        }
+      }
+    }
   }
 
   // Calculate correct answers

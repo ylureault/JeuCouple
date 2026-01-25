@@ -1,16 +1,33 @@
 // Types partagés entre frontend et backend
 
-// Extended question types: A, B, C, D + new E (binary choice), F (who of us), G (vrai ou faux about player), H (culture générale QCM), I (image-based choice)
-export type QuestionType = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I';
+// Extended question types
+// A-I: existing types
+// J: Date exacte (deviner une date/mois d'un souvenir)
+// K: Durée (il y a combien de temps?)
+// L: Avant/Après (ordre chronologique de 2 événements)
+// M: Top 3 (classer 3 éléments dans l'ordre de préférence)
+// N: Plus/Moins (ce chiffre est-il plus ou moins que X?)
+// O: Scénario (que ferais-tu si - hypothétique)
+// P: Superpouvoir (quel superpouvoir choisirait ton partenaire?)
+// Q: Humeur (deviner l'humeur de l'autre sur une échelle)
+// R: Pet Peeves (qu'est-ce qui agace ton partenaire?)
+// S: Hot Take (opinion controversée - d'accord ou pas)
+export type QuestionType = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S';
 
 // Scoring modes for question types
 // 'individual' for Type H: each player scores independently based on correct answer
-export type ScoringMode = 'match' | 'consensus' | 'proximity' | 'none' | 'individual';
+// 'ranking' for Type M: partial points based on how many items match positions
+export type ScoringMode = 'match' | 'consensus' | 'proximity' | 'none' | 'individual' | 'ranking';
 
 // Input types for questions
 // 'qcm' for Type H: multiple choice with one correct answer
 // 'image_choice' for Type I: visual emoji-based choice between two options
-export type InputType = 'options' | 'binary' | 'scale' | 'text' | 'who' | 'qcm' | 'image_choice';
+// 'month_select' for Type J: select a month/year
+// 'duration' for Type K: select a duration (months/years ago)
+// 'ranking' for Type M: order 3 items
+// 'plus_moins' for Type N: plus or moins choice
+// 'agree_disagree' for Type S: d'accord or pas d'accord
+export type InputType = 'options' | 'binary' | 'scale' | 'text' | 'who' | 'qcm' | 'image_choice' | 'month_select' | 'duration' | 'ranking' | 'plus_moins' | 'agree_disagree';
 
 // Question Type Configuration (administrable)
 export interface QuestionTypeConfig {
@@ -49,6 +66,11 @@ export interface Question {
   emoji_b?: string;   // For type I (image choice) - visual emoji for option B
   target_player?: 1 | 2;  // For type G (vrai ou faux about a specific player)
   correct_answer?: string;  // For type H (culture générale QCM - the correct option)
+  // New fields for types J-S
+  ranking_items?: string[];  // For type M (Top 3) - items to rank
+  reference_value?: number;  // For type N (Plus/Moins) - the reference number
+  scenario_context?: string;  // For type O (Scénario) - additional context
+  hot_take_statement?: string;  // For type S (Hot Take) - the controversial statement
   timer: number;
   active: boolean;
 }
@@ -214,6 +236,16 @@ export const QUESTION_TYPE_CONFIG = [
   { id: 'F', label: 'Qui de nous', emoji: '👫', description: 'Désigner toi, ton partenaire ou les deux' },
   { id: 'G', label: 'Vrai ou Faux', emoji: '✅', description: 'Deviner si c\'est vrai ou faux' },
   { id: 'H', label: 'Culture G.', emoji: '🧠', description: 'Questions de culture générale' },
+  { id: 'J', label: 'Date exacte', emoji: '📅', description: 'Deviner la date d\'un souvenir' },
+  { id: 'K', label: 'Il y a combien?', emoji: '⏰', description: 'Estimer le temps écoulé' },
+  { id: 'L', label: 'Avant/Après', emoji: '↔️', description: 'Ordre chronologique de 2 événements' },
+  { id: 'M', label: 'Top 3', emoji: '🏆', description: 'Classer 3 éléments par préférence' },
+  { id: 'N', label: 'Plus ou Moins', emoji: '🔢', description: 'Deviner si c\'est plus ou moins' },
+  { id: 'O', label: 'Scénario', emoji: '🎭', description: 'Que ferait ton partenaire si...' },
+  { id: 'P', label: 'Superpouvoir', emoji: '🦸', description: 'Quel pouvoir choisirait-il/elle?' },
+  { id: 'Q', label: 'Humeur', emoji: '😊', description: 'Deviner l\'humeur de l\'autre' },
+  { id: 'R', label: 'Pet Peeves', emoji: '😤', description: 'Ce qui agace ton partenaire' },
+  { id: 'S', label: 'Hot Take', emoji: '🔥', description: 'Opinion controversée à deviner' },
 ] as const;
 
 export interface ClientToServerEvents {
