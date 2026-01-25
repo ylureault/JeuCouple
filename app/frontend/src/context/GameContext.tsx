@@ -329,8 +329,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 }
 
 interface GameContextType extends GameState {
-  createRoom: (playerName: string, gender: Gender, questionCount?: number, categories?: string[], questionTypes?: string[]) => Promise<void>;
-  joinRoom: (code: string, playerName: string, gender: Gender) => Promise<void>;
+  createRoom: (playerName: string, gender: Gender, questionCount?: number, categories?: string[], questionTypes?: string[]) => Promise<string>;
+  joinRoom: (code: string, playerName: string, gender: Gender) => Promise<string>;
   startGame: () => Promise<void>;
   submitAnswer: (answer: string) => void;
   leaveRoom: () => void;
@@ -520,10 +520,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const createRoom = useCallback(async (playerName: string, gender: Gender, questionCount?: number, categories?: string[], questionTypes?: string[]) => {
-    if (!state.socket) return;
+  const createRoom = useCallback(async (playerName: string, gender: Gender, questionCount?: number, categories?: string[], questionTypes?: string[]): Promise<string> => {
+    if (!state.socket) throw new Error('No socket connection');
 
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
       state.socket!.emit('room:create', { playerName, gender, questionCount, categories, questionTypes }, (response) => {
         if (response.success && response.room && response.playerId) {
           dispatch({
@@ -533,7 +533,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             playerName
           });
           saveSession(response.room.code, response.playerId, playerName);
-          resolve();
+          resolve(response.room.code); // Return the room code
         } else {
           dispatch({ type: 'SET_ERROR', error: response.error || 'Failed to create room' });
           reject(new Error(response.error));
@@ -542,10 +542,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [state.socket]);
 
-  const joinRoom = useCallback(async (code: string, playerName: string, gender: Gender) => {
-    if (!state.socket) return;
+  const joinRoom = useCallback(async (code: string, playerName: string, gender: Gender): Promise<string> => {
+    if (!state.socket) throw new Error('No socket connection');
 
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
       state.socket!.emit('room:join', { code: code.toUpperCase(), playerName, gender }, (response) => {
         if (response.success && response.room && response.playerId) {
           dispatch({
@@ -555,7 +555,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             playerName
           });
           saveSession(response.room.code, response.playerId, playerName);
-          resolve();
+          resolve(response.room.code); // Return the room code
         } else {
           dispatch({ type: 'SET_ERROR', error: response.error || 'Failed to join room' });
           reject(new Error(response.error));

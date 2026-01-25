@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
@@ -36,21 +36,24 @@ export default function Game() {
   } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
+  const { code } = useParams<{ code: string }>();
   const [timeLeft, setTimeLeft] = useState(0);
   const [showIntro, setShowIntro] = useState(true);
   const [introStep, setIntroStep] = useState<'number' | 'category' | 'question'>('number');
 
+  // If no room and no valid code in URL, go home
   useEffect(() => {
-    if (!room) {
+    if (!room && !code) {
       navigate('/');
     }
-  }, [room, navigate]);
+  }, [room, code, navigate]);
 
+  // Navigate to results when game finishes (with room code in URL)
   useEffect(() => {
-    if (phase === 'finished' && finalResults) {
-      navigate('/results');
+    if (phase === 'finished' && finalResults && room?.code) {
+      navigate(`/results/${room.code}`);
     }
-  }, [phase, finalResults, navigate]);
+  }, [phase, finalResults, navigate, room?.code]);
 
   useEffect(() => {
     if (currentQuestion) {

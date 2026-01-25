@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
@@ -101,6 +101,7 @@ export default function Results() {
   const { room, playerId, finalResults, restartGame, phase } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
+  const { code } = useParams<{ code: string }>();
   const [showPodium, setShowPodium] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showFireworks, setShowFireworks] = useState(false);
@@ -114,18 +115,19 @@ export default function Results() {
       ((finalResults.score1 + finalResults.score2) / (finalResults.totalQuestions * 200)) >= 1
     : false;
 
-  // Navigate to lobby when restart happens
+  // Navigate to lobby when restart happens (with room code in URL)
   useEffect(() => {
-    if (phase === 'lobby' && room) {
-      navigate('/salon/lobby');
+    if (phase === 'lobby' && room?.code) {
+      navigate(`/salon/${room.code}`);
     }
-  }, [phase, room, navigate]);
+  }, [phase, room?.code, navigate]);
 
   useEffect(() => {
-    if (!finalResults || !room) {
+    if (!finalResults && !code) {
       navigate('/');
       return;
     }
+    if (!finalResults || !room) return;
 
     // Dramatic reveal sequence
     const timer0 = setTimeout(() => setDrumroll(false), 1500);

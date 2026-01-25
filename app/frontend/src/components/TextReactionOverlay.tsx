@@ -59,7 +59,7 @@ export default function TextReactionOverlay() {
   }, [textReactions, playerId, playSound]);
 
   return (
-    <div className="fixed inset-x-0 top-20 pointer-events-none overflow-hidden z-50 flex flex-col items-center gap-2">
+    <div className="fixed inset-0 pointer-events-none z-50 flex flex-col items-center pt-20 gap-2">
       <AnimatePresence>
         {floatingReactions.map((reaction) => {
           const style = getGenderStyle(reaction.gender);
@@ -68,9 +68,9 @@ export default function TextReactionOverlay() {
           return (
             <motion.div
               key={reaction.id}
-              initial={{ opacity: 0, y: isFromMe ? 20 : -20, scale: 0.8 }}
+              initial={{ opacity: 0, y: 30, scale: 0.8 }}
               animate={{ opacity: isFromMe ? 0.8 : 1, y: 0, scale: isFromMe ? 0.85 : 1 }}
-              exit={{ opacity: 0, y: isFromMe ? 20 : -30, scale: 0.8 }}
+              exit={{ opacity: 0, y: -50, scale: 0.8 }}
               transition={{ type: 'spring', damping: 20 }}
               className={`
                 ${isFromMe ? 'bg-white/20 border-white/30' : `${style.bg} ${style.border}`}

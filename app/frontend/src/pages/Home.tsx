@@ -82,9 +82,9 @@ export default function Home() {
     playSound('click');
     try {
       // Pass selected categories and types (empty array = all / auto mode)
-      await createRoom(playerName.trim(), gender, questionCount, selectedCategories, selectedTypes);
-      // Navigate to lobby, not game (game hasn't started yet)
-      navigate('/salon/lobby');
+      const code = await createRoom(playerName.trim(), gender, questionCount, selectedCategories, selectedTypes);
+      // Navigate to lobby with the actual room code
+      navigate(`/salon/${code}`);
     } catch {
       // Error handled in context
     } finally {
@@ -102,8 +102,8 @@ export default function Home() {
       const themeCategories = selectedTheme === 'mix_hot'
         ? THEMATIC_THEMES.filter(t => t.id !== 'mix_hot').map(t => t.id)
         : [selectedTheme];
-      await createRoom(playerName.trim(), gender, questionCount, themeCategories, []);
-      navigate('/salon/lobby');
+      const code = await createRoom(playerName.trim(), gender, questionCount, themeCategories, []);
+      navigate(`/salon/${code}`);
     } catch {
       // Error handled in context
     } finally {
@@ -132,8 +132,8 @@ export default function Home() {
     setLoading(true);
     playSound('click');
     try {
-      await joinRoom(roomCode.trim().toUpperCase(), playerName.trim(), gender);
-      navigate('/salon/lobby');
+      const code = await joinRoom(roomCode.trim().toUpperCase(), playerName.trim(), gender);
+      navigate(`/salon/${code}`);
     } catch {
       // Error handled in context
     } finally {

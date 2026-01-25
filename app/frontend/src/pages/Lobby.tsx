@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
@@ -26,19 +26,22 @@ export default function Lobby() {
   } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
+  const { code } = useParams<{ code: string }>();
   const [copied, setCopied] = useState(false);
 
+  // Navigate to game when it starts (with room code in URL)
   useEffect(() => {
-    if (phase === 'question') {
-      navigate('/game');
+    if (phase === 'question' && room?.code) {
+      navigate(`/game/${room.code}`);
     }
-  }, [phase, navigate]);
+  }, [phase, navigate, room?.code]);
 
+  // If no room and no valid code in URL, go home
   useEffect(() => {
-    if (!room) {
+    if (!room && !code) {
       navigate('/');
     }
-  }, [room, navigate]);
+  }, [room, code, navigate]);
 
   const handleStart = async () => {
     playSound('click');
