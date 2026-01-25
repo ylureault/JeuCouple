@@ -7,6 +7,7 @@ import type { TextReactionData, Gender } from '../../../shared/types';
 interface FloatingTextReaction extends TextReactionData {
   id: string;
   gender: Gender | null;
+  isFromMe?: boolean;
 }
 
 export default function TextReactionOverlay() {
@@ -38,21 +39,22 @@ export default function TextReactionOverlay() {
     if (lastReaction) {
       const id = `${lastReaction.timestamp}-${lastReaction.playerId}-${Math.random()}`;
       const gender = getPlayerGender(lastReaction.playerId);
+      const isFromMe = lastReaction.playerId === playerId;
 
-      // Play sound when receiving text reaction from OTHER player
-      if (lastReaction.playerId !== playerId) {
+      // Play sound only when receiving from OTHER player
+      if (!isFromMe) {
         playSound('reactionReceived');
       }
 
       setFloatingReactions((prev) => [
         ...prev,
-        { ...lastReaction, id, gender }
+        { ...lastReaction, id, gender, isFromMe }
       ]);
 
-      // Remove after animation
+      // Remove after animation (shorter for own reactions)
       setTimeout(() => {
         setFloatingReactions((prev) => prev.filter((r) => r.id !== id));
-      }, 3000);
+      }, isFromMe ? 1500 : 3000);
     }
   }, [textReactions, playerId, playSound]);
 
@@ -61,23 +63,25 @@ export default function TextReactionOverlay() {
       <AnimatePresence>
         {floatingReactions.map((reaction) => {
           const style = getGenderStyle(reaction.gender);
+          const isFromMe = reaction.isFromMe;
 
           return (
             <motion.div
               key={reaction.id}
-              initial={{ opacity: 0, y: -20, scale: 0.8 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -30, scale: 0.8 }}
+              initial={{ opacity: 0, y: isFromMe ? 20 : -20, scale: 0.8 }}
+              animate={{ opacity: isFromMe ? 0.8 : 1, y: 0, scale: isFromMe ? 0.85 : 1 }}
+              exit={{ opacity: 0, y: isFromMe ? 20 : -30, scale: 0.8 }}
               transition={{ type: 'spring', damping: 20 }}
               className={`
-                ${style.bg} ${style.border} border-2 rounded-2xl px-4 py-2 shadow-xl
+                ${isFromMe ? 'bg-white/20 border-white/30' : `${style.bg} ${style.border}`}
+                border-2 rounded-2xl px-4 py-2 shadow-xl
                 flex items-center gap-2
               `}
             >
               {/* Emoji */}
               <motion.span
-                className="text-2xl"
-                animate={{ rotate: [0, -10, 10, 0] }}
+                className={isFromMe ? 'text-xl' : 'text-2xl'}
+                animate={isFromMe ? {} : { rotate: [0, -10, 10, 0] }}
                 transition={{ duration: 0.5 }}
               >
                 {reaction.emoji}
@@ -85,11 +89,11 @@ export default function TextReactionOverlay() {
 
               {/* Text */}
               <div className="text-center">
-                <p className={`font-bold text-base ${style.text}`}>
+                <p className={`font-bold ${isFromMe ? 'text-sm text-white/90' : `text-base ${style.text}`}`}>
                   {reaction.text}
                 </p>
-                <p className="text-white/70 text-xs font-medium">
-                  - {getPlayerName(reaction.playerId)}
+                <p className={`text-xs font-medium ${isFromMe ? 'text-white/50' : 'text-white/70'}`}>
+                  {isFromMe ? 'Envoyé ✓' : `- ${getPlayerName(reaction.playerId)}`}
                 </p>
               </div>
             </motion.div>
