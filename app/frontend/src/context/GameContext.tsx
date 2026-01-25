@@ -580,11 +580,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [state.socket]);
 
   const submitAnswer = useCallback((answer: string) => {
-    if (!state.socket || state.myAnswer) return;
+    // Prevent submitting if no socket, already answered, or not in question phase
+    if (!state.socket || state.myAnswer || state.phase !== 'question') return;
 
     state.socket.emit('game:answer', { answer });
     dispatch({ type: 'SET_MY_ANSWER', answer });
-  }, [state.socket, state.myAnswer]);
+  }, [state.socket, state.myAnswer, state.phase]);
 
   const leaveRoom = useCallback(() => {
     if (state.socket) {

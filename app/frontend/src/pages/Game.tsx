@@ -76,23 +76,26 @@ export default function Game() {
   }, [currentQuestion, playSound]);
 
   useEffect(() => {
-    if (phase === 'question' && !showIntro && timeLeft > 0 && !myAnswer) {
-      const timer = setInterval(() => {
-        setTimeLeft((t) => {
-          if (t <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          if (t <= 5) {
-            playSound('tick');
-          }
-          return t - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
+    // Only start timer when in question phase, intro is done, and no answer given
+    if (phase !== 'question' || showIntro || myAnswer) {
+      return;
     }
-  }, [phase, showIntro, timeLeft, myAnswer, playSound]);
+
+    const timer = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        if (t <= 5) {
+          playSound('tick');
+        }
+        return t - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [phase, showIntro, myAnswer, playSound]); // Removed timeLeft from deps to prevent multiple intervals
 
   useEffect(() => {
     if (revealData) {

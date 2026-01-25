@@ -242,6 +242,12 @@ export function setupSocketHandlers(
                 totalQuestions: gameState.questions.length
               });
 
+              // Clear any existing timer before setting a new one
+              if (gameState.timer) {
+                clearTimeout(gameState.timer);
+                gameState.timer = null;
+              }
+
               // Restart timer with remaining time
               const remainingMs = gameState.remainingTime * 1000;
               gameState.questionStartTime = Date.now() - ((gameState.currentQuestion.timer - gameState.remainingTime) * 1000);
@@ -252,7 +258,7 @@ export function setupSocketHandlers(
               }, remainingMs + 3000); // Extra 3 seconds for network latency
             }
             // If in reveal phase, we need to schedule the next question since the timer was cleared
-            if (gameState.phase === 'reveal') {
+            else if (gameState.phase === 'reveal') {
               console.log('Resuming from reveal phase - scheduling next question');
               scheduleNextQuestion(io, room.code, gameState);
             }
@@ -273,6 +279,12 @@ export function setupSocketHandlers(
       const connection = playerConnections.get(socket.id);
       if (!connection) {
         callback({ success: false, error: 'Not in a room' });
+        return;
+      }
+
+      // Check if game already exists for this room (prevent double start)
+      if (activeGames.has(connection.roomCode)) {
+        callback({ success: false, error: 'Game already started' });
         return;
       }
 
@@ -355,7 +367,13 @@ export function setupSocketHandlers(
       if (!connection) return;
 
       const gameState = activeGames.get(connection.roomCode);
-      if (!gameState || gameState.phase !== 'question') return;
+      if (!gameState) return;
+
+      // Only accept answers in question phase
+      if (gameState.phase !== 'question') {
+        console.log('Answer rejected - not in question phase:', gameState.phase);
+        return;
+      }
 
       // Don't accept answers if game is paused
       if (gameState.paused) return;
@@ -365,6 +383,17 @@ export function setupSocketHandlers(
 
       // Save answer with timestamp
       const questionAnswers = gameState.answers.get(currentQuestion.id) || {};
+
+      // Prevent duplicate answers from same player
+      if (connection.playerId === 1 && questionAnswers.answer1 !== undefined) {
+        console.log('Duplicate answer from player 1 rejected');
+        return;
+      }
+      if (connection.playerId === 2 && questionAnswers.answer2 !== undefined) {
+        console.log('Duplicate answer from player 2 rejected');
+        return;
+      }
+
       if (connection.playerId === 1) {
         questionAnswers.answer1 = data.answer;
         questionAnswers.time1 = answerTime;
@@ -387,13 +416,10 @@ export function setupSocketHandlers(
         playerId: connection.playerId
       });
 
-      // Check if both players have answered
-      if (questionAnswers.answer1 !== undefined && questionAnswers.answer2 !== undefined) {
-        // Clear timer and reveal
-        if (gameState.timer) {
-          clearTimeout(gameState.timer);
-          gameState.timer = null;
-        }
+      // Check if both players have answered (double-check phase to avoid race)
+      if (gameState.phase === 'question' &&
+          questionAnswers.answer1 !== undefined &&
+          questionAnswers.answer2 !== undefined) {
         revealAnswers(io, connection.roomCode, gameState);
       }
     });
@@ -415,7 +441,19 @@ export function setupSocketHandlers(
       // Reset room status to waiting (ready to play again)
       roomModel.updateRoomStatus(room.id, 'waiting');
 
-      // Clean up any existing game state for this room
+      // Clean up any existing game state for this room - CLEAR ALL TIMERS FIRST
+      const existingGame = activeGames.get(connection.roomCode);
+      if (existingGame) {
+        if (existingGame.timer) {
+          clearTimeout(existingGame.timer);
+        }
+        if (existingGame.nextQuestionTimer) {
+          clearTimeout(existingGame.nextQuestionTimer);
+        }
+        if (existingGame.disconnectGraceTimer) {
+          clearTimeout(existingGame.disconnectGraceTimer);
+        }
+      }
       activeGames.delete(connection.roomCode);
 
       // Notify both players to go back to lobby
@@ -700,6 +738,12 @@ function sendQuestion(
   // Don't send question if game is paused
   if (gameState.paused) return;
 
+  // Clear any existing question timer to prevent duplicates
+  if (gameState.timer) {
+    clearTimeout(gameState.timer);
+    gameState.timer = null;
+  }
+
   const question = { ...gameState.questions[gameState.currentQuestionIndex] };
   gameState.phase = 'question';
   gameState.questionStartTime = Date.now();
@@ -752,6 +796,18 @@ function revealAnswers(
   roomCode: string,
   gameState: GameState
 ) {
+  // Prevent double reveal (race condition protection)
+  if (gameState.phase === 'reveal') {
+    console.log('Reveal already in progress, skipping duplicate call');
+    return;
+  }
+
+  // Clear any pending question timer
+  if (gameState.timer) {
+    clearTimeout(gameState.timer);
+    gameState.timer = null;
+  }
+
   gameState.phase = 'reveal';
   const question = gameState.questions[gameState.currentQuestionIndex];
   const answers = gameState.answers.get(question.id) || {};
@@ -1205,6 +1261,20 @@ function finishGame(
   roomCode: string,
   gameState: GameState
 ) {
+  // Clear all timers before finishing
+  if (gameState.timer) {
+    clearTimeout(gameState.timer);
+    gameState.timer = null;
+  }
+  if (gameState.nextQuestionTimer) {
+    clearTimeout(gameState.nextQuestionTimer);
+    gameState.nextQuestionTimer = null;
+  }
+  if (gameState.disconnectGraceTimer) {
+    clearTimeout(gameState.disconnectGraceTimer);
+    gameState.disconnectGraceTimer = null;
+  }
+
   // Mark game as finished
   gameModel.finishGame(gameState.gameId);
   roomModel.updateRoomStatus(gameState.roomId, 'finished');
