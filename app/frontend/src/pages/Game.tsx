@@ -11,6 +11,8 @@ import RevealCard from '../components/RevealCard';
 import CategoryBadge from '../components/CategoryBadge';
 import ReactionBar from '../components/ReactionBar';
 import ReactionOverlay from '../components/ReactionOverlay';
+import TextReactionBar from '../components/TextReactionBar';
+import TextReactionOverlay from '../components/TextReactionOverlay';
 import VoiceChat from '../components/VoiceChat';
 import GameAlerts from '../components/GameAlerts';
 import Lobby from './Lobby';
@@ -138,6 +140,7 @@ export default function Game() {
   return (
     <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col pb-20`}>
       <ReactionOverlay />
+      <TextReactionOverlay />
       <GameAlerts
         otherAnswered={otherAnswered}
         myAnswer={myAnswer}
@@ -505,8 +508,9 @@ export default function Game() {
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-sm py-2 px-2 border-t border-white/10 z-40"
+        className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-sm py-2 px-2 border-t border-white/10 z-40 space-y-1.5"
       >
+        <TextReactionBar />
         <ReactionBar />
       </motion.div>
     </div>

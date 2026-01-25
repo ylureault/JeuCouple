@@ -7,6 +7,8 @@ import { useTheme } from '../context/ThemeContext';
 import MuteButton from '../components/MuteButton';
 import ReactionBar from '../components/ReactionBar';
 import ReactionOverlay from '../components/ReactionOverlay';
+import TextReactionBar from '../components/TextReactionBar';
+import TextReactionOverlay from '../components/TextReactionOverlay';
 import VoiceChat from '../components/VoiceChat';
 import type { Gender } from '../../../shared/types';
 
@@ -110,6 +112,7 @@ export default function Lobby() {
     <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-hidden pb-16`}>
       <MuteButton />
       <ReactionOverlay />
+      <TextReactionOverlay />
 
       {/* Voice chat - top right */}
       {bothPlayersReady && (
@@ -358,8 +361,9 @@ export default function Lobby() {
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-sm py-2 px-2 border-t border-white/10 z-40"
+        className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-sm py-2 px-2 border-t border-white/10 z-40 space-y-1.5"
       >
+        <TextReactionBar />
         <ReactionBar />
       </motion.div>
     </div>

@@ -86,9 +86,28 @@ export interface Answer {
 export const REACTION_EMOJIS = ['❤️', '😂', '😮', '😢', '👏', '🔥', '😍', '🤔'] as const;
 export type ReactionEmoji = typeof REACTION_EMOJIS[number];
 
+// Text quick reactions
+export const TEXT_REACTIONS = [
+  { id: 'ptitcon', text: "P'tit con", emoji: '😏' },
+  { id: 'viellepeau', text: 'Vieille peau', emoji: '👵' },
+  { id: 'jattends', text: "J'attends", emoji: '⏳' },
+  { id: 'comprends', text: 'Je comprends pas', emoji: '🤷' },
+  { id: 'allez', text: 'Allez !', emoji: '💪' },
+  { id: 'habon', text: 'Ah bon ?', emoji: '🤨' },
+] as const;
+export type TextReactionId = typeof TEXT_REACTIONS[number]['id'];
+
 export interface ReactionData {
   playerId: 1 | 2;
   emoji: ReactionEmoji;
+  timestamp: number;
+}
+
+export interface TextReactionData {
+  playerId: 1 | 2;
+  reactionId: TextReactionId;
+  text: string;
+  emoji: string;
   timestamp: number;
 }
 
@@ -122,6 +141,7 @@ export interface ServerToClientEvents {
   'game:finished': (data: GameFinishedData) => void;
   'game:restarted': () => void;
   'game:reaction': (data: ReactionData) => void;
+  'game:text-reaction': (data: TextReactionData) => void;
   // Player connection status
   'game:paused': (data: { disconnectedPlayer: 1 | 2; playerName: string }) => void;
   'game:resumed': (data: { reconnectedPlayer: 1 | 2; playerName: string }) => void;
@@ -142,6 +162,7 @@ export interface ClientToServerEvents {
   'game:restart': (callback: (response: { success: boolean; error?: string }) => void) => void;
   'room:reconnect': (data: { code: string; playerId: 1 | 2 }, callback: (response: RoomResponse) => void) => void;
   'game:reaction': (data: { emoji: ReactionEmoji }) => void;
+  'game:text-reaction': (data: { reactionId: TextReactionId }) => void;
   // Voice chat
   'voice:offer': (data: VoiceOffer) => void;
   'voice:answer': (data: VoiceAnswer) => void;

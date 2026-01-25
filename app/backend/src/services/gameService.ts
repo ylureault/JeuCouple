@@ -8,9 +8,10 @@ import type {
   GameRevealData,
   GameFinishedData,
   CategoryScore,
-  ReactionEmoji
+  ReactionEmoji,
+  TextReactionId
 } from '../types.js';
-import { REACTION_EMOJIS } from '../types.js';
+import { REACTION_EMOJIS, TEXT_REACTIONS } from '../types.js';
 import * as roomModel from '../models/room.js';
 import * as gameModel from '../models/game.js';
 import * as questionModel from '../models/question.js';
@@ -430,6 +431,25 @@ export function setupSocketHandlers(
       io.to(connection.roomCode).emit('game:reaction', {
         playerId: connection.playerId,
         emoji: data.emoji as ReactionEmoji,
+        timestamp: Date.now()
+      });
+    });
+
+    // Send text reaction to partner
+    socket.on('game:text-reaction', (data) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+
+      // Find the text reaction
+      const reaction = TEXT_REACTIONS.find(r => r.id === data.reactionId);
+      if (!reaction) return;
+
+      // Broadcast text reaction to the room
+      io.to(connection.roomCode).emit('game:text-reaction', {
+        playerId: connection.playerId,
+        reactionId: data.reactionId as TextReactionId,
+        text: reaction.text,
+        emoji: reaction.emoji,
         timestamp: Date.now()
       });
     });

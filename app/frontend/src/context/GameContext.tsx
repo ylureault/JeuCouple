@@ -16,7 +16,9 @@ import type {
   GameFinishedData,
   Gender,
   ReactionEmoji,
-  ReactionData
+  ReactionData,
+  TextReactionData,
+  TextReactionId
 } from '../../../shared/types';
 
 interface GameState {
@@ -37,6 +39,7 @@ interface GameState {
   finalResults: GameFinishedData | null;
   error: string | null;
   reactions: ReactionData[];
+  textReactions: TextReactionData[];
   // Pause state when partner disconnects
   gamePaused: boolean;
   disconnectedPlayerName: string | null;
@@ -59,6 +62,7 @@ type GameAction =
   | { type: 'SET_ERROR'; error: string }
   | { type: 'CLEAR_ERROR' }
   | { type: 'ADD_REACTION'; reaction: ReactionData }
+  | { type: 'ADD_TEXT_REACTION'; textReaction: TextReactionData }
   | { type: 'CLEAR_REACTIONS' }
   | { type: 'GAME_PAUSED'; playerName: string }
   | { type: 'GAME_RESUMED' }
@@ -82,6 +86,7 @@ const initialState: GameState = {
   finalResults: null,
   error: null,
   reactions: [],
+  textReactions: [],
   gamePaused: false,
   disconnectedPlayerName: null
 };
@@ -195,6 +200,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         finalResults: null,
         error: null,
         reactions: [],
+        textReactions: [],
         gamePaused: false,
         disconnectedPlayerName: null
       };
@@ -212,8 +218,15 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         .slice(-10); // Max 10 reactions
       return { ...state, reactions: newReactions };
 
+    case 'ADD_TEXT_REACTION':
+      // Keep only recent text reactions (last 5, auto-cleanup old ones)
+      const newTextReactions = [...state.textReactions, action.textReaction]
+        .filter(r => Date.now() - r.timestamp < 4000) // Keep reactions from last 4 seconds
+        .slice(-5); // Max 5 text reactions
+      return { ...state, textReactions: newTextReactions };
+
     case 'CLEAR_REACTIONS':
-      return { ...state, reactions: [] };
+      return { ...state, reactions: [], textReactions: [] };
 
     case 'GAME_PAUSED':
       return {
@@ -250,6 +263,7 @@ interface GameContextType extends GameState {
   resetGame: () => void;
   restartGame: () => Promise<void>;
   sendReaction: (emoji: ReactionEmoji) => void;
+  sendTextReaction: (reactionId: TextReactionId) => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -373,6 +387,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'ADD_REACTION', reaction: data });
     });
 
+    socket.on('game:text-reaction', (data) => {
+      dispatch({ type: 'ADD_TEXT_REACTION', textReaction: data });
+    });
+
     socket.on('game:paused', (data) => {
       console.log('Game paused, waiting for:', data.playerName);
       dispatch({ type: 'GAME_PAUSED', playerName: data.playerName });
@@ -493,6 +511,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     state.socket.emit('game:reaction', { emoji });
   }, [state.socket]);
 
+  const sendTextReaction = useCallback((reactionId: TextReactionId) => {
+    if (!state.socket) return;
+    state.socket.emit('game:text-reaction', { reactionId });
+  }, [state.socket]);
+
   return (
     <GameContext.Provider
       value={{
@@ -504,7 +527,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         leaveRoom,
         resetGame,
         restartGame,
-        sendReaction
+        sendReaction,
+        sendTextReaction
       }}
     >
       {children}
