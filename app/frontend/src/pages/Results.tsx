@@ -106,10 +106,10 @@ export default function Results() {
   const [showCategories, setShowCategories] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
-  // Navigate to game/lobby when restart happens
+  // Navigate to lobby when restart happens
   useEffect(() => {
     if (phase === 'lobby' && room) {
-      navigate('/game');
+      navigate('/salon/lobby');
     }
   }, [phase, room, navigate]);
 
@@ -187,7 +187,7 @@ export default function Results() {
   const compatMessage = getCompatibilityMessage();
 
   return (
-    <div className={`h-screen bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-hidden relative pb-16`}>
+    <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-hidden relative pb-16`}>
       <MuteButton />
       <ReactionOverlay />
 

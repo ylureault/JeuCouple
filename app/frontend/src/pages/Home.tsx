@@ -60,13 +60,14 @@ export default function Home() {
   }, [location.state]);
 
   const handleCreate = async () => {
-    if (!playerName.trim() || !gender) return;
+    if (!playerName.trim() || !gender || !connected) return;
     setLoading(true);
     playSound('click');
     try {
       // Pass selected categories and types (empty array = all / auto mode)
       await createRoom(playerName.trim(), gender, questionCount, selectedCategories, selectedTypes);
-      navigate('/game');
+      // Navigate to lobby, not game (game hasn't started yet)
+      navigate('/salon/lobby');
     } catch {
       // Error handled in context
     } finally {
@@ -96,7 +97,7 @@ export default function Home() {
     playSound('click');
     try {
       await joinRoom(roomCode.trim().toUpperCase(), playerName.trim(), gender);
-      navigate('/game');
+      navigate('/salon/lobby');
     } catch {
       // Error handled in context
     } finally {
@@ -112,7 +113,7 @@ export default function Home() {
   const { theme } = useTheme();
 
   return (
-    <div className={`h-screen bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-hidden`}>
+    <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-hidden`}>
       <MuteButton />
       <ThemeSelector />
 
@@ -484,6 +485,9 @@ export default function Home() {
                       placeholder="ABC123"
                       className="input-kahoot text-center text-3xl tracking-[0.3em] font-black"
                       maxLength={6}
+                      inputMode="text"
+                      autoCapitalize="characters"
+                      autoComplete="off"
                       onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
                     />
                   </div>

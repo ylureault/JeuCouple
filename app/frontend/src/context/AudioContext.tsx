@@ -15,7 +15,7 @@ interface SoundContextType {
   stopLobbyMusic: () => void;
 }
 
-type SoundType = 'click' | 'correct' | 'wrong' | 'tick' | 'reveal' | 'fanfare' | 'countdown' | 'notification' | 'reaction';
+type SoundType = 'click' | 'correct' | 'wrong' | 'tick' | 'reveal' | 'fanfare' | 'countdown' | 'notification' | 'reaction' | 'reactionReceived';
 
 // Web Audio API type
 type WebAudioContext = typeof window.AudioContext;
@@ -223,6 +223,42 @@ function createReactionSound(): () => void {
   };
 }
 
+function createReactionReceivedSound(): () => void {
+  return () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: WebAudioContext }).webkitAudioContext)();
+      // Cheerful "bling" sound for receiving reactions from partner
+      const oscillator = audioCtx.createOscillator();
+      const oscillator2 = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      oscillator2.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.type = 'sine';
+      oscillator2.type = 'triangle';
+
+      // Two-tone cheerful sound
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(1318.51, audioCtx.currentTime + 0.1);
+
+      oscillator2.frequency.setValueAtTime(1174.66, audioCtx.currentTime + 0.05);
+      oscillator2.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.15);
+
+      gainNode.gain.setValueAtTime(0.25, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+
+      oscillator.start(audioCtx.currentTime);
+      oscillator2.start(audioCtx.currentTime + 0.05);
+      oscillator.stop(audioCtx.currentTime + 0.15);
+      oscillator2.stop(audioCtx.currentTime + 0.2);
+    } catch {
+      // Audio not supported
+    }
+  };
+}
+
 const sounds: Record<SoundType, () => void> = {
   click: createClickSound(),
   correct: createCorrectSound(),
@@ -232,7 +268,8 @@ const sounds: Record<SoundType, () => void> = {
   fanfare: createFanfareSound(),
   countdown: createTickSound(),
   notification: createNotificationSound(),
-  reaction: createReactionSound()
+  reaction: createReactionSound(),
+  reactionReceived: createReactionReceivedSound()
 };
 
 // Procedural ambient music generator using Web Audio API

@@ -16,7 +16,7 @@ export default function Join() {
   }, [code, navigate]);
 
   return (
-    <div className="min-h-screen bg-[#46178f] flex items-center justify-center">
+    <div className="min-h-[100dvh] bg-[#46178f] flex items-center justify-center">
       <div className="text-white text-xl font-bold">Redirection...</div>
     </div>
   );

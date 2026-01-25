@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
-import type { ReactionData } from '../../../shared/types';
+import { useAudio } from '../context/AudioContext';
+import type { ReactionData, Gender } from '../../../shared/types';
 
 interface FloatingReaction extends ReactionData {
   id: string;
@@ -9,6 +10,7 @@ interface FloatingReaction extends ReactionData {
   size: number;
   rotation: number;
   path: 'left' | 'right' | 'center';
+  gender: Gender | null;
 }
 
 // Particle burst effect for reactions
@@ -43,8 +45,15 @@ function ParticleBurst({ x }: { x: number }) {
 
 export default function ReactionOverlay() {
   const { reactions, playerId, room } = useGame();
+  const { playSound } = useAudio();
   const [floatingReactions, setFloatingReactions] = useState<FloatingReaction[]>([]);
   const [bursts, setBursts] = useState<{ id: string; emoji: string; x: number }[]>([]);
+
+  // Get gender for a player
+  const getPlayerGender = (reactionPlayerId: 1 | 2): Gender | null => {
+    if (!room) return null;
+    return reactionPlayerId === 1 ? room.player1_gender : room.player2_gender;
+  };
 
   useEffect(() => {
     const lastReaction = reactions[reactions.length - 1];
@@ -55,10 +64,16 @@ export default function ReactionOverlay() {
       const rotation = -15 + Math.random() * 30;
       const paths: ('left' | 'right' | 'center')[] = ['left', 'right', 'center'];
       const path = paths[Math.floor(Math.random() * 3)];
+      const gender = getPlayerGender(lastReaction.playerId);
+
+      // Play sound when receiving reaction from OTHER player
+      if (lastReaction.playerId !== playerId) {
+        playSound('reactionReceived');
+      }
 
       setFloatingReactions((prev) => [
         ...prev,
-        { ...lastReaction, id, x, size, rotation, path }
+        { ...lastReaction, id, x, size, rotation, path, gender }
       ]);
 
       // Add particle burst
@@ -73,12 +88,19 @@ export default function ReactionOverlay() {
         setFloatingReactions((prev) => prev.filter((r) => r.id !== id));
       }, 3500);
     }
-  }, [reactions]);
+  }, [reactions, playerId, playSound]);
 
   const getPlayerName = (reactionPlayerId: 1 | 2) => {
     if (!room) return '';
     if (reactionPlayerId === playerId) return 'Toi';
     return reactionPlayerId === 1 ? room.player1_name : room.player2_name;
+  };
+
+  // Get color based on gender
+  const getGenderColor = (gender: Gender | null) => {
+    if (gender === 'F') return { glow: 'rgba(236, 72, 153, 0.7)', bg: 'bg-pink-500/70', border: 'border-pink-400' };
+    if (gender === 'M') return { glow: 'rgba(59, 130, 246, 0.7)', bg: 'bg-blue-500/70', border: 'border-blue-400' };
+    return { glow: 'rgba(255, 255, 255, 0.5)', bg: 'bg-white/50', border: 'border-white' };
   };
 
   const getPathAnimation = (path: 'left' | 'right' | 'center') => {
@@ -118,35 +140,35 @@ export default function ReactionOverlay() {
             className="absolute bottom-24 -translate-x-1/2"
           >
             <div className="flex flex-col items-center">
-              {/* Glow effect */}
+              {/* Glow effect with gender color */}
               <motion.div
-                className="absolute inset-0 rounded-full blur-xl opacity-50"
+                className="absolute inset-0 rounded-full blur-xl opacity-60"
                 style={{
-                  background: 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%)',
-                  transform: `scale(${reaction.size * 1.5})`
+                  background: `radial-gradient(circle, ${getGenderColor(reaction.gender).glow} 0%, transparent 70%)`,
+                  transform: `scale(${reaction.size * 1.8})`
                 }}
-                animate={{ opacity: [0.3, 0.6, 0.3] }}
+                animate={{ opacity: [0.4, 0.7, 0.4] }}
                 transition={{ duration: 1, repeat: Infinity }}
               />
 
-              {/* Main emoji */}
-              <motion.span
+              {/* Main emoji with colored ring */}
+              <motion.div
                 animate={{
                   rotate: [reaction.rotation, reaction.rotation + 20, reaction.rotation - 20, reaction.rotation],
                   scale: [1, 1.1, 0.95, 1]
                 }}
                 transition={{ repeat: Infinity, duration: 0.8 }}
                 style={{ fontSize: `${reaction.size * 3.5}rem` }}
-                className="relative z-10 drop-shadow-lg"
+                className={`relative z-10 drop-shadow-lg rounded-full p-1 border-2 ${getGenderColor(reaction.gender).border}`}
               >
                 {reaction.emoji}
-              </motion.span>
+              </motion.div>
 
-              {/* Player name badge */}
+              {/* Player name badge with gender color */}
               <motion.span
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-white text-xs mt-2 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full font-semibold shadow-lg"
+                className={`text-white text-xs mt-2 ${getGenderColor(reaction.gender).bg} backdrop-blur-sm px-3 py-1 rounded-full font-semibold shadow-lg border ${getGenderColor(reaction.gender).border}`}
               >
                 {getPlayerName(reaction.playerId)}
               </motion.span>

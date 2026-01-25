@@ -29,7 +29,6 @@ export default function Game() {
     scores,
     submitAnswer,
     finalResults,
-    reactions,
     gamePaused,
     disconnectedPlayerName
   } = useGame();
@@ -38,19 +37,6 @@ export default function Game() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [showIntro, setShowIntro] = useState(true);
   const [introStep, setIntroStep] = useState<'number' | 'category' | 'question'>('number');
-  const [lastReactionCount, setLastReactionCount] = useState(0);
-
-  // Play notification sound when receiving reaction from partner
-  useEffect(() => {
-    if (reactions.length > lastReactionCount) {
-      const newReaction = reactions[reactions.length - 1];
-      // Only play sound if the reaction is from the other player
-      if (newReaction.playerId !== playerId) {
-        playSound('notification');
-      }
-      setLastReactionCount(reactions.length);
-    }
-  }, [reactions, lastReactionCount, playerId, playSound]);
 
   useEffect(() => {
     if (!room) {
@@ -122,7 +108,7 @@ export default function Game() {
   // No room - redirect to home
   if (!room) {
     return (
-      <div className="min-h-screen bg-[#46178f] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[#46178f] flex items-center justify-center">
         <div className="spinner w-16 h-16" />
       </div>
     );
@@ -136,7 +122,7 @@ export default function Game() {
   // Game started but no question yet - loading
   if (!currentQuestion) {
     return (
-      <div className="min-h-screen bg-[#46178f] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[#46178f] flex items-center justify-center">
         <div className="spinner w-16 h-16" />
       </div>
     );
@@ -150,7 +136,7 @@ export default function Game() {
   const theirName = playerId === 1 ? player2Name : player1Name;
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${theme.colors.background} flex flex-col pb-20`}>
+    <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col pb-20`}>
       <ReactionOverlay />
       <GameAlerts
         otherAnswered={otherAnswered}
