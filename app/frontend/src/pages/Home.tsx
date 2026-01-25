@@ -8,7 +8,23 @@ import MuteButton from '../components/MuteButton';
 import ThemeSelector from '../components/ThemeSelector';
 import type { Gender } from '../../../shared/types';
 
-type Mode = 'home' | 'create' | 'join';
+type Mode = 'home' | 'create' | 'join' | 'thematic';
+
+// Thematic game configuration - explicit themes
+const THEMATIC_THEMES = [
+  { id: 'fellation', label: 'Fellation', emoji: '👄', description: 'Questions sur les plaisirs oraux masculins', color: 'from-pink-500 to-rose-600' },
+  { id: 'cunnilingus', label: 'Cunnilingus', emoji: '👅', description: 'Questions sur les plaisirs oraux féminins', color: 'from-pink-400 to-fuchsia-600' },
+  { id: 'sodomie', label: 'Sodomie', emoji: '🍑', description: 'Questions sur le plaisir anal', color: 'from-orange-500 to-red-600' },
+  { id: '69', label: 'Position 69', emoji: '🔄', description: 'Questions sur le plaisir mutuel simultané', color: 'from-purple-500 to-indigo-600' },
+  { id: 'kamasutra', label: 'Kamasutra', emoji: '🧘', description: 'Questions sur les positions et techniques', color: 'from-amber-500 to-orange-600' },
+  { id: 'fantasmes', label: 'Fantasmes', emoji: '💭', description: 'Vos désirs secrets et inavoués', color: 'from-violet-500 to-purple-600' },
+  { id: 'jeux_role', label: 'Jeux de rôle', emoji: '🎭', description: 'Scénarios et personnages coquins', color: 'from-emerald-500 to-teal-600' },
+  { id: 'bdsm', label: 'BDSM', emoji: '⛓️', description: 'Domination, soumission et plus', color: 'from-gray-700 to-gray-900' },
+  { id: 'preliminaires', label: 'Préliminaires', emoji: '💋', description: 'L\'art de faire monter le désir', color: 'from-red-400 to-pink-600' },
+  { id: 'public', label: 'Sexe en public', emoji: '🏖️', description: 'Oser en dehors de la chambre', color: 'from-sky-500 to-blue-600' },
+  { id: 'extreme', label: 'Ultra coquin', emoji: '🔞', description: 'Pour les couples très audacieux', color: 'from-red-600 to-rose-700' },
+  { id: 'mix_hot', label: 'Mix Torride', emoji: '🔥', description: 'Un mélange de tous les thèmes osés', color: 'from-orange-500 to-red-500' },
+] as const;
 
 // Category configuration with display info
 const CATEGORY_CONFIG = [
@@ -43,6 +59,7 @@ export default function Home() {
   const [gender, setGender] = useState<Gender | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
   const { createRoom, joinRoom, error, connected } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
@@ -67,6 +84,25 @@ export default function Home() {
       // Pass selected categories and types (empty array = all / auto mode)
       await createRoom(playerName.trim(), gender, questionCount, selectedCategories, selectedTypes);
       // Navigate to lobby, not game (game hasn't started yet)
+      navigate('/salon/lobby');
+    } catch {
+      // Error handled in context
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateThematic = async () => {
+    if (!playerName.trim() || !gender || !connected || !selectedTheme) return;
+    setLoading(true);
+    playSound('click');
+    try {
+      // For thematic games, use the theme as the only category
+      // mix_hot uses all explicit themes together
+      const themeCategories = selectedTheme === 'mix_hot'
+        ? THEMATIC_THEMES.filter(t => t.id !== 'mix_hot').map(t => t.id)
+        : [selectedTheme];
+      await createRoom(playerName.trim(), gender, questionCount, themeCategories, []);
       navigate('/salon/lobby');
     } catch {
       // Error handled in context
@@ -221,6 +257,18 @@ export default function Home() {
                   <span className="text-2xl">🎮</span>
                   Créer une partie
                   {!connected && <span className="text-sm opacity-70">(connexion...)</span>}
+                </span>
+              </motion.button>
+
+              <motion.button
+                onClick={() => connected && switchMode('thematic')}
+                className={`w-full py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-pink-500 to-rose-600 shadow-lg ${!connected ? 'opacity-70 cursor-wait' : ''}`}
+                whileHover={connected ? { scale: 1.02 } : {}}
+                whileTap={connected ? { scale: 0.98 } : {}}
+              >
+                <span className="flex items-center justify-center gap-2">
+                  <span className="text-xl">🔞</span>
+                  <span className="text-base">Partie thématique osée</span>
                 </span>
               </motion.button>
 
@@ -513,6 +561,154 @@ export default function Home() {
 
               <motion.button
                 onClick={() => switchMode('home')}
+                className="w-full text-white/70 hover:text-white font-bold py-4 mt-4 transition-colors"
+                whileHover={{ scale: 1.02 }}
+              >
+                ← Retour
+              </motion.button>
+            </motion.div>
+          )}
+
+          {mode === 'thematic' && (
+            <motion.div
+              key="thematic"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30, scale: 0.95 }}
+              transition={{ type: 'spring', damping: 20 }}
+              className="w-full max-w-md"
+            >
+              <div className="bg-white rounded-2xl shadow-2xl max-h-[80vh] flex flex-col">
+                <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-pink-500 to-rose-600 rounded-t-2xl">
+                  <h2 className="text-xl font-black text-white text-center flex items-center justify-center gap-2">
+                    <span>🔞</span> Partie Thématique
+                  </h2>
+                  <p className="text-white/80 text-sm text-center mt-1">Choisis ton thème osé</p>
+                </div>
+
+                <div className="p-4 space-y-3 overflow-y-auto flex-1">
+                  <div>
+                    <label className="block text-gray-600 font-bold text-sm mb-1 uppercase tracking-wide">
+                      Ton prénom
+                    </label>
+                    <input
+                      type="text"
+                      value={playerName}
+                      onChange={(e) => setPlayerName(e.target.value)}
+                      placeholder="Ex: Marie"
+                      className="input-kahoot"
+                      maxLength={20}
+                      autoFocus
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-600 font-bold text-sm mb-1 uppercase tracking-wide">
+                      Tu es...
+                    </label>
+                    <div className="flex gap-2">
+                      <motion.button
+                        type="button"
+                        onClick={() => setGender('F')}
+                        className={`flex-1 py-2 rounded-xl font-bold text-base transition-all ${
+                          gender === 'F'
+                            ? 'bg-pink-500 text-white shadow-lg scale-105'
+                            : 'bg-gray-100 text-gray-600 hover:bg-pink-100'
+                        }`}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        👩 Femme
+                      </motion.button>
+                      <motion.button
+                        type="button"
+                        onClick={() => setGender('M')}
+                        className={`flex-1 py-2 rounded-xl font-bold text-base transition-all ${
+                          gender === 'M'
+                            ? 'bg-blue-500 text-white shadow-lg scale-105'
+                            : 'bg-gray-100 text-gray-600 hover:bg-blue-100'
+                        }`}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        👨 Homme
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-600 font-bold text-sm mb-1 uppercase tracking-wide">
+                      Questions: {questionCount === 50 ? '∞' : questionCount}
+                    </label>
+                    <input
+                      type="range"
+                      min="5"
+                      max="50"
+                      step="5"
+                      value={questionCount}
+                      onChange={(e) => setQuestionCount(parseInt(e.target.value))}
+                      className="w-full h-2 rounded-full cursor-pointer accent-pink-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
+                      Choisis un thème 🔥
+                    </label>
+                    <div className="grid grid-cols-2 gap-2 max-h-[35vh] overflow-y-auto pr-1">
+                      {THEMATIC_THEMES.map((theme) => {
+                        const isSelected = selectedTheme === theme.id;
+                        return (
+                          <motion.button
+                            key={theme.id}
+                            type="button"
+                            onClick={() => setSelectedTheme(theme.id)}
+                            className={`p-3 rounded-xl text-left transition-all border-2 ${
+                              isSelected
+                                ? `bg-gradient-to-r ${theme.color} text-white border-transparent shadow-lg`
+                                : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-pink-300'
+                            }`}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl">{theme.emoji}</span>
+                              <span className="font-bold text-sm">{theme.label}</span>
+                            </div>
+                            <p className={`text-xs mt-1 ${isSelected ? 'text-white/80' : 'text-gray-500'}`}>
+                              {theme.description}
+                            </p>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+                  <motion.button
+                    onClick={handleCreateThematic}
+                    disabled={!playerName.trim() || !gender || !selectedTheme || loading}
+                    className="w-full py-4 rounded-xl font-bold text-lg text-white bg-gradient-to-r from-pink-500 to-rose-600 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-3">
+                        <div className="spinner w-5 h-5 border-white/30 border-t-white" />
+                        Création...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        🔥 Lancer la partie
+                      </span>
+                    )}
+                  </motion.button>
+                </div>
+              </div>
+
+              <motion.button
+                onClick={() => {
+                  setSelectedTheme(null);
+                  switchMode('home');
+                }}
                 className="w-full text-white/70 hover:text-white font-bold py-4 mt-4 transition-colors"
                 whileHover={{ scale: 1.02 }}
               >
