@@ -800,8 +800,8 @@ function TypeModal({ questionType, onSave, onClose }: TypeModalProps) {
   const [code, setCode] = useState(questionType?.code || '');
   const [name, setName] = useState(questionType?.name || '');
   const [description, setDescription] = useState(questionType?.description || '');
-  const [scoringMode, setScoringMode] = useState<'match' | 'consensus' | 'proximity' | 'none' | 'individual'>(questionType?.scoring_mode || 'match');
-  const [inputType, setInputType] = useState<'options' | 'binary' | 'scale' | 'text' | 'who' | 'qcm' | 'image_choice'>(questionType?.input_type || 'options');
+  const [scoringMode, setScoringMode] = useState<'match' | 'consensus' | 'proximity' | 'none' | 'individual' | 'ranking'>(questionType?.scoring_mode || 'match');
+  const [inputType, setInputType] = useState<'options' | 'binary' | 'scale' | 'text' | 'who' | 'qcm' | 'image_choice' | 'month_select' | 'duration' | 'ranking' | 'plus_moins' | 'agree_disagree'>(questionType?.input_type || 'options');
   const [icon, setIcon] = useState(questionType?.icon || '❓');
   const [color, setColor] = useState(questionType?.color || '#46178f');
   const [active, setActive] = useState(questionType?.active ?? true);

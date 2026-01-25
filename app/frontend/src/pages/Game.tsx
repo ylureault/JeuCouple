@@ -41,7 +41,7 @@ export default function Game() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [showIntro, setShowIntro] = useState(true);
   const [introStep, setIntroStep] = useState<'number' | 'category' | 'question'>('number');
-  const [currentStreak, setCurrentStreak] = useState(0);
+  // Music intensity is updated directly from revealData streak
 
   useEffect(() => {
     if (!room) {
@@ -67,7 +67,6 @@ export default function Game() {
   useEffect(() => {
     if (revealData) {
       const myStreak = playerId === 1 ? revealData.streak1 : revealData.streak2;
-      setCurrentStreak(myStreak);
       setMusicIntensity(myStreak);
     }
   }, [revealData, playerId, setMusicIntensity]);

@@ -850,8 +850,8 @@ function revealAnswers(
   }
 
   // Anti-tie mechanism: Add micro-bonus (1-3 points) based on answer speed
-  // Only applies when both players would get the same score
-  if (points1 === points2 && points1 > 0 && answerTime1 !== null && answerTime2 !== null) {
+  // Applies when both players would get the same score (positive or zero, but not negative)
+  if (points1 === points2 && points1 >= 0 && answerTime1 !== null && answerTime2 !== null) {
     // Player who answered faster gets a small bonus (1-3 points based on time difference)
     const timeDiff = Math.abs(answerTime1 - answerTime2);
     const microBonus = Math.min(3, Math.max(1, Math.ceil(timeDiff)));
@@ -859,11 +859,18 @@ function revealAnswers(
       points1 += microBonus;
     } else if (answerTime2 < answerTime1) {
       points2 += microBonus;
+    } else {
+      // If exactly same time (extremely rare), give slight edge to player 2 to avoid tie
+      points2 += 1;
     }
-    // If exactly same time (extremely rare), both get +1
-    else {
+  }
+  // Also handle case where both players tie on negative/zero but one answered
+  else if (points1 === points2 && (answerTime1 !== null || answerTime2 !== null)) {
+    // Player who answered gets a small bonus
+    if (answerTime1 !== null && answerTime2 === null) {
       points1 += 1;
-      points2 += 2; // Give slight edge to player 2 to avoid tie
+    } else if (answerTime2 !== null && answerTime1 === null) {
+      points2 += 1;
     }
   }
 

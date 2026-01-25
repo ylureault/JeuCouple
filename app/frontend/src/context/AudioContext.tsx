@@ -578,7 +578,7 @@ function updateGameMusicIntensity(intensity: number) {
       // Add high tension notes
       const tensionFreqs = [440, 554.37]; // A4, C#5
 
-      tensionFreqs.forEach((freq, i) => {
+      tensionFreqs.forEach((freq) => {
         const osc = gameAudioContext!.createOscillator();
         const oscGain = gameAudioContext!.createGain();
 
