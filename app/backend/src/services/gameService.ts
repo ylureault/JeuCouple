@@ -64,6 +64,8 @@ interface GameState {
   // Grace period for reconnection (don't pause immediately)
   disconnectGraceTimer: ReturnType<typeof setTimeout> | null;
   pendingDisconnectPlayer: 1 | 2 | null;
+  // Timer for next question (to cancel on pause)
+  nextQuestionTimer: ReturnType<typeof setTimeout> | null;
 }
 
 interface PlayerConnection {
@@ -243,8 +245,11 @@ export function setupSocketHandlers(
                 revealAnswers(io, room.code, gameState);
               }, remainingMs + 3000); // Extra 3 seconds for network latency
             }
-            // If in reveal phase, the scheduleNextQuestion will handle sending the next question
-            // after the reveal timeout (it checks for paused state and retries)
+            // If in reveal phase, we need to schedule the next question since the timer was cleared
+            if (gameState.phase === 'reveal') {
+              console.log('Resuming from reveal phase - scheduling next question');
+              scheduleNextQuestion(io, room.code, gameState);
+            }
           }
         }
       } catch (error) {
@@ -321,7 +326,8 @@ export function setupSocketHandlers(
         connectedPlayers: new Set([1, 2]),
         disconnectedPlayerName: null,
         disconnectGraceTimer: null,
-        pendingDisconnectPlayer: null
+        pendingDisconnectPlayer: null,
+        nextQuestionTimer: null
       };
 
       activeGames.set(room.code, gameState);
@@ -518,18 +524,24 @@ function handleDisconnect(
       currentGameState.disconnectGraceTimer = null;
       currentGameState.pendingDisconnectPlayer = null;
 
-      // Calculate remaining time if in question phase
-      if (currentGameState.phase === 'question' && currentGameState.timer) {
-        const currentQuestion = currentGameState.questions[currentGameState.currentQuestionIndex];
-        const elapsed = (Date.now() - currentGameState.questionStartTime) / 1000;
-        currentGameState.remainingTime = Math.max(0, currentQuestion.timer - elapsed);
-
-        // Clear the timer
+      // Clear ALL timers when pausing
+      if (currentGameState.timer) {
         clearTimeout(currentGameState.timer);
         currentGameState.timer = null;
       }
+      if (currentGameState.nextQuestionTimer) {
+        clearTimeout(currentGameState.nextQuestionTimer);
+        currentGameState.nextQuestionTimer = null;
+      }
 
-      console.log('Game paused in room', connection.roomCode, 'after grace period, waiting for', playerName);
+      // Calculate remaining time if in question phase
+      if (currentGameState.phase === 'question') {
+        const currentQuestion = currentGameState.questions[currentGameState.currentQuestionIndex];
+        const elapsed = (Date.now() - currentGameState.questionStartTime) / 1000;
+        currentGameState.remainingTime = Math.max(0, currentQuestion.timer - elapsed);
+      }
+
+      console.log('Game FULLY paused in room', connection.roomCode, '- all timers cleared, waiting for', playerName);
 
       // Notify the other player that the game is paused
       io.to(connection.roomCode).emit('game:paused', {
@@ -825,10 +837,23 @@ function scheduleNextQuestion(
   roomCode: string,
   gameState: GameState
 ) {
-  setTimeout(() => {
-    // If game is paused, wait and retry
+  // Don't schedule if game is paused - will be called when resumed
+  if (gameState.paused) {
+    console.log('Game paused, not scheduling next question');
+    return;
+  }
+
+  // Clear any existing timer
+  if (gameState.nextQuestionTimer) {
+    clearTimeout(gameState.nextQuestionTimer);
+  }
+
+  gameState.nextQuestionTimer = setTimeout(() => {
+    gameState.nextQuestionTimer = null;
+
+    // Double-check pause state (might have changed during timeout)
     if (gameState.paused) {
-      scheduleNextQuestion(io, roomCode, gameState);
+      console.log('Game became paused during reveal, stopping');
       return;
     }
 

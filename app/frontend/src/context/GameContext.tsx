@@ -193,7 +193,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         revealData: null,
         scores: { player1: 0, player2: 0 },
         finalResults: null,
-        error: null
+        error: null,
+        reactions: [],
+        gamePaused: false,
+        disconnectedPlayerName: null
       };
 
     case 'SET_ERROR':

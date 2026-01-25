@@ -247,14 +247,16 @@ export default function Home() {
               transition={{ type: 'spring', damping: 20 }}
               className="w-full max-w-md"
             >
-              <div className="bg-white rounded-2xl p-6 shadow-2xl">
-                <h2 className="text-xl font-black text-gray-900 text-center mb-4">
-                  Créer une partie
-                </h2>
+              <div className="bg-white rounded-2xl shadow-2xl max-h-[75vh] flex flex-col">
+                <div className="p-4 border-b border-gray-100">
+                  <h2 className="text-xl font-black text-gray-900 text-center">
+                    Créer une partie
+                  </h2>
+                </div>
 
-                <div className="space-y-3">
+                <div className="p-4 space-y-3 overflow-y-auto flex-1">
                   <div>
-                    <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
+                    <label className="block text-gray-600 font-bold text-sm mb-1 uppercase tracking-wide">
                       Ton prénom
                     </label>
                     <input
@@ -270,74 +272,60 @@ export default function Home() {
                   </div>
 
                   <div>
-                    <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
+                    <label className="block text-gray-600 font-bold text-sm mb-1 uppercase tracking-wide">
                       Tu es...
                     </label>
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                       <motion.button
                         type="button"
                         onClick={() => setGender('F')}
-                        className={`flex-1 py-3 rounded-xl font-bold text-lg transition-all ${
+                        className={`flex-1 py-2 rounded-xl font-bold text-base transition-all ${
                           gender === 'F'
                             ? 'bg-pink-500 text-white shadow-lg scale-105'
                             : 'bg-gray-100 text-gray-600 hover:bg-pink-100'
                         }`}
-                        whileHover={{ scale: gender === 'F' ? 1.05 : 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
-                        <span className="text-2xl mr-2">👩</span>
+                        <span className="text-xl mr-1">👩</span>
                         Femme
                       </motion.button>
                       <motion.button
                         type="button"
                         onClick={() => setGender('M')}
-                        className={`flex-1 py-3 rounded-xl font-bold text-lg transition-all ${
+                        className={`flex-1 py-2 rounded-xl font-bold text-base transition-all ${
                           gender === 'M'
                             ? 'bg-blue-500 text-white shadow-lg scale-105'
                             : 'bg-gray-100 text-gray-600 hover:bg-blue-100'
                         }`}
-                        whileHover={{ scale: gender === 'M' ? 1.05 : 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
-                        <span className="text-2xl mr-2">👨</span>
+                        <span className="text-xl mr-1">👨</span>
                         Homme
                       </motion.button>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
-                      Nombre de questions
+                    <label className="block text-gray-600 font-bold text-sm mb-1 uppercase tracking-wide">
+                      Questions: {questionCount === 50 ? '∞' : questionCount}
                     </label>
-                    <div className="flex items-center gap-4">
-                      <input
-                        type="range"
-                        min="5"
-                        max="50"
-                        step="5"
-                        value={questionCount}
-                        onChange={(e) => setQuestionCount(parseInt(e.target.value))}
-                        className="flex-1 h-3 rounded-full cursor-pointer accent-[#864cbf]"
-                      />
-                      <span className="text-2xl font-black text-[#864cbf] min-w-[3rem] text-center">
-                        {questionCount === 50 ? '∞' : questionCount}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-400 mt-1 px-1">
-                      <span>5 min</span>
-                      <span>25 min</span>
-                      <span>∞ (200pts)</span>
-                    </div>
+                    <input
+                      type="range"
+                      min="5"
+                      max="50"
+                      step="5"
+                      value={questionCount}
+                      onChange={(e) => setQuestionCount(parseInt(e.target.value))}
+                      className="w-full h-2 rounded-full cursor-pointer accent-[#864cbf]"
+                    />
                   </div>
 
-                  <div>
-                    <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
-                      Catégories
-                      <span className="text-gray-400 font-normal normal-case ml-2">
-                        {selectedCategories.length === 0 ? '(toutes)' : `(${selectedCategories.length})`}
-                      </span>
-                    </label>
-                    <div className="flex flex-wrap gap-2">
+                  <details className="group">
+                    <summary className="text-gray-600 font-bold text-sm uppercase tracking-wide cursor-pointer list-none flex items-center justify-between">
+                      <span>Catégories {selectedCategories.length > 0 && `(${selectedCategories.length})`}</span>
+                      <span className="text-lg group-open:rotate-180 transition-transform">▼</span>
+                    </summary>
+                    <div className="flex flex-wrap gap-1.5 mt-2">
                       {CATEGORY_CONFIG.map((cat) => {
                         const isSelected = selectedCategories.includes(cat.id);
                         return (
@@ -345,12 +333,11 @@ export default function Home() {
                             key={cat.id}
                             type="button"
                             onClick={() => toggleCategory(cat.id)}
-                            className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-all flex items-center gap-1 ${
+                            className={`px-2 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1 ${
                               isSelected
-                                ? 'bg-[#864cbf] text-white shadow-md'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-[#864cbf] text-white'
+                                : 'bg-gray-100 text-gray-600'
                             }`}
-                            whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                           >
                             <span>{cat.emoji}</span>
@@ -359,19 +346,14 @@ export default function Home() {
                         );
                       })}
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Aucune sélection = toutes catégories
-                    </p>
-                  </div>
+                  </details>
 
-                  <div>
-                    <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
-                      Types de questions
-                      <span className="text-gray-400 font-normal normal-case ml-2">
-                        {selectedTypes.length === 0 ? '(tous)' : `(${selectedTypes.length})`}
-                      </span>
-                    </label>
-                    <div className="grid grid-cols-4 gap-1.5">
+                  <details className="group">
+                    <summary className="text-gray-600 font-bold text-sm uppercase tracking-wide cursor-pointer list-none flex items-center justify-between">
+                      <span>Types {selectedTypes.length > 0 && `(${selectedTypes.length})`}</span>
+                      <span className="text-lg group-open:rotate-180 transition-transform">▼</span>
+                    </summary>
+                    <div className="grid grid-cols-4 gap-1 mt-2">
                       {TYPE_CONFIG.map((type) => {
                         const isSelected = selectedTypes.includes(type.id);
                         return (
@@ -379,29 +361,27 @@ export default function Home() {
                             key={type.id}
                             type="button"
                             onClick={() => toggleType(type.id)}
-                            className={`p-2 rounded-lg text-center transition-all ${
+                            className={`p-1.5 rounded-lg text-center transition-all ${
                               isSelected
-                                ? 'bg-[#864cbf] text-white shadow-md'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-[#864cbf] text-white'
+                                : 'bg-gray-100 text-gray-600'
                             }`}
-                            whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                           >
-                            <span className="text-lg block">{type.emoji}</span>
-                            <span className="text-[10px] font-bold block leading-tight">{type.label}</span>
+                            <span className="text-base block">{type.emoji}</span>
+                            <span className="text-[9px] font-bold block">{type.label}</span>
                           </motion.button>
                         );
                       })}
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Aucune sélection = tous les types
-                    </p>
-                  </div>
+                  </details>
+                </div>
 
+                <div className="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
                   <motion.button
                     onClick={handleCreate}
                     disabled={!playerName.trim() || !gender || loading}
-                    className="btn-create w-full disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+                    className="btn-create w-full disabled:opacity-50 disabled:cursor-not-allowed text-lg py-4"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
@@ -411,7 +391,7 @@ export default function Home() {
                         Creation...
                       </span>
                     ) : (
-                      "C'est parti !"
+                      "🚀 C'est parti !"
                     )}
                   </motion.button>
                 </div>
