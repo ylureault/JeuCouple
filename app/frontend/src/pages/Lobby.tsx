@@ -24,21 +24,15 @@ export default function Lobby() {
     phase,
     error
   } = useGame();
-  const { playSound, playLobbyMusic, stopLobbyMusic } = useAudio();
+  const { playSound } = useAudio();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    playLobbyMusic();
-    return () => stopLobbyMusic();
-  }, [playLobbyMusic, stopLobbyMusic]);
-
-  useEffect(() => {
     if (phase === 'question') {
-      stopLobbyMusic();
       navigate('/game');
     }
-  }, [phase, navigate, stopLobbyMusic]);
+  }, [phase, navigate]);
 
   useEffect(() => {
     if (!room) {

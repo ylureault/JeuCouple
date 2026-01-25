@@ -21,7 +21,11 @@ import type {
   TextReactionId,
   SoundReactionData,
   SoundReactionId,
-  ChatMessage
+  ChatMessage,
+  QuickMessageId,
+  QuickMessageData,
+  BuzzData,
+  KissData
 } from '../../../shared/types';
 
 interface GameState {
@@ -49,6 +53,12 @@ interface GameState {
   // Pause state when partner disconnects
   gamePaused: boolean;
   disconnectedPlayerName: string | null;
+  // New interaction features
+  quickMessages: QuickMessageData[];
+  lastBuzz: BuzzData | null;
+  partnerHesitating: boolean;
+  kissCount: number;
+  lastKiss: KissData | null;
 }
 
 type GameAction =
@@ -75,6 +85,12 @@ type GameAction =
   | { type: 'CLEAR_CHAT_MESSAGES' }
   | { type: 'GAME_PAUSED'; playerName: string }
   | { type: 'GAME_RESUMED' }
+  | { type: 'ADD_QUICK_MESSAGE'; message: QuickMessageData }
+  | { type: 'SET_BUZZ'; buzz: BuzzData }
+  | { type: 'CLEAR_BUZZ' }
+  | { type: 'SET_PARTNER_HESITATING'; isHesitating: boolean }
+  | { type: 'ADD_KISS'; kiss: KissData }
+  | { type: 'CLEAR_KISS' }
   | { type: 'RESET' };
 
 const initialState: GameState = {
@@ -99,7 +115,12 @@ const initialState: GameState = {
   soundReactions: [],
   chatMessages: [],
   gamePaused: false,
-  disconnectedPlayerName: null
+  disconnectedPlayerName: null,
+  quickMessages: [],
+  lastBuzz: null,
+  partnerHesitating: false,
+  kissCount: 0,
+  lastKiss: null
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -270,6 +291,31 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         disconnectedPlayerName: null
       };
 
+    case 'ADD_QUICK_MESSAGE':
+      const newQuickMessages = [...state.quickMessages, action.message]
+        .filter(m => Date.now() - m.timestamp < 4000)
+        .slice(-5);
+      return { ...state, quickMessages: newQuickMessages };
+
+    case 'SET_BUZZ':
+      return { ...state, lastBuzz: action.buzz };
+
+    case 'CLEAR_BUZZ':
+      return { ...state, lastBuzz: null };
+
+    case 'SET_PARTNER_HESITATING':
+      return { ...state, partnerHesitating: action.isHesitating };
+
+    case 'ADD_KISS':
+      return {
+        ...state,
+        lastKiss: action.kiss,
+        kissCount: action.kiss.totalKisses
+      };
+
+    case 'CLEAR_KISS':
+      return { ...state, lastKiss: null };
+
     case 'RESET':
       return {
         ...initialState,
@@ -294,6 +340,10 @@ interface GameContextType extends GameState {
   sendTextReaction: (reactionId: TextReactionId) => void;
   sendSoundReaction: (reactionId: SoundReactionId) => void;
   sendChatMessage: (message: string) => void;
+  sendQuickMessage: (messageId: QuickMessageId) => void;
+  sendBuzz: () => void;
+  sendHesitation: (isHesitating: boolean) => void;
+  sendKiss: () => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -427,6 +477,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     socket.on('lobby:chat', (data) => {
       dispatch({ type: 'ADD_CHAT_MESSAGE', message: data });
+    });
+
+    socket.on('game:quick-message', (data) => {
+      dispatch({ type: 'ADD_QUICK_MESSAGE', message: data });
+    });
+
+    socket.on('game:buzz', (data) => {
+      dispatch({ type: 'SET_BUZZ', buzz: data });
+      // Auto-clear buzz after 1.5 seconds
+      setTimeout(() => dispatch({ type: 'CLEAR_BUZZ' }), 1500);
+    });
+
+    socket.on('game:hesitation', (data) => {
+      dispatch({ type: 'SET_PARTNER_HESITATING', isHesitating: data.isHesitating });
+    });
+
+    socket.on('game:kiss', (data) => {
+      dispatch({ type: 'ADD_KISS', kiss: data });
+      // Auto-clear kiss display after 2 seconds
+      setTimeout(() => dispatch({ type: 'CLEAR_KISS' }), 2000);
     });
 
     socket.on('game:paused', (data) => {
@@ -566,6 +636,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
     state.socket.emit('lobby:chat', { message: trimmed });
   }, [state.socket]);
 
+  const sendQuickMessage = useCallback((messageId: QuickMessageId) => {
+    if (!state.socket) return;
+    state.socket.emit('game:quick-message', { messageId });
+  }, [state.socket]);
+
+  const sendBuzz = useCallback(() => {
+    if (!state.socket) return;
+    state.socket.emit('game:buzz');
+  }, [state.socket]);
+
+  const sendHesitation = useCallback((isHesitating: boolean) => {
+    if (!state.socket) return;
+    state.socket.emit('game:hesitation', { isHesitating });
+  }, [state.socket]);
+
+  const sendKiss = useCallback(() => {
+    if (!state.socket) return;
+    state.socket.emit('game:kiss');
+  }, [state.socket]);
+
   return (
     <GameContext.Provider
       value={{
@@ -580,7 +670,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
         sendReaction,
         sendTextReaction,
         sendSoundReaction,
-        sendChatMessage
+        sendChatMessage,
+        sendQuickMessage,
+        sendBuzz,
+        sendHesitation,
+        sendKiss
       }}
     >
       {children}

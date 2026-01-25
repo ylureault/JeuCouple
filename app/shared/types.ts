@@ -84,10 +84,27 @@ export interface Room {
   player2_name: string | null;
   player1_gender: Gender | null;
   player2_gender: Gender | null;
+  player1_avatar?: string;  // Base64 or URL
+  player2_avatar?: string;
+  player1_theme?: ThemeColor;
+  player2_theme?: ThemeColor;
   status: 'waiting' | 'playing' | 'finished';
   created_at: string;
   last_activity: string;
 }
+
+// Theme colors available
+export const THEME_COLORS = [
+  { id: 'purple', name: 'Violet', primary: '#46178f', secondary: '#6b3fa0' },
+  { id: 'pink', name: 'Rose', primary: '#e91e63', secondary: '#f06292' },
+  { id: 'blue', name: 'Bleu', primary: '#2196f3', secondary: '#64b5f6' },
+  { id: 'green', name: 'Vert', primary: '#4caf50', secondary: '#81c784' },
+  { id: 'orange', name: 'Orange', primary: '#ff9800', secondary: '#ffb74d' },
+  { id: 'red', name: 'Rouge', primary: '#f44336', secondary: '#e57373' },
+  { id: 'teal', name: 'Turquoise', primary: '#009688', secondary: '#4db6ac' },
+  { id: 'indigo', name: 'Indigo', primary: '#3f51b5', secondary: '#7986cb' },
+] as const;
+export type ThemeColor = typeof THEME_COLORS[number]['id'];
 
 export interface Game {
   id: number;
@@ -157,6 +174,46 @@ export interface SoundReactionData {
   timestamp: number;
 }
 
+// Quick predefined messages
+export const QUICK_MESSAGES = [
+  { id: 'serious', text: "T'es sérieux(se) ?!", emoji: '😳' },
+  { id: 'obvious', text: "C'est évident !", emoji: '🙄' },
+  { id: 'nooo', text: "Noooon !", emoji: '😱' },
+  { id: 'yesss', text: "Ouiii !", emoji: '🎉' },
+  { id: 'think', text: "Réfléchis bien...", emoji: '🤔' },
+  { id: 'hurry', text: "Dépêche-toi !", emoji: '⏰' },
+  { id: 'easy', text: "Trop facile", emoji: '😎' },
+  { id: 'hard', text: "C'est dur...", emoji: '😅' },
+] as const;
+export type QuickMessageId = typeof QUICK_MESSAGES[number]['id'];
+
+export interface QuickMessageData {
+  playerId: 1 | 2;
+  messageId: QuickMessageId;
+  text: string;
+  emoji: string;
+  timestamp: number;
+}
+
+// Buzz/vibration data
+export interface BuzzData {
+  fromPlayerId: 1 | 2;
+  timestamp: number;
+}
+
+// Hesitation indicator (player is thinking)
+export interface HesitationData {
+  playerId: 1 | 2;
+  isHesitating: boolean;
+}
+
+// Kiss counter
+export interface KissData {
+  fromPlayerId: 1 | 2;
+  totalKisses: number;
+  timestamp: number;
+}
+
 // Chat messages for lobby
 export interface ChatMessage {
   id: string;
@@ -198,6 +255,11 @@ export interface ServerToClientEvents {
   'game:reaction': (data: ReactionData) => void;
   'game:text-reaction': (data: TextReactionData) => void;
   'game:sound-reaction': (data: SoundReactionData) => void;
+  'game:quick-message': (data: QuickMessageData) => void;
+  'game:buzz': (data: BuzzData) => void;
+  'game:hesitation': (data: HesitationData) => void;
+  'game:kiss': (data: KissData) => void;
+  'game:time-bonus': (data: { playerId: 1 | 2; bonusSeconds: number }) => void;
   // Lobby chat
   'lobby:chat': (data: ChatMessage) => void;
   // Player connection status
@@ -259,6 +321,10 @@ export interface ClientToServerEvents {
   'game:reaction': (data: { emoji: ReactionEmoji }) => void;
   'game:text-reaction': (data: { reactionId: TextReactionId }) => void;
   'game:sound-reaction': (data: { reactionId: SoundReactionId }) => void;
+  'game:quick-message': (data: { messageId: QuickMessageId }) => void;
+  'game:buzz': () => void;
+  'game:hesitation': (data: { isHesitating: boolean }) => void;
+  'game:kiss': () => void;
   // Lobby chat
   'lobby:chat': (data: { message: string }) => void;
   // Voice chat

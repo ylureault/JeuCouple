@@ -157,6 +157,43 @@ export interface SoundReactionData {
   timestamp: number;
 }
 
+// Quick predefined messages
+export const QUICK_MESSAGES = [
+  { id: 'serious', text: "T'es sérieux(se) ?!", emoji: '😳' },
+  { id: 'obvious', text: "C'est évident !", emoji: '🙄' },
+  { id: 'nooo', text: "Noooon !", emoji: '😱' },
+  { id: 'yesss', text: "Ouiii !", emoji: '🎉' },
+  { id: 'think', text: "Réfléchis bien...", emoji: '🤔' },
+  { id: 'hurry', text: "Dépêche-toi !", emoji: '⏰' },
+  { id: 'easy', text: "Trop facile", emoji: '😎' },
+  { id: 'hard', text: "C'est dur...", emoji: '😅' },
+] as const;
+export type QuickMessageId = typeof QUICK_MESSAGES[number]['id'];
+
+export interface QuickMessageData {
+  playerId: 1 | 2;
+  messageId: QuickMessageId;
+  text: string;
+  emoji: string;
+  timestamp: number;
+}
+
+export interface BuzzData {
+  fromPlayerId: 1 | 2;
+  timestamp: number;
+}
+
+export interface HesitationData {
+  playerId: 1 | 2;
+  isHesitating: boolean;
+}
+
+export interface KissData {
+  fromPlayerId: 1 | 2;
+  totalKisses: number;
+  timestamp: number;
+}
+
 // Chat messages for lobby
 export interface ChatMessage {
   id: string;
@@ -198,6 +235,11 @@ export interface ServerToClientEvents {
   'game:reaction': (data: ReactionData) => void;
   'game:text-reaction': (data: TextReactionData) => void;
   'game:sound-reaction': (data: SoundReactionData) => void;
+  'game:quick-message': (data: QuickMessageData) => void;
+  'game:buzz': (data: BuzzData) => void;
+  'game:hesitation': (data: HesitationData) => void;
+  'game:kiss': (data: KissData) => void;
+  'game:time-bonus': (data: { playerId: 1 | 2; bonusSeconds: number }) => void;
   // Lobby chat
   'lobby:chat': (data: ChatMessage) => void;
   // Player connection status
@@ -222,6 +264,10 @@ export interface ClientToServerEvents {
   'game:reaction': (data: { emoji: ReactionEmoji }) => void;
   'game:text-reaction': (data: { reactionId: TextReactionId }) => void;
   'game:sound-reaction': (data: { reactionId: SoundReactionId }) => void;
+  'game:quick-message': (data: { messageId: QuickMessageId }) => void;
+  'game:buzz': () => void;
+  'game:hesitation': (data: { isHesitating: boolean }) => void;
+  'game:kiss': () => void;
   // Lobby chat
   'lobby:chat': (data: { message: string }) => void;
   // Voice chat

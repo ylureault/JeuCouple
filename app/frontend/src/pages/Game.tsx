@@ -36,12 +36,11 @@ export default function Game() {
     gamePaused,
     disconnectedPlayerName
   } = useGame();
-  const { playSound, playGameMusic, stopGameMusic, setMusicIntensity } = useAudio();
+  const { playSound } = useAudio();
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(0);
   const [showIntro, setShowIntro] = useState(true);
   const [introStep, setIntroStep] = useState<'number' | 'category' | 'question'>('number');
-  // Music intensity is updated directly from revealData streak
 
   useEffect(() => {
     if (!room) {
@@ -51,25 +50,9 @@ export default function Game() {
 
   useEffect(() => {
     if (phase === 'finished' && finalResults) {
-      stopGameMusic();
       navigate('/results');
     }
-  }, [phase, finalResults, navigate, stopGameMusic]);
-
-  // Start game music when game starts
-  useEffect(() => {
-    if (phase === 'question' && questionNumber === 1) {
-      playGameMusic();
-    }
-  }, [phase, questionNumber, playGameMusic]);
-
-  // Update music intensity based on streak from reveal data
-  useEffect(() => {
-    if (revealData) {
-      const myStreak = playerId === 1 ? revealData.streak1 : revealData.streak2;
-      setMusicIntensity(myStreak);
-    }
-  }, [revealData, playerId, setMusicIntensity]);
+  }, [phase, finalResults, navigate]);
 
   useEffect(() => {
     if (currentQuestion) {

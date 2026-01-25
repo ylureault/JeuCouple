@@ -10,9 +10,10 @@ import type {
   CategoryScore,
   ReactionEmoji,
   TextReactionId,
-  SoundReactionId
+  SoundReactionId,
+  QuickMessageId
 } from '../types.js';
-import { REACTION_EMOJIS, TEXT_REACTIONS, SOUND_REACTIONS } from '../types.js';
+import { REACTION_EMOJIS, TEXT_REACTIONS, SOUND_REACTIONS, QUICK_MESSAGES } from '../types.js';
 import * as roomModel from '../models/room.js';
 import * as gameModel from '../models/game.js';
 import * as questionModel from '../models/question.js';
@@ -68,6 +69,8 @@ interface GameState {
   pendingDisconnectPlayer: 1 | 2 | null;
   // Timer for next question (to cancel on pause)
   nextQuestionTimer: ReturnType<typeof setTimeout> | null;
+  // Kiss counter for the game
+  kissCount?: { player1: number; player2: number };
 }
 
 interface PlayerConnection {
@@ -469,6 +472,74 @@ export function setupSocketHandlers(
       io.to(connection.roomCode).emit('game:sound-reaction', {
         playerId: connection.playerId,
         reactionId: data.reactionId as SoundReactionId,
+        timestamp: Date.now()
+      });
+    });
+
+    // Quick predefined messages
+    socket.on('game:quick-message', (data) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+
+      const message = QUICK_MESSAGES.find(m => m.id === data.messageId);
+      if (!message) return;
+
+      io.to(connection.roomCode).emit('game:quick-message', {
+        playerId: connection.playerId,
+        messageId: data.messageId as QuickMessageId,
+        text: message.text,
+        emoji: message.emoji,
+        timestamp: Date.now()
+      });
+    });
+
+    // Buzz - vibrate partner's phone
+    socket.on('game:buzz', () => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+
+      io.to(connection.roomCode).emit('game:buzz', {
+        fromPlayerId: connection.playerId,
+        timestamp: Date.now()
+      });
+    });
+
+    // Hesitation indicator
+    socket.on('game:hesitation', (data) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+
+      socket.to(connection.roomCode).emit('game:hesitation', {
+        playerId: connection.playerId,
+        isHesitating: data.isHesitating
+      });
+    });
+
+    // Kiss with counter
+    socket.on('game:kiss', () => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+
+      const gameState = activeGames.get(connection.roomCode);
+      if (!gameState) return;
+
+      // Initialize kiss counter if needed
+      if (!gameState.kissCount) {
+        gameState.kissCount = { player1: 0, player2: 0 };
+      }
+
+      // Increment kiss count
+      if (connection.playerId === 1) {
+        gameState.kissCount.player1++;
+      } else {
+        gameState.kissCount.player2++;
+      }
+
+      const totalKisses = gameState.kissCount.player1 + gameState.kissCount.player2;
+
+      io.to(connection.roomCode).emit('game:kiss', {
+        fromPlayerId: connection.playerId,
+        totalKisses,
         timestamp: Date.now()
       });
     });

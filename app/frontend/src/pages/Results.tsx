@@ -189,7 +189,7 @@ export default function Results() {
   const compatMessage = getCompatibilityMessage();
 
   return (
-    <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-hidden relative pb-16`}>
+    <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-hidden relative pb-24`}>
       <MuteButton />
       <ReactionOverlay />
       <TextReactionOverlay />
@@ -548,8 +548,8 @@ export default function Results() {
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 3 }}
-        className="fixed bottom-0 left-0 right-0 bg-black/30 backdrop-blur-sm py-2 px-4 border-t border-white/10 z-40 space-y-1.5"
+        transition={{ delay: 1.8 }}
+        className="fixed bottom-0 left-0 right-0 bg-black/50 backdrop-blur-md py-3 px-4 border-t border-white/20 z-50 space-y-2"
       >
         <TextReactionBar />
         <ReactionBar />

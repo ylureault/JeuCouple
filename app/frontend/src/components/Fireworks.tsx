@@ -1,209 +1,169 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface Particle {
-  id: string;
-  x: number;
-  y: number;
-  color: string;
-  size: number;
-  angle: number;
-  velocity: number;
-  type: 'spark' | 'circle' | 'star';
+interface FireworksProps {
+  show?: boolean;
+  onComplete?: () => void;
 }
 
-interface Firework {
-  id: string;
-  x: number;
-  y: number;
-  color: string;
-  particles: Particle[];
-}
-
-const COLORS = ['#ff0000', '#ffd700', '#00ff00', '#00bfff', '#ff00ff', '#ff6b6b', '#feca57', '#48dbfb'];
-
-function generateParticles(x: number, y: number, color: string): Particle[] {
-  const particles: Particle[] = [];
-  const particleCount = 20 + Math.floor(Math.random() * 15);
-
-  for (let i = 0; i < particleCount; i++) {
-    particles.push({
-      id: `${Date.now()}-${i}`,
-      x,
-      y,
-      color: Math.random() > 0.7 ? COLORS[Math.floor(Math.random() * COLORS.length)] : color,
-      size: 3 + Math.random() * 5,
-      angle: (i / particleCount) * 360,
-      velocity: 80 + Math.random() * 120,
-      type: Math.random() > 0.6 ? 'spark' : Math.random() > 0.5 ? 'star' : 'circle',
-    });
-  }
-  return particles;
-}
-
-export default function Fireworks() {
-  const [fireworks, setFireworks] = useState<Firework[]>([]);
+export default function Fireworks({ show = true, onComplete }: FireworksProps) {
+  const [particles, setParticles] = useState<Array<{
+    id: number;
+    x: number;
+    y: number;
+    color: string;
+    size: number;
+    angle: number;
+    velocity: number;
+  }>>([]);
 
   useEffect(() => {
-    // Launch initial burst
-    const launchFirework = (delay: number) => {
-      setTimeout(() => {
-        const x = 20 + Math.random() * 60; // 20-80% of width
-        const y = 20 + Math.random() * 40; // 20-60% of height
-        const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+    if (show) {
+      const colors = ['#ff0000', '#ffff00', '#00ff00', '#00ffff', '#ff00ff', '#ff8800', '#ffffff'];
+      const newParticles: typeof particles = [];
 
-        const newFirework: Firework = {
-          id: `fw-${Date.now()}-${Math.random()}`,
-          x,
-          y,
-          color,
-          particles: generateParticles(x, y, color),
-        };
+      const bursts = [
+        { x: 30, y: 40 },
+        { x: 50, y: 30 },
+        { x: 70, y: 45 },
+      ];
 
-        setFireworks((prev) => [...prev, newFirework]);
+      bursts.forEach((burst, burstIndex) => {
+        for (let i = 0; i < 30; i++) {
+          newParticles.push({
+            id: burstIndex * 100 + i,
+            x: burst.x,
+            y: burst.y,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            size: Math.random() * 8 + 4,
+            angle: (Math.PI * 2 * i) / 30 + Math.random() * 0.3,
+            velocity: Math.random() * 150 + 100,
+          });
+        }
+      });
 
-        // Remove after animation
-        setTimeout(() => {
-          setFireworks((prev) => prev.filter((fw) => fw.id !== newFirework.id));
-        }, 1500);
-      }, delay);
-    };
+      setParticles(newParticles);
 
-    // Launch multiple fireworks in sequence
-    launchFirework(0);
-    launchFirework(200);
-    launchFirework(400);
-    launchFirework(700);
-    launchFirework(1000);
-    launchFirework(1400);
+      const timer = setTimeout(() => {
+        setParticles([]);
+        onComplete?.();
+      }, 2500);
 
-    return () => {};
-  }, []);
+      return () => clearTimeout(timer);
+    }
+  }, [show, onComplete]);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-      <AnimatePresence>
-        {fireworks.map((fw) => (
-          <div key={fw.id}>
-            {/* Center burst flash */}
+    <AnimatePresence>
+      {show && (
+        <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+          {particles.map((particle) => (
             <motion.div
-              initial={{ scale: 0, opacity: 1 }}
-              animate={{ scale: 3, opacity: 0 }}
-              transition={{ duration: 0.4 }}
+              key={particle.id}
               className="absolute rounded-full"
               style={{
-                left: `${fw.x}%`,
-                top: `${fw.y}%`,
-                width: 20,
-                height: 20,
-                background: `radial-gradient(circle, ${fw.color} 0%, transparent 70%)`,
-                transform: 'translate(-50%, -50%)',
+                width: particle.size,
+                height: particle.size,
+                backgroundColor: particle.color,
+                left: `${particle.x}%`,
+                top: `${particle.y}%`,
+                boxShadow: `0 0 ${particle.size}px ${particle.color}`,
               }}
+              initial={{ opacity: 1, scale: 0 }}
+              animate={{
+                opacity: [1, 1, 0],
+                scale: [0, 1.5, 0.5],
+                x: Math.cos(particle.angle) * particle.velocity,
+                y: Math.sin(particle.angle) * particle.velocity + 50,
+              }}
+              transition={{ duration: 2, ease: 'easeOut' }}
             />
+          ))}
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.5 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="text-center">
+              <motion.span
+                className="text-6xl md:text-8xl block"
+                animate={{ rotate: [0, -5, 5, 0], scale: [1, 1.1, 1] }}
+                transition={{ duration: 0.5, repeat: 3 }}
+              >
+                🎆
+              </motion.span>
+              <motion.p
+                className="text-white font-black text-3xl md:text-5xl mt-4 text-shadow-strong"
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 0.5, repeat: Infinity }}
+              >
+                PARFAIT !
+              </motion.p>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+}
 
-            {/* Particles */}
-            {fw.particles.map((particle) => {
-              const rad = (particle.angle * Math.PI) / 180;
-              const endX = Math.cos(rad) * particle.velocity;
-              const endY = Math.sin(rad) * particle.velocity + 50; // gravity
+export function Confetti({ show }: { show: boolean }) {
+  const [confettiPieces, setConfettiPieces] = useState<Array<{
+    id: number;
+    x: number;
+    color: string;
+    delay: number;
+    rotation: number;
+  }>>([]);
 
-              return (
-                <motion.div
-                  key={particle.id}
-                  initial={{
-                    left: `${fw.x}%`,
-                    top: `${fw.y}%`,
-                    scale: 1,
-                    opacity: 1,
-                  }}
-                  animate={{
-                    x: endX,
-                    y: endY,
-                    scale: 0,
-                    opacity: 0,
-                  }}
-                  transition={{
-                    duration: 0.8 + Math.random() * 0.4,
-                    ease: [0.25, 0.46, 0.45, 0.94],
-                  }}
-                  className="absolute"
-                  style={{
-                    width: particle.size,
-                    height: particle.size,
-                    backgroundColor: particle.color,
-                    borderRadius: particle.type === 'circle' ? '50%' : particle.type === 'star' ? '2px' : '50%',
-                    boxShadow: `0 0 ${particle.size * 2}px ${particle.color}`,
-                    transform: 'translate(-50%, -50%)',
-                  }}
-                />
-              );
-            })}
+  useEffect(() => {
+    if (show) {
+      const colors = ['#ff0000', '#ffff00', '#00ff00', '#00ffff', '#ff00ff', '#ff8800', '#4444ff'];
+      const pieces: typeof confettiPieces = [];
 
-            {/* Sparkle trails */}
-            {[...Array(8)].map((_, i) => {
-              const angle = (i / 8) * 360;
-              const rad = (angle * Math.PI) / 180;
-              const distance = 60 + Math.random() * 40;
+      for (let i = 0; i < 50; i++) {
+        pieces.push({
+          id: i,
+          x: Math.random() * 100,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          delay: Math.random() * 0.5,
+          rotation: Math.random() * 360,
+        });
+      }
 
-              return (
-                <motion.div
-                  key={`trail-${fw.id}-${i}`}
-                  initial={{
-                    left: `${fw.x}%`,
-                    top: `${fw.y}%`,
-                    opacity: 1,
-                    scale: 1,
-                  }}
-                  animate={{
-                    x: Math.cos(rad) * distance,
-                    y: Math.sin(rad) * distance,
-                    opacity: 0,
-                    scale: 0.3,
-                  }}
-                  transition={{
-                    duration: 0.6,
-                    ease: 'easeOut',
-                  }}
-                  className="absolute text-lg"
-                  style={{ transform: 'translate(-50%, -50%)' }}
-                >
-                  ✦
-                </motion.div>
-              );
-            })}
-          </div>
-        ))}
-      </AnimatePresence>
+      setConfettiPieces(pieces);
+      const timer = setTimeout(() => setConfettiPieces([]), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [show]);
 
-      {/* Confetti falling */}
-      {[...Array(30)].map((_, i) => (
-        <motion.div
-          key={`confetti-${i}`}
-          initial={{
-            left: `${Math.random() * 100}%`,
-            top: '-5%',
-            rotate: 0,
-            opacity: 1,
-          }}
-          animate={{
-            top: '110%',
-            rotate: Math.random() > 0.5 ? 720 : -720,
-            opacity: [1, 1, 0],
-          }}
-          transition={{
-            duration: 3 + Math.random() * 2,
-            delay: Math.random() * 1.5,
-            ease: 'easeIn',
-          }}
-          className="absolute"
-          style={{
-            width: 8 + Math.random() * 6,
-            height: 8 + Math.random() * 6,
-            backgroundColor: COLORS[Math.floor(Math.random() * COLORS.length)],
-            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-          }}
-        />
-      ))}
-    </div>
+  return (
+    <AnimatePresence>
+      {confettiPieces.length > 0 && (
+        <div className="fixed inset-0 pointer-events-none z-40 overflow-hidden">
+          {confettiPieces.map((piece) => (
+            <motion.div
+              key={piece.id}
+              className="absolute w-3 h-3"
+              style={{
+                left: `${piece.x}%`,
+                top: -20,
+                backgroundColor: piece.color,
+                borderRadius: Math.random() > 0.5 ? '50%' : '0%',
+              }}
+              initial={{ y: -20, rotate: 0, opacity: 1 }}
+              animate={{
+                y: window.innerHeight + 50,
+                rotate: piece.rotation + 720,
+                opacity: [1, 1, 0],
+              }}
+              transition={{ duration: 2.5, delay: piece.delay, ease: 'easeIn' }}
+            />
+          ))}
+        </div>
+      )}
+    </AnimatePresence>
   );
 }
