@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { BuzzData, KissData } from '../../../shared/types';
+import { useAudio } from '../context/AudioContext';
 
 interface BuzzButtonProps {
   onBuzz: () => void;
@@ -20,7 +22,7 @@ export function BuzzButton({ onBuzz, disabled }: BuzzButtonProps) {
     <motion.button
       onClick={handleBuzz}
       disabled={cooldown || disabled}
-      className={`px-3 py-2 rounded-xl font-bold text-sm transition-all
+      className={`px-3 py-2 rounded-xl font-bold text-sm transition-all text-white
                   ${cooldown
                     ? 'bg-gray-500 cursor-not-allowed'
                     : 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400'
@@ -36,20 +38,27 @@ export function BuzzButton({ onBuzz, disabled }: BuzzButtonProps) {
 }
 
 interface BuzzReceivedProps {
-  show: boolean;
-  fromPlayer: string;
+  buzz: BuzzData | null;
+  partnerName: string;
 }
 
-export function BuzzReceived({ show, fromPlayer }: BuzzReceivedProps) {
+export function BuzzReceived({ buzz, partnerName }: BuzzReceivedProps) {
+  const [showBuzz, setShowBuzz] = useState(false);
+
   useEffect(() => {
-    if (show && 'vibrate' in navigator) {
-      navigator.vibrate([200, 100, 200, 100, 200]);
+    if (buzz) {
+      setShowBuzz(true);
+      if ('vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200, 100, 200]);
+      }
+      const timer = setTimeout(() => setShowBuzz(false), 1500);
+      return () => clearTimeout(timer);
     }
-  }, [show]);
+  }, [buzz]);
 
   return (
     <AnimatePresence>
-      {show && (
+      {showBuzz && (
         <motion.div
           initial={{ opacity: 0, scale: 2 }}
           animate={{
@@ -69,7 +78,7 @@ export function BuzzReceived({ show, fromPlayer }: BuzzReceivedProps) {
               📳
             </motion.span>
             <p className="text-white font-bold text-xl mt-2">
-              {fromPlayer} te buzz !
+              {partnerName} te buzz !
             </p>
           </div>
         </motion.div>
@@ -80,31 +89,31 @@ export function BuzzReceived({ show, fromPlayer }: BuzzReceivedProps) {
 
 interface KissButtonProps {
   onKiss: () => void;
-  totalKisses: number;
+  kissCount: number;
   disabled?: boolean;
 }
 
-export function KissButton({ onKiss, totalKisses, disabled }: KissButtonProps) {
+export function KissButton({ onKiss, kissCount, disabled }: KissButtonProps) {
   return (
     <motion.button
       onClick={onKiss}
       disabled={disabled}
       className="px-3 py-2 rounded-xl font-bold text-sm bg-gradient-to-r from-pink-500 to-red-500
-                 hover:from-pink-400 hover:to-red-400 shadow-lg disabled:opacity-50 relative"
+                 hover:from-pink-400 hover:to-red-400 shadow-lg disabled:opacity-50 relative text-white"
       whileHover={!disabled ? { scale: 1.05 } : {}}
       whileTap={!disabled ? { scale: 0.95 } : {}}
     >
       <span className="mr-1">💋</span>
       Bisou
-      {totalKisses > 0 && (
+      {kissCount > 0 && (
         <motion.span
-          key={totalKisses}
+          key={kissCount}
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           className="absolute -top-2 -right-2 bg-white text-pink-600 rounded-full
                      w-5 h-5 text-xs flex items-center justify-center font-bold"
         >
-          {totalKisses}
+          {kissCount}
         </motion.span>
       )}
     </motion.button>
@@ -112,14 +121,26 @@ export function KissButton({ onKiss, totalKisses, disabled }: KissButtonProps) {
 }
 
 interface KissReceivedProps {
-  show: boolean;
-  fromPlayer: string;
+  kiss: KissData | null;
+  partnerName: string;
 }
 
-export function KissReceived({ show, fromPlayer }: KissReceivedProps) {
+export function KissReceived({ kiss, partnerName }: KissReceivedProps) {
+  const [showKiss, setShowKiss] = useState(false);
+  const { playSound } = useAudio();
+
+  useEffect(() => {
+    if (kiss) {
+      setShowKiss(true);
+      playSound('kiss');
+      const timer = setTimeout(() => setShowKiss(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [kiss, playSound]);
+
   return (
     <AnimatePresence>
-      {show && (
+      {showKiss && (
         <motion.div
           initial={{ opacity: 0, scale: 0.5, y: 50 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -142,7 +163,7 @@ export function KissReceived({ show, fromPlayer }: KissReceivedProps) {
               animate={{ opacity: 1 }}
               className="text-white font-bold text-2xl mt-2 text-shadow-strong"
             >
-              Bisou de {fromPlayer} !
+              Bisou de {partnerName} !
             </motion.p>
           </div>
         </motion.div>
@@ -153,40 +174,40 @@ export function KissReceived({ show, fromPlayer }: KissReceivedProps) {
 
 interface HesitationIndicatorProps {
   isHesitating: boolean;
-  playerName: string;
+  partnerName: string;
 }
 
-export function HesitationIndicator({ isHesitating, playerName }: HesitationIndicatorProps) {
+export function HesitationIndicator({ isHesitating, partnerName }: HesitationIndicatorProps) {
   return (
     <AnimatePresence>
       {isHesitating && (
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 20 }}
-          className="flex items-center gap-2 bg-white/10 rounded-full px-3 py-1"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40"
         >
-          <motion.span
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
-            🤔
-          </motion.span>
-          <span className="text-white/70 text-sm">
-            {playerName} hésite...
-          </span>
-          <motion.span
-            className="flex gap-0.5"
-          >
-            {[0, 1, 2].map((i) => (
-              <motion.span
-                key={i}
-                className="w-1.5 h-1.5 bg-white/50 rounded-full"
-                animate={{ opacity: [0.3, 1, 0.3] }}
-                transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-              />
-            ))}
-          </motion.span>
+          <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
+            <motion.span
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              🤔
+            </motion.span>
+            <span className="text-white font-semibold text-sm">
+              {partnerName} hésite...
+            </span>
+            <span className="flex gap-0.5">
+              {[0, 1, 2].map((i) => (
+                <motion.span
+                  key={i}
+                  className="w-1.5 h-1.5 bg-white/70 rounded-full"
+                  animate={{ opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                />
+              ))}
+            </span>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

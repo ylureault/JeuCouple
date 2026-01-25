@@ -13,10 +13,10 @@ import ReactionBar from '../components/ReactionBar';
 import ReactionOverlay from '../components/ReactionOverlay';
 import TextReactionBar from '../components/TextReactionBar';
 import TextReactionOverlay from '../components/TextReactionOverlay';
-import SoundReactionBar from '../components/SoundReactionBar';
-import SoundReactionHandler from '../components/SoundReactionHandler';
 import VoiceChat from '../components/VoiceChat';
 import GameAlerts from '../components/GameAlerts';
+import QuickMessageBar, { QuickMessageDisplay } from '../components/QuickMessageBar';
+import { BuzzButton, BuzzReceived, KissButton, KissReceived, HesitationIndicator } from '../components/InteractionButtons';
 import Lobby from './Lobby';
 
 export default function Game() {
@@ -34,7 +34,16 @@ export default function Game() {
     submitAnswer,
     finalResults,
     gamePaused,
-    disconnectedPlayerName
+    disconnectedPlayerName,
+    sendBuzz,
+    sendKiss,
+    sendHesitation,
+    sendQuickMessage,
+    lastBuzz,
+    lastKiss,
+    partnerHesitating,
+    kissCount,
+    quickMessages
   } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
@@ -103,9 +112,29 @@ export default function Game() {
     }
   }, [revealData, playSound]);
 
+  // Automatic hesitation detection - after 5 seconds without answering
+  useEffect(() => {
+    if (phase === 'question' && !showIntro && !myAnswer && currentQuestion) {
+      const halfTime = Math.floor(currentQuestion.timer / 2);
+      const hesitationTime = Math.max(5, halfTime); // At least 5 seconds
+
+      // Send hesitation signal when player takes too long
+      const hesitationTimer = setTimeout(() => {
+        sendHesitation(true);
+      }, hesitationTime * 1000);
+
+      return () => {
+        clearTimeout(hesitationTimer);
+        // Clear hesitation when answering or phase changes
+        sendHesitation(false);
+      };
+    }
+  }, [phase, showIntro, myAnswer, currentQuestion, sendHesitation]);
+
   const handleAnswer = (answer: string) => {
     if (myAnswer) return;
     playSound('click');
+    sendHesitation(false); // Clear hesitation when answering
     submitAnswer(answer);
   };
 
@@ -143,7 +172,6 @@ export default function Game() {
     <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col pb-20`}>
       <ReactionOverlay />
       <TextReactionOverlay />
-      <SoundReactionHandler />
       <GameAlerts
         otherAnswered={otherAnswered}
         myAnswer={myAnswer}
@@ -507,13 +535,46 @@ export default function Game() {
 
       </div>
 
+      {/* Hesitation indicator from partner */}
+      <HesitationIndicator
+        isHesitating={partnerHesitating}
+        partnerName={playerId === 1 ? player2Name : player1Name}
+      />
+
+      {/* Buzz received overlay */}
+      <BuzzReceived
+        buzz={lastBuzz}
+        partnerName={playerId === 1 ? player2Name : player1Name}
+      />
+
+      {/* Kiss received overlay */}
+      <KissReceived
+        kiss={lastKiss}
+        partnerName={playerId === 1 ? player2Name : player1Name}
+      />
+
+      {/* Quick message display */}
+      <QuickMessageDisplay
+        message={quickMessages[quickMessages.length - 1] ? {
+          text: quickMessages[quickMessages.length - 1].text,
+          emoji: quickMessages[quickMessages.length - 1].emoji,
+          playerId: quickMessages[quickMessages.length - 1].playerId
+        } : null}
+        playerNames={{ player1: player1Name, player2: player2Name }}
+      />
+
       {/* Fixed Reaction Bar at bottom - always visible during game */}
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-sm py-2 px-2 border-t border-white/10 z-40 space-y-1.5"
       >
-        <SoundReactionBar />
+        {/* Interaction buttons row */}
+        <div className="flex justify-center gap-2 mb-1">
+          <BuzzButton onBuzz={sendBuzz} />
+          <KissButton onKiss={sendKiss} kissCount={kissCount} />
+        </div>
+        <QuickMessageBar onSend={sendQuickMessage} />
         <TextReactionBar />
         <ReactionBar />
       </motion.div>

@@ -108,6 +108,12 @@ export default function Results() {
   const [showCategories, setShowCategories] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
+  // Calculate if this is a perfect score (100% compatibility or all matches)
+  const isPerfectScore = finalResults
+    ? finalResults.perfectMatches === finalResults.totalQuestions ||
+      ((finalResults.score1 + finalResults.score2) / (finalResults.totalQuestions * 200)) >= 1
+    : false;
+
   // Navigate to lobby when restart happens
   useEffect(() => {
     if (phase === 'lobby' && room) {
@@ -218,18 +224,65 @@ export default function Results() {
         ))}
       </div>
 
-      {/* Fireworks layer */}
+      {/* Fireworks layer - extra spectacular for perfect score */}
       {showFireworks && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <Fireworks />
-          <Confetti count={100} />
+          <Confetti count={isPerfectScore ? 200 : 100} />
           <Firework x={20} y={20} delay={0} />
           <Firework x={80} y={25} delay={0.3} />
           <Firework x={50} y={15} delay={0.6} />
           <Firework x={30} y={35} delay={0.9} />
           <Firework x={70} y={40} delay={1.2} />
+          {/* Extra fireworks for perfect score! */}
+          {isPerfectScore && (
+            <>
+              <Firework x={10} y={30} delay={1.5} />
+              <Firework x={90} y={35} delay={1.8} />
+              <Firework x={40} y={50} delay={2.1} />
+              <Firework x={60} y={45} delay={2.4} />
+              <Firework x={25} y={55} delay={2.7} />
+              <Firework x={75} y={60} delay={3.0} />
+            </>
+          )}
         </div>
       )}
+
+      {/* Perfect score special banner */}
+      <AnimatePresence>
+        {showFireworks && isPerfectScore && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0, y: -100 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            transition={{ delay: 1.5, type: 'spring', stiffness: 100 }}
+            className="fixed top-1/4 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
+          >
+            <motion.div
+              className="bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-600 rounded-2xl px-8 py-4 shadow-2xl"
+              animate={{
+                boxShadow: [
+                  '0 0 20px rgba(255,215,0,0.5)',
+                  '0 0 40px rgba(255,215,0,0.8)',
+                  '0 0 20px rgba(255,215,0,0.5)'
+                ]
+              }}
+              transition={{ duration: 1, repeat: Infinity }}
+            >
+              <motion.p
+                className="text-white font-black text-3xl md:text-4xl text-center text-shadow-strong"
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 0.5, repeat: Infinity }}
+              >
+                🌟 SCORE PARFAIT ! 🌟
+              </motion.p>
+              <p className="text-white/90 text-center text-lg font-semibold mt-1">
+                Vous êtes faits l'un pour l'autre ! 💕
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Drumroll overlay */}
       <AnimatePresence>

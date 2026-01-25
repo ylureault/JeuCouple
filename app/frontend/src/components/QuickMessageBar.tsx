@@ -1,8 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { QUICK_MESSAGES } from '../../../shared/types';
+import { QUICK_MESSAGES, type QuickMessageId } from '../../../shared/types';
 
 interface QuickMessageBarProps {
-  onSend: (messageId: string) => void;
+  onSend: (messageId: QuickMessageId) => void;
   disabled?: boolean;
 }
 
@@ -12,7 +12,7 @@ export default function QuickMessageBar({ onSend, disabled }: QuickMessageBarPro
       {QUICK_MESSAGES.map((msg) => (
         <motion.button
           key={msg.id}
-          onClick={() => onSend(msg.id)}
+          onClick={() => onSend(msg.id as QuickMessageId)}
           disabled={disabled}
           className="px-2 py-1 bg-white/10 hover:bg-white/20 rounded-full text-xs text-white/80
                      hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed
