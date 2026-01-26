@@ -358,11 +358,11 @@ interface StoredSession {
 }
 
 function saveSession(roomCode: string, playerId: 1 | 2, playerName: string) {
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode, playerId, playerName }));
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode, playerId, playerName }));
 }
 
 function getStoredSession(): StoredSession | null {
-  const stored = sessionStorage.getItem(SESSION_KEY);
+  const stored = localStorage.getItem(SESSION_KEY);
   if (stored) {
     try {
       return JSON.parse(stored);
@@ -374,7 +374,7 @@ function getStoredSession(): StoredSession | null {
 }
 
 function clearSession() {
-  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SESSION_KEY);
 }
 
 export function GameProvider({ children }: { children: ReactNode }) {
