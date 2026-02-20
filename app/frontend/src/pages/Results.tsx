@@ -22,7 +22,27 @@ const CATEGORY_ICONS: Record<string, string> = {
   projets: '🚀',
   sexy: '🔥',
   coquin: '😈',
-  fun: '🎉'
+  fun: '🎉',
+  profond: '💭',
+  culture: '🧠',
+  comportement: '🎭',
+  communication: '💬',
+  fantasmes: '💭',
+  fellation: '👄',
+  cunnilingus: '👅',
+  sodomie: '🍑',
+  kamasutra: '🧘',
+  bdsm: '⛓️',
+  preliminaires: '💋',
+  sextoys: '🎀',
+  confessions: '🤫',
+  seduction: '😏',
+  massage: '💆',
+  jeux_role: '🎭',
+  public: '🏖️',
+  extreme: '🔞',
+  intime: '💋',
+  humour: '😂'
 };
 
 // Firework burst component
@@ -197,7 +217,7 @@ export default function Results() {
   const compatMessage = getCompatibilityMessage();
 
   return (
-    <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-hidden relative pb-24`}>
+    <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-x-hidden relative pb-24`}>
       <MuteButton />
       <ReactionOverlay />
       <TextReactionOverlay />
@@ -635,8 +655,8 @@ function QuestionHistoryItem({
     if (answer === 'joker') return '🃏 Joker';
     if (answer === 'dontknow') return '🤷 Je ne sais pas';
 
-    // Type E: Convert 'A' or 'B' to actual option text
-    if (question.type === 'E') {
+    // Type E, I, L: Convert 'A' or 'B' to actual option text
+    if (question.type === 'E' || question.type === 'I' || question.type === 'L') {
       if (answer === 'A') return question.option_a || 'Option A';
       if (answer === 'B') return question.option_b || 'Option B';
     }
@@ -651,6 +671,18 @@ function QuestionHistoryItem({
     // Type G: Capitalize vrai/faux
     if (question.type === 'G') {
       return answer.charAt(0).toUpperCase() + answer.slice(1);
+    }
+
+    // Type N: Plus/Moins
+    if (question.type === 'N') {
+      if (answer === 'plus') return '+ Plus';
+      if (answer === 'moins') return '- Moins';
+    }
+
+    // Type S: Hot Take
+    if (question.type === 'S') {
+      if (answer === 'daccord') return "👍 D'accord";
+      if (answer === 'pasdaccord') return "👎 Pas d'accord";
     }
 
     return answer;

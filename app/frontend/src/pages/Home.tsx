@@ -12,16 +12,20 @@ type Mode = 'home' | 'create' | 'join' | 'thematic';
 
 // Thematic game configuration - explicit themes
 const THEMATIC_THEMES = [
-  { id: 'fellation', label: 'Fellation', emoji: '👄', description: 'Questions sur les plaisirs oraux masculins', color: 'from-pink-500 to-rose-600' },
-  { id: 'cunnilingus', label: 'Cunnilingus', emoji: '👅', description: 'Questions sur les plaisirs oraux féminins', color: 'from-pink-400 to-fuchsia-600' },
-  { id: 'sodomie', label: 'Sodomie', emoji: '🍑', description: 'Questions sur le plaisir anal', color: 'from-orange-500 to-red-600' },
-  { id: '69', label: 'Position 69', emoji: '🔄', description: 'Questions sur le plaisir mutuel simultané', color: 'from-purple-500 to-indigo-600' },
-  { id: 'kamasutra', label: 'Kamasutra', emoji: '🧘', description: 'Questions sur les positions et techniques', color: 'from-amber-500 to-orange-600' },
   { id: 'fantasmes', label: 'Fantasmes', emoji: '💭', description: 'Vos désirs secrets et inavoués', color: 'from-violet-500 to-purple-600' },
+  { id: 'preliminaires', label: 'Préliminaires', emoji: '💋', description: "L'art de faire monter le désir", color: 'from-red-400 to-pink-600' },
+  { id: 'kamasutra', label: 'Kamasutra', emoji: '🧘', description: 'Positions et techniques', color: 'from-amber-500 to-orange-600' },
+  { id: 'fellation', label: 'Fellation', emoji: '👄', description: 'Plaisirs oraux masculins', color: 'from-pink-500 to-rose-600' },
+  { id: 'cunnilingus', label: 'Cunnilingus', emoji: '👅', description: 'Plaisirs oraux féminins', color: 'from-pink-400 to-fuchsia-600' },
+  { id: '69', label: 'Position 69', emoji: '🔄', description: 'Plaisir mutuel simultané', color: 'from-purple-500 to-indigo-600' },
+  { id: 'sodomie', label: 'Sodomie', emoji: '🍑', description: 'Le plaisir anal', color: 'from-orange-500 to-red-600' },
   { id: 'jeux_role', label: 'Jeux de rôle', emoji: '🎭', description: 'Scénarios et personnages coquins', color: 'from-emerald-500 to-teal-600' },
   { id: 'bdsm', label: 'BDSM', emoji: '⛓️', description: 'Domination, soumission et plus', color: 'from-gray-700 to-gray-900' },
-  { id: 'preliminaires', label: 'Préliminaires', emoji: '💋', description: 'L\'art de faire monter le désir', color: 'from-red-400 to-pink-600' },
+  { id: 'sextoys', label: 'Sextoys', emoji: '🎀', description: 'Jouets et accessoires coquins', color: 'from-fuchsia-500 to-pink-600' },
+  { id: 'confessions', label: 'Confessions', emoji: '🤫', description: 'Aveux intimes et secrets', color: 'from-rose-400 to-red-500' },
   { id: 'public', label: 'Sexe en public', emoji: '🏖️', description: 'Oser en dehors de la chambre', color: 'from-sky-500 to-blue-600' },
+  { id: 'seduction', label: 'Séduction', emoji: '😏', description: 'Drague et attirance', color: 'from-rose-500 to-pink-500' },
+  { id: 'massage', label: 'Massage', emoji: '💆', description: 'Toucher sensuel et détente', color: 'from-teal-400 to-cyan-600' },
   { id: 'extreme', label: 'Ultra coquin', emoji: '🔞', description: 'Pour les couples très audacieux', color: 'from-red-600 to-rose-700' },
   { id: 'mix_hot', label: 'Mix Torride', emoji: '🔥', description: 'Un mélange de tous les thèmes osés', color: 'from-orange-500 to-red-500' },
 ] as const;
@@ -36,6 +40,9 @@ const CATEGORY_CONFIG = [
   { id: 'projets', label: 'Projets', emoji: '🎯' },
   { id: 'fun', label: 'Fun', emoji: '🎉' },
   { id: 'preferences', label: 'Goûts', emoji: '⭐' },
+  { id: 'profond', label: 'Profond', emoji: '💭' },
+  { id: 'culture', label: 'Culture G', emoji: '🧠' },
+  { id: 'comportement', label: 'Comportement', emoji: '🎭' },
 ] as const;
 
 // Question type configuration
@@ -149,7 +156,7 @@ export default function Home() {
   const { theme } = useTheme();
 
   return (
-    <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-hidden`}>
+    <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-y-auto`}>
       <MuteButton />
       <ThemeSelector />
 
@@ -578,8 +585,15 @@ export default function Home() {
               transition={{ type: 'spring', damping: 20 }}
               className="w-full max-w-md"
             >
-              <div className="bg-white rounded-2xl shadow-2xl max-h-[80vh] flex flex-col">
-                <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-pink-500 to-rose-600 rounded-t-2xl">
+              <div className="bg-white rounded-2xl shadow-2xl max-h-[85vh] flex flex-col">
+                <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-pink-500 to-rose-600 rounded-t-2xl relative">
+                  <motion.button
+                    onClick={() => { setSelectedTheme(null); switchMode('home'); }}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-white/80 hover:text-white font-bold text-2xl"
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    ←
+                  </motion.button>
                   <h2 className="text-xl font-black text-white text-center flex items-center justify-center gap-2">
                     <span>🔞</span> Partie Thématique
                   </h2>
@@ -653,7 +667,7 @@ export default function Home() {
                     <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
                       Choisis un thème 🔥
                     </label>
-                    <div className="grid grid-cols-2 gap-2 max-h-[35vh] overflow-y-auto pr-1">
+                    <div className="grid grid-cols-2 gap-2">
                       {THEMATIC_THEMES.map((theme) => {
                         const isSelected = selectedTheme === theme.id;
                         return (
@@ -704,16 +718,6 @@ export default function Home() {
                 </div>
               </div>
 
-              <motion.button
-                onClick={() => {
-                  setSelectedTheme(null);
-                  switchMode('home');
-                }}
-                className="w-full text-white/70 hover:text-white font-bold py-4 mt-4 transition-colors"
-                whileHover={{ scale: 1.02 }}
-              >
-                ← Retour
-              </motion.button>
             </motion.div>
           )}
         </AnimatePresence>

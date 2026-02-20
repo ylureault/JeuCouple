@@ -106,7 +106,7 @@ export default function Lobby() {
   const bothPlayersReady = room.player1_name && room.player2_name;
 
   return (
-    <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-hidden pb-16`}>
+    <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-x-hidden pb-16`}>
       <MuteButton />
       <ReactionOverlay />
       <TextReactionOverlay />
