@@ -703,6 +703,185 @@ export default function QuestionCard({
     );
   };
 
+  // Type L: Avant/Après - binary choice
+  const renderTypeL = () => {
+    const optionA = question.option_a || 'Avant';
+    const optionB = question.option_b || 'Après';
+
+    return (
+      <div className="grid grid-cols-2 gap-2">
+        <motion.button
+          initial={{ opacity: 0, x: -30, scale: 0.9 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+          onClick={() => !disabled && onAnswer('A')}
+          disabled={disabled}
+          className={`
+            relative overflow-hidden rounded-xl p-4 min-h-[100px]
+            bg-gradient-to-br from-[#1368ce] to-[#0d47a1]
+            ${disabled && selectedAnswer !== 'A' ? 'opacity-50' : ''}
+            ${selectedAnswer === 'A' ? 'ring-2 ring-white scale-102' : ''}
+            shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[3px]
+            transition-all duration-100
+          `}
+          whileHover={disabled ? {} : { scale: 1.03, y: -2 }}
+          whileTap={disabled ? {} : { scale: 0.98 }}
+        >
+          <div className="flex flex-col items-center justify-center h-full gap-1">
+            <span className="text-3xl">⬅️</span>
+            <span className="text-white font-extrabold text-lg text-center leading-tight">{optionA}</span>
+          </div>
+          {selectedAnswer === 'A' && (
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute bottom-1 right-1 text-xl">✓</motion.div>
+          )}
+        </motion.button>
+        <motion.button
+          initial={{ opacity: 0, x: 30, scale: 0.9 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+          onClick={() => !disabled && onAnswer('B')}
+          disabled={disabled}
+          className={`
+            relative overflow-hidden rounded-xl p-4 min-h-[100px]
+            bg-gradient-to-br from-[#e91e63] to-[#c2185b]
+            ${disabled && selectedAnswer !== 'B' ? 'opacity-50' : ''}
+            ${selectedAnswer === 'B' ? 'ring-2 ring-white scale-102' : ''}
+            shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
+            active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[3px]
+            transition-all duration-100
+          `}
+          whileHover={disabled ? {} : { scale: 1.03, y: -2 }}
+          whileTap={disabled ? {} : { scale: 0.98 }}
+        >
+          <div className="flex flex-col items-center justify-center h-full gap-1">
+            <span className="text-3xl">➡️</span>
+            <span className="text-white font-extrabold text-lg text-center leading-tight">{optionB}</span>
+          </div>
+          {selectedAnswer === 'B' && (
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute bottom-1 left-1 text-xl">✓</motion.div>
+          )}
+        </motion.button>
+      </div>
+    );
+  };
+
+  // Type N: Plus ou Moins
+  const renderTypeN = () => (
+    <div className="grid grid-cols-2 gap-2">
+      <motion.button
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+        onClick={() => !disabled && onAnswer('plus')}
+        disabled={disabled}
+        className={`
+          relative overflow-hidden rounded-xl p-4 min-h-[100px]
+          bg-gradient-to-br from-[#26890c] to-[#1a6b08]
+          ${disabled && selectedAnswer !== 'plus' ? 'opacity-50' : ''}
+          ${selectedAnswer === 'plus' ? 'ring-2 ring-white scale-102' : ''}
+          shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
+          active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[3px]
+          transition-all duration-100
+        `}
+        whileHover={disabled ? {} : { scale: 1.03, y: -2 }}
+        whileTap={disabled ? {} : { scale: 0.98 }}
+      >
+        <div className="flex flex-col items-center justify-center h-full gap-1">
+          <span className="text-4xl font-black text-white">+</span>
+          <span className="text-white font-extrabold text-xl">PLUS</span>
+        </div>
+        {selectedAnswer === 'plus' && (
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-1 right-1 text-xl">✓</motion.div>
+        )}
+      </motion.button>
+      <motion.button
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+        onClick={() => !disabled && onAnswer('moins')}
+        disabled={disabled}
+        className={`
+          relative overflow-hidden rounded-xl p-4 min-h-[100px]
+          bg-gradient-to-br from-[#e21b3c] to-[#b01530]
+          ${disabled && selectedAnswer !== 'moins' ? 'opacity-50' : ''}
+          ${selectedAnswer === 'moins' ? 'ring-2 ring-white scale-102' : ''}
+          shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
+          active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[3px]
+          transition-all duration-100
+        `}
+        whileHover={disabled ? {} : { scale: 1.03, y: -2 }}
+        whileTap={disabled ? {} : { scale: 0.98 }}
+      >
+        <div className="flex flex-col items-center justify-center h-full gap-1">
+          <span className="text-4xl font-black text-white">-</span>
+          <span className="text-white font-extrabold text-xl">MOINS</span>
+        </div>
+        {selectedAnswer === 'moins' && (
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-1 left-1 text-xl">✓</motion.div>
+        )}
+      </motion.button>
+    </div>
+  );
+
+  // Type S: Hot Take - d'accord ou pas d'accord
+  const renderTypeS = () => (
+    <div className="grid grid-cols-2 gap-2">
+      <motion.button
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+        onClick={() => !disabled && onAnswer('daccord')}
+        disabled={disabled}
+        className={`
+          relative overflow-hidden rounded-xl p-4 min-h-[100px]
+          bg-gradient-to-br from-[#26890c] to-[#1a6b08]
+          ${disabled && selectedAnswer !== 'daccord' ? 'opacity-50' : ''}
+          ${selectedAnswer === 'daccord' ? 'ring-2 ring-white scale-102' : ''}
+          shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
+          active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[3px]
+          transition-all duration-100
+        `}
+        whileHover={disabled ? {} : { scale: 1.03, y: -2 }}
+        whileTap={disabled ? {} : { scale: 0.98 }}
+      >
+        <div className="flex flex-col items-center justify-center h-full gap-1">
+          <span className="text-3xl">👍</span>
+          <span className="text-white font-extrabold text-lg">D'accord</span>
+        </div>
+        {selectedAnswer === 'daccord' && (
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-1 right-1 text-xl">✓</motion.div>
+        )}
+      </motion.button>
+      <motion.button
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+        onClick={() => !disabled && onAnswer('pasdaccord')}
+        disabled={disabled}
+        className={`
+          relative overflow-hidden rounded-xl p-4 min-h-[100px]
+          bg-gradient-to-br from-[#e21b3c] to-[#b01530]
+          ${disabled && selectedAnswer !== 'pasdaccord' ? 'opacity-50' : ''}
+          ${selectedAnswer === 'pasdaccord' ? 'ring-2 ring-white scale-102' : ''}
+          shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
+          active:shadow-[0_1px_0_0_rgba(0,0,0,0.3)] active:translate-y-[3px]
+          transition-all duration-100
+        `}
+        whileHover={disabled ? {} : { scale: 1.03, y: -2 }}
+        whileTap={disabled ? {} : { scale: 0.98 }}
+      >
+        <div className="flex flex-col items-center justify-center h-full gap-1">
+          <span className="text-3xl">👎</span>
+          <span className="text-white font-extrabold text-lg">Pas d'accord</span>
+        </div>
+        {selectedAnswer === 'pasdaccord' && (
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-1 left-1 text-xl">✓</motion.div>
+        )}
+      </motion.button>
+    </div>
+  );
+
   // Joker button - available for all question types
   const renderJoker = () => (
     <motion.button
@@ -744,12 +923,16 @@ export default function QuestionCard({
     <div className="space-y-2 w-full max-w-2xl mx-auto">
       {(question.type === 'A' || question.type === 'B') && renderTypeAB()}
       {question.type === 'C' && renderTypeC()}
-      {question.type === 'D' && renderTypeD()}
+      {(question.type === 'D' || question.type === 'Q' || question.type === 'K') && renderTypeD()}
       {question.type === 'E' && renderTypeE()}
       {question.type === 'F' && renderTypeF()}
       {question.type === 'G' && renderTypeG()}
-      {question.type === 'H' && renderTypeH()}
+      {(question.type === 'H' || question.type === 'J') && renderTypeH()}
       {question.type === 'I' && renderTypeI()}
+      {question.type === 'L' && renderTypeL()}
+      {(question.type === 'M' || question.type === 'O' || question.type === 'P' || question.type === 'R') && (question.options ? renderTypeAB() : renderTypeC())}
+      {question.type === 'N' && renderTypeN()}
+      {question.type === 'S' && renderTypeS()}
 
       {/* Joker button for all types */}
       <div className="pt-1 border-t border-white/20">

@@ -716,8 +716,8 @@ function AnswerBlock({
     if (answer === 'joker') return '🃏 Joker';
     if (answer === 'dontknow') return '🤷 Je ne sais pas';
 
-    // Type E: Convert 'A' or 'B' to actual option text
-    if (questionType === 'E' && question) {
+    // Type E, I, L: Convert 'A' or 'B' to actual option text
+    if ((questionType === 'E' || questionType === 'I' || questionType === 'L') && question) {
       if (answer === 'A') return question.option_a || 'Option A';
       if (answer === 'B') return question.option_b || 'Option B';
     }
@@ -732,6 +732,18 @@ function AnswerBlock({
     // Type G: Keep vrai/faux as is but capitalize
     if (questionType === 'G') {
       return answer.charAt(0).toUpperCase() + answer.slice(1);
+    }
+
+    // Type N: Plus/Moins display
+    if (questionType === 'N') {
+      if (answer === 'plus') return '+ Plus';
+      if (answer === 'moins') return '- Moins';
+    }
+
+    // Type S: Hot Take display
+    if (questionType === 'S') {
+      if (answer === 'daccord') return "👍 D'accord";
+      if (answer === 'pasdaccord') return '👎 Pas d\'accord';
     }
 
     return answer;

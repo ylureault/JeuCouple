@@ -188,6 +188,9 @@ export function setupSocketHandlers(
 
         roomModel.updateRoomActivity(room.id);
 
+        // Check if game is active - include game info in response
+        const gameState = activeGames.get(room.code);
+
         callback({ success: true, room, playerId: data.playerId });
 
         // Notify the other player
@@ -197,8 +200,59 @@ export function setupSocketHandlers(
           gender: data.playerId === 1 ? room.player1_gender! : room.player2_gender!
         });
 
+        // If game is active, send current game state to reconnected player
+        if (gameState) {
+          // Send game:started so the frontend knows a game is in progress
+          socket.emit('game:started', { gameId: gameState.gameId });
+
+          // Send current scores
+          socket.emit('game:score-update', {
+            score1: gameState.scores.player1,
+            score2: gameState.scores.player2
+          });
+
+          // Send current question if available (for question or reveal phase)
+          if (gameState.currentQuestion) {
+            socket.emit('game:question', {
+              question: gameState.currentQuestion,
+              questionNumber: gameState.currentQuestionIndex + 1,
+              totalQuestions: gameState.questions.length
+            });
+          }
+
+          // If in reveal phase, send the reveal data
+          if (gameState.phase === 'reveal') {
+            const question = gameState.questions[gameState.currentQuestionIndex];
+            const answers = gameState.answers.get(question.id) || {};
+            // Re-send the latest reveal data from history if available
+            const lastHistory = gameState.questionHistory[gameState.questionHistory.length - 1];
+            if (lastHistory) {
+              // Reconstruct minimal reveal data for display
+              socket.emit('game:reveal', {
+                questionId: question.id,
+                answer1: answers.answer1 || null,
+                answer2: answers.answer2 || null,
+                correct: lastHistory.correct,
+                points1: lastHistory.points1,
+                points2: lastHistory.points2,
+                questionType: question.type,
+                basePoints: 0,
+                speedBonus1: 0,
+                speedBonus2: 0,
+                streakBonus1: 0,
+                streakBonus2: 0,
+                streak1: gameState.gamification.streak1,
+                streak2: gameState.gamification.streak2,
+                answerTime1: null,
+                answerTime2: null,
+                category: question.category,
+                correctAnswer: question.type === 'H' ? question.correct_answer : undefined
+              });
+            }
+          }
+        }
+
         // Handle reconnection - either during grace period or after pause
-        const gameState = activeGames.get(room.code);
         if (gameState) {
           // Mark player as connected
           gameState.connectedPlayers.add(data.playerId);
@@ -226,22 +280,10 @@ export function setupSocketHandlers(
               playerName: playerName || 'Joueur'
             });
 
-            // Always send current scores to keep players in sync
-            socket.emit('game:score-update', {
-              score1: gameState.scores.player1,
-              score2: gameState.scores.player2
-            });
+            // Scores and question already sent above before pause check
 
             // Resume the timer if we were in question phase
             if (gameState.phase === 'question' && gameState.remainingTime !== null && gameState.currentQuestion) {
-              // Send the stored question ONLY to the reconnected player (not all players)
-              // This ensures sync - other player already has the same question
-              socket.emit('game:question', {
-                question: gameState.currentQuestion,
-                questionNumber: gameState.currentQuestionIndex + 1,
-                totalQuestions: gameState.questions.length
-              });
-
               // Clear any existing timer before setting a new one
               if (gameState.timer) {
                 clearTimeout(gameState.timer);
@@ -667,13 +709,16 @@ function handleDisconnect(
 
   console.log('Player disconnected:', socket.id, 'from room:', connection.roomCode);
 
-  // Notify other players
-  socket.to(connection.roomCode).emit('room:player-left', {
-    playerId: connection.playerId
-  });
-
   // Handle game pause with grace period
   const gameState = activeGames.get(connection.roomCode);
+
+  // Only notify room:player-left when NOT in an active game
+  // During a game, the pause/resume system handles disconnect display
+  if (!gameState) {
+    socket.to(connection.roomCode).emit('room:player-left', {
+      playerId: connection.playerId
+    });
+  }
   if (gameState && !gameState.paused) {
     // Mark player as temporarily disconnected
     gameState.connectedPlayers.delete(connection.playerId);

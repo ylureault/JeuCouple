@@ -132,12 +132,17 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, connected: action.connected };
 
     case 'JOIN_ROOM':
+      // If room is actively playing or finished, don't reset to lobby
+      // The backend will send game:started, game:question, etc. to set the correct phase
+      const reconnectPhase = action.room.status === 'playing' ? 'question'
+        : action.room.status === 'finished' ? 'finished'
+        : 'lobby';
       return {
         ...state,
         room: action.room,
         playerId: action.playerId,
         playerName: action.playerName,
-        phase: 'lobby',
+        phase: reconnectPhase,
         error: null
       };
 
