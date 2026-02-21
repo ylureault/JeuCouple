@@ -59,7 +59,7 @@ export default function TextReactionOverlay() {
   }, [textReactions, playerId, playSound]);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-50 flex flex-col items-center pt-20 gap-2">
+    <div className="fixed inset-x-0 top-14 pointer-events-none z-[60] flex flex-col items-center gap-2">
       <AnimatePresence>
         {floatingReactions.map((reaction) => {
           const style = getGenderStyle(reaction.gender);

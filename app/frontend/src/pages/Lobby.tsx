@@ -197,20 +197,6 @@ export default function Lobby() {
           </div>
         </motion.div>
 
-        {/* Music indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex items-center gap-1 mb-4 bg-white/10 px-3 py-1.5 rounded-full"
-        >
-          <div className="flex items-end gap-0.5 h-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="music-bar" style={{ animationDelay: `${i * 0.15}s` }} />
-            ))}
-          </div>
-          <span className="text-white/70 text-sm ml-2">Musique d'ambiance</span>
-        </motion.div>
-
         {/* Players */}
         <div className="w-full max-w-lg space-y-3 mb-4">
           <motion.div

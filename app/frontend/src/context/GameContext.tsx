@@ -83,8 +83,9 @@ type GameAction =
   | { type: 'CLEAR_REACTIONS' }
   | { type: 'ADD_CHAT_MESSAGE'; message: ChatMessage }
   | { type: 'CLEAR_CHAT_MESSAGES' }
-  | { type: 'GAME_PAUSED'; playerName: string }
+  | { type: 'GAME_PAUSED'; playerName: string; isManual?: boolean }
   | { type: 'GAME_RESUMED' }
+  | { type: 'SET_MANUAL_PAUSE'; paused: boolean }
   | { type: 'ADD_QUICK_MESSAGE'; message: QuickMessageData }
   | { type: 'SET_BUZZ'; buzz: BuzzData }
   | { type: 'CLEAR_BUZZ' }
@@ -132,17 +133,15 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, connected: action.connected };
 
     case 'JOIN_ROOM':
-      // If room is actively playing or finished, don't reset to lobby
-      // The backend will send game:started, game:question, etc. to set the correct phase
-      const reconnectPhase = action.room.status === 'playing' ? 'question'
-        : action.room.status === 'finished' ? 'finished'
-        : 'lobby';
+      // For playing rooms, keep phase as 'lobby' temporarily - the backend will immediately
+      // send game:started + game:question events to set the correct phase.
+      // For finished rooms, localStorage is already cleared so this shouldn't happen.
       return {
         ...state,
         room: action.room,
         playerId: action.playerId,
         playerName: action.playerName,
-        phase: reconnectPhase,
+        phase: 'lobby',
         error: null
       };
 
@@ -296,6 +295,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         disconnectedPlayerName: null
       };
 
+    case 'SET_MANUAL_PAUSE':
+      return {
+        ...state,
+        gamePaused: action.paused,
+        disconnectedPlayerName: action.paused ? 'Pause' : null
+      };
+
     case 'ADD_QUICK_MESSAGE':
       const newQuickMessages = [...state.quickMessages, action.message]
         .filter(m => Date.now() - m.timestamp < 4000)
@@ -349,6 +355,7 @@ interface GameContextType extends GameState {
   sendBuzz: () => void;
   sendHesitation: (isHesitating: boolean) => void;
   sendKiss: () => void;
+  requestPause: () => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -461,6 +468,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
 
     socket.on('game:finished', (data) => {
+      // Clear stale session so reconnect doesn't try to rejoin a finished game
+      clearSession();
       dispatch({ type: 'GAME_FINISHED', data });
     });
 
@@ -662,6 +671,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     state.socket.emit('game:kiss');
   }, [state.socket]);
 
+  const requestPause = useCallback(() => {
+    if (!state.socket) return;
+    state.socket.emit('game:request-pause', (response: { success: boolean; paused?: boolean }) => {
+      if (response.success && response.paused !== undefined) {
+        dispatch({ type: 'SET_MANUAL_PAUSE', paused: response.paused });
+      }
+    });
+  }, [state.socket]);
+
   return (
     <GameContext.Provider
       value={{
@@ -680,7 +698,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         sendQuickMessage,
         sendBuzz,
         sendHesitation,
-        sendKiss
+        sendKiss,
+        requestPause
       }}
     >
       {children}

@@ -260,6 +260,7 @@ export interface ClientToServerEvents {
   'game:start': (callback: (response: { success: boolean; error?: string }) => void) => void;
   'game:answer': (data: { answer: string }) => void;
   'game:restart': (callback: (response: { success: boolean; error?: string }) => void) => void;
+  'game:request-pause': (callback: (response: { success: boolean; paused?: boolean }) => void) => void;
   'room:reconnect': (data: { code: string; playerId: 1 | 2 }, callback: (response: RoomResponse) => void) => void;
   'game:reaction': (data: { emoji: ReactionEmoji }) => void;
   'game:text-reaction': (data: { reactionId: TextReactionId }) => void;

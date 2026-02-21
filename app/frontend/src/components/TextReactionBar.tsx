@@ -5,12 +5,14 @@ import { useAudio } from '../context/AudioContext';
 
 // Define locally to avoid Vite import issues with shared folder values
 const TEXT_REACTIONS = [
+  { id: 'jetaime', text: "Je t'aime", emoji: '❤️' },
+  { id: 'bisou', text: 'Bisou', emoji: '💋' },
   { id: 'ptitcon', text: "P'tit con", emoji: '😏' },
-  { id: 'viellepeau', text: 'Vieille peau', emoji: '👵' },
-  { id: 'jattends', text: "J'attends", emoji: '⏳' },
-  { id: 'comprends', text: 'Je comprends pas', emoji: '🤷' },
+  { id: 'nul', text: "T'es nul(le)", emoji: '😜' },
+  { id: 'bravo', text: 'Bravo !', emoji: '👏' },
   { id: 'allez', text: 'Allez !', emoji: '💪' },
   { id: 'habon', text: 'Ah bon ?', emoji: '🤨' },
+  { id: 'mechant', text: 'Méchant(e)', emoji: '😤' },
 ] as const;
 
 export default function TextReactionBar() {

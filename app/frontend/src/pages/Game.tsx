@@ -33,6 +33,7 @@ export default function Game() {
     finalResults,
     gamePaused,
     disconnectedPlayerName,
+    requestPause,
   } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
@@ -76,8 +77,8 @@ export default function Game() {
   }, [currentQuestion, playSound]);
 
   useEffect(() => {
-    // Only start timer when in question phase, intro is done, and no answer given
-    if (phase !== 'question' || showIntro || myAnswer) {
+    // Only start timer when in question phase, intro is done, no answer given, and not paused
+    if (phase !== 'question' || showIntro || myAnswer || gamePaused) {
       return;
     }
 
@@ -95,7 +96,7 @@ export default function Game() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [phase, showIntro, myAnswer, playSound]); // Removed timeLeft from deps to prevent multiple intervals
+  }, [phase, showIntro, myAnswer, gamePaused, playSound]); // gamePaused stops/resumes timer
 
   useEffect(() => {
     if (revealData) {
@@ -156,7 +157,7 @@ export default function Game() {
         questionNumber={questionNumber}
       />
 
-      {/* Pause overlay when partner disconnected */}
+      {/* Pause overlay when partner disconnected or manual pause */}
       <AnimatePresence>
         {gamePaused && (
           <motion.div
@@ -180,40 +181,68 @@ export default function Game() {
                 ⏸️
               </motion.div>
 
-              {/* Disconnected message */}
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="bg-red-500/20 border border-red-500/40 rounded-2xl p-4 mb-6"
-              >
-                <p className="text-red-400 text-lg font-bold flex items-center justify-center gap-2">
-                  <span className="animate-pulse">🔴</span>
-                  {disconnectedPlayerName} n'est plus connecté
-                </p>
-              </motion.div>
-
-              {/* Pause status */}
-              <h2 className="text-3xl font-black text-white mb-3">
-                Le jeu est en pause
-              </h2>
-
-              {/* Waiting message */}
-              <p className="text-white/70 text-lg mb-6">
-                En attente de <span className="font-bold text-yellow-400">{disconnectedPlayerName}</span>
-              </p>
-
-              {/* Loading dots */}
-              <div className="flex justify-center gap-2">
-                {[0, 1, 2].map((i) => (
-                  <motion.span
-                    key={i}
-                    className="w-4 h-4 bg-yellow-400 rounded-full"
-                    animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1, 0.8] }}
-                    transition={{ repeat: Infinity, duration: 1.4, delay: i * 0.2 }}
-                  />
-                ))}
-              </div>
+              {disconnectedPlayerName && !disconnectedPlayerName.toLowerCase().includes('pause') ? (
+                <>
+                  {/* Disconnected message */}
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-red-500/20 border border-red-500/40 rounded-2xl p-4 mb-6"
+                  >
+                    <p className="text-red-400 text-lg font-bold flex items-center justify-center gap-2">
+                      <span className="animate-pulse">🔴</span>
+                      {disconnectedPlayerName}
+                    </p>
+                  </motion.div>
+                  <h2 className="text-3xl font-black text-white mb-3">
+                    Le jeu est en pause
+                  </h2>
+                  <p className="text-white/70 text-lg mb-6">
+                    En attente de reconnexion...
+                  </p>
+                  <div className="flex justify-center gap-2">
+                    {[0, 1, 2].map((i) => (
+                      <motion.span
+                        key={i}
+                        className="w-4 h-4 bg-yellow-400 rounded-full"
+                        animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1, 0.8] }}
+                        transition={{ repeat: Infinity, duration: 1.4, delay: i * 0.2 }}
+                      />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Manual pause */}
+                  <h2 className="text-3xl font-black text-white mb-3">
+                    Jeu en pause
+                  </h2>
+                  <p className="text-white/70 text-lg mb-6">
+                    Prenez un moment pour souffler...
+                  </p>
+                  <motion.button
+                    onClick={requestPause}
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-lg py-4 px-8 rounded-2xl shadow-lg"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    ▶️ Reprendre le jeu
+                  </motion.button>
+                  {/* WhatsApp button during pause */}
+                  <motion.a
+                    href={`https://wa.me/?text=${encodeURIComponent("Viens, on en parle ! 💬")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 inline-flex items-center gap-2 bg-[#25D366] text-white font-bold py-3 px-6 rounded-xl shadow-lg"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <span className="text-xl">💬</span>
+                    Viens on en parle sur WhatsApp
+                  </motion.a>
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}
@@ -250,8 +279,16 @@ export default function Game() {
             </div>
           </div>
 
-          {/* Right: Voice chat and mute */}
+          {/* Right: Pause, voice, mute */}
           <div className="flex items-center gap-1 flex-shrink-0">
+            <motion.button
+              onClick={requestPause}
+              className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-white text-sm"
+              whileTap={{ scale: 0.9 }}
+              title="Pause"
+            >
+              ⏸
+            </motion.button>
             <VoiceChat compact />
             <MuteButton compact />
           </div>

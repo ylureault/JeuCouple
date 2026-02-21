@@ -60,13 +60,13 @@ interface GameState {
   questionHistory: QuestionHistoryItem[];
   // Pause/resume state
   paused: boolean;
+  manualPause: boolean;
   pausedAt: number | null;
   remainingTime: number | null;
   connectedPlayers: Set<1 | 2>;
   disconnectedPlayerName: string | null;
-  // Grace period for reconnection (don't pause immediately)
-  disconnectGraceTimer: ReturnType<typeof setTimeout> | null;
-  pendingDisconnectPlayer: 1 | 2 | null;
+  // Grace period for reconnection (don't pause immediately) - per-player timers
+  disconnectGraceTimers: Map<1 | 2, ReturnType<typeof setTimeout>>;
   // Timer for next question (to cancel on pause)
   nextQuestionTimer: ReturnType<typeof setTimeout> | null;
   // Kiss counter for the game
@@ -180,6 +180,14 @@ export function setupSocketHandlers(
 
         socket.join(room.code);
 
+        // Clean up stale connections for the same player in the same room
+        for (const [oldSocketId, conn] of playerConnections.entries()) {
+          if (conn.roomCode === room.code && conn.playerId === data.playerId && oldSocketId !== socket.id) {
+            console.log('Cleaning up stale connection for player', data.playerId, 'socket', oldSocketId);
+            playerConnections.delete(oldSocketId);
+          }
+        }
+
         playerConnections.set(socket.id, {
           socket,
           roomCode: room.code,
@@ -259,16 +267,16 @@ export function setupSocketHandlers(
 
           const playerName = data.playerId === 1 ? room.player1_name : room.player2_name;
 
-          // Cancel any pending grace timer (player reconnected quickly)
-          if (gameState.disconnectGraceTimer) {
-            clearTimeout(gameState.disconnectGraceTimer);
-            gameState.disconnectGraceTimer = null;
-            gameState.pendingDisconnectPlayer = null;
+          // Cancel any pending grace timer for this player (reconnected quickly)
+          const graceTimer = gameState.disconnectGraceTimers.get(data.playerId);
+          if (graceTimer) {
+            clearTimeout(graceTimer);
+            gameState.disconnectGraceTimers.delete(data.playerId);
             console.log('Player', playerName, 'reconnected within grace period - no pause needed');
           }
 
-          // Resume if game was actually paused
-          if (gameState.paused) {
+          // Resume if game was paused due to disconnect (not manual pause)
+          if (gameState.paused && !gameState.manualPause) {
             console.log('Player', playerName, 'reconnected to room', room.code, '- resuming game');
 
             gameState.paused = false;
@@ -304,6 +312,13 @@ export function setupSocketHandlers(
               console.log('Resuming from reveal phase - scheduling next question');
               scheduleNextQuestion(io, room.code, gameState);
             }
+          } else if (gameState.paused && gameState.manualPause) {
+            // Game is manually paused - inform the reconnecting player
+            console.log('Player', playerName, 'reconnected but game is manually paused');
+            socket.emit('game:paused', {
+              disconnectedPlayer: data.playerId,
+              playerName: (gameState.disconnectedPlayerName || 'Pause')
+            });
           }
         }
       } catch (error) {
@@ -385,12 +400,12 @@ export function setupSocketHandlers(
         questionHistory: [],
         // Pause/resume state - both players connected at start
         paused: false,
+        manualPause: false,
         pausedAt: null,
         remainingTime: null,
         connectedPlayers: new Set([1, 2]),
         disconnectedPlayerName: null,
-        disconnectGraceTimer: null,
-        pendingDisconnectPlayer: null,
+        disconnectGraceTimers: new Map(),
         nextQuestionTimer: null
       };
 
@@ -502,9 +517,10 @@ export function setupSocketHandlers(
         if (existingGame.nextQuestionTimer) {
           clearTimeout(existingGame.nextQuestionTimer);
         }
-        if (existingGame.disconnectGraceTimer) {
-          clearTimeout(existingGame.disconnectGraceTimer);
+        for (const timer of existingGame.disconnectGraceTimers.values()) {
+          clearTimeout(timer);
         }
+        existingGame.disconnectGraceTimers.clear();
       }
       activeGames.delete(connection.roomCode);
 
@@ -515,6 +531,67 @@ export function setupSocketHandlers(
     });
 
     // Send reaction emoji to partner
+    // Manual pause/resume requested by a player
+    socket.on('game:request-pause', (callback) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) { callback?.({ success: false }); return; }
+
+      const gameState = activeGames.get(connection.roomCode);
+      if (!gameState) { callback?.({ success: false }); return; }
+
+      if (gameState.paused) {
+        // Resume the game
+        gameState.paused = false;
+        gameState.disconnectedPlayerName = null;
+        gameState.manualPause = false;
+
+        // Resume timer if in question phase
+        if (gameState.phase === 'question' && gameState.remainingTime !== null && gameState.currentQuestion) {
+          if (gameState.timer) { clearTimeout(gameState.timer); gameState.timer = null; }
+          const remainingMs = gameState.remainingTime * 1000;
+          gameState.questionStartTime = Date.now() - ((gameState.currentQuestion.timer - gameState.remainingTime) * 1000);
+          gameState.remainingTime = null;
+          gameState.timer = setTimeout(() => {
+            revealAnswers(io, connection.roomCode, gameState);
+          }, remainingMs);
+        } else if (gameState.phase === 'reveal') {
+          scheduleNextQuestion(io, connection.roomCode, gameState);
+        }
+
+        io.to(connection.roomCode).emit('game:resumed', {
+          reconnectedPlayer: connection.playerId,
+          playerName: 'le jeu'
+        });
+        callback?.({ success: true, paused: false });
+      } else {
+        // Pause the game
+        gameState.paused = true;
+        gameState.manualPause = true;
+
+        // Freeze timers
+        if (gameState.timer) { clearTimeout(gameState.timer); gameState.timer = null; }
+        if (gameState.nextQuestionTimer) { clearTimeout(gameState.nextQuestionTimer); gameState.nextQuestionTimer = null; }
+
+        // Save remaining time
+        if (gameState.phase === 'question') {
+          const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
+          const elapsed = (Date.now() - gameState.questionStartTime) / 1000;
+          gameState.remainingTime = Math.max(0, currentQuestion.timer - elapsed);
+        }
+
+        const room = roomModel.getRoomByCode(connection.roomCode);
+        const playerName = room
+          ? (connection.playerId === 1 ? room.player1_name : room.player2_name) || 'Joueur'
+          : 'Joueur';
+
+        io.to(connection.roomCode).emit('game:paused', {
+          disconnectedPlayer: connection.playerId,
+          playerName: playerName + ' a mis en pause'
+        });
+        callback?.({ success: true, paused: true });
+      }
+    });
+
     socket.on('game:reaction', (data) => {
       const connection = playerConnections.get(socket.id);
       if (!connection) return;
@@ -729,18 +806,16 @@ function handleDisconnect(
       ? (connection.playerId === 1 ? room.player1_name : room.player2_name) || 'Joueur'
       : 'Joueur';
 
-    // Clear any existing grace timer for this player
-    if (gameState.disconnectGraceTimer) {
-      clearTimeout(gameState.disconnectGraceTimer);
+    // Clear any existing grace timer for this specific player
+    const existingTimer = gameState.disconnectGraceTimers.get(connection.playerId);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
     }
-
-    // Store pending disconnect info
-    gameState.pendingDisconnectPlayer = connection.playerId;
 
     console.log('Player', playerName, 'disconnected, starting grace period...');
 
     // Start grace period - only pause if they don't reconnect within 5 seconds
-    gameState.disconnectGraceTimer = setTimeout(() => {
+    const graceTimer = setTimeout(() => {
       // Check if game still exists and player still disconnected
       const currentGameState = activeGames.get(connection.roomCode);
       if (!currentGameState || currentGameState.paused) return;
@@ -750,8 +825,7 @@ function handleDisconnect(
       currentGameState.paused = true;
       currentGameState.pausedAt = Date.now();
       currentGameState.disconnectedPlayerName = playerName;
-      currentGameState.disconnectGraceTimer = null;
-      currentGameState.pendingDisconnectPlayer = null;
+      currentGameState.disconnectGraceTimers.delete(connection.playerId);
 
       // Clear ALL timers when pausing
       if (currentGameState.timer) {
@@ -778,6 +852,7 @@ function handleDisconnect(
         playerName
       });
     }, DISCONNECT_GRACE_PERIOD);
+    gameState.disconnectGraceTimers.set(connection.playerId, graceTimer);
   }
 
   // Clean up connection
@@ -1342,10 +1417,10 @@ function finishGame(
     clearTimeout(gameState.nextQuestionTimer);
     gameState.nextQuestionTimer = null;
   }
-  if (gameState.disconnectGraceTimer) {
-    clearTimeout(gameState.disconnectGraceTimer);
-    gameState.disconnectGraceTimer = null;
+  for (const timer of gameState.disconnectGraceTimers.values()) {
+    clearTimeout(timer);
   }
+  gameState.disconnectGraceTimers.clear();
 
   // Mark game as finished
   gameModel.finishGame(gameState.gameId);
