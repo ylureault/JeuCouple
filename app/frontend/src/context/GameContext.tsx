@@ -362,6 +362,8 @@ const GameContext = createContext<GameContextType | null>(null);
 
 // Session storage helpers
 const SESSION_KEY = 'jeucouple_session';
+const SESSION_TIMESTAMP_KEY = 'jeucouple_session_ts';
+const SESSION_MAX_AGE_MS = 4 * 60 * 60 * 1000; // 4 hours max session age
 
 interface StoredSession {
   roomCode: string;
@@ -370,23 +372,61 @@ interface StoredSession {
 }
 
 function saveSession(roomCode: string, playerId: 1 | 2, playerName: string) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode, playerId, playerName }));
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode, playerId, playerName }));
+    localStorage.setItem(SESSION_TIMESTAMP_KEY, Date.now().toString());
+  } catch (e) {
+    console.warn('Failed to save session:', e);
+  }
 }
 
 function getStoredSession(): StoredSession | null {
-  const stored = localStorage.getItem(SESSION_KEY);
-  if (stored) {
-    try {
-      return JSON.parse(stored);
-    } catch {
+  try {
+    const stored = localStorage.getItem(SESSION_KEY);
+    const timestamp = localStorage.getItem(SESSION_TIMESTAMP_KEY);
+
+    if (!stored) return null;
+
+    // Check if session is too old
+    if (timestamp) {
+      const age = Date.now() - parseInt(timestamp, 10);
+      if (age > SESSION_MAX_AGE_MS) {
+        console.log('Session expired (age:', Math.round(age / 1000 / 60), 'minutes)');
+        clearSession();
+        return null;
+      }
+    }
+
+    const session = JSON.parse(stored);
+    // Validate session structure
+    if (!session.roomCode || !session.playerId || !session.playerName) {
+      clearSession();
       return null;
     }
+    return session;
+  } catch {
+    clearSession();
+    return null;
   }
-  return null;
 }
 
 function clearSession() {
-  localStorage.removeItem(SESSION_KEY);
+  try {
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_TIMESTAMP_KEY);
+  } catch (e) {
+    console.warn('Failed to clear session:', e);
+  }
+}
+
+function updateSessionTimestamp() {
+  try {
+    if (localStorage.getItem(SESSION_KEY)) {
+      localStorage.setItem(SESSION_TIMESTAMP_KEY, Date.now().toString());
+    }
+  } catch (e) {
+    console.warn('Failed to update session timestamp:', e);
+  }
 }
 
 export function GameProvider({ children }: { children: ReactNode }) {
@@ -400,8 +440,60 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(socketUrl, {
       transports: ['websocket', 'polling'],
-      timeout: 20000
+      timeout: 20000,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000
     });
+
+    // Track if we're currently trying to reconnect to prevent duplicate attempts
+    let reconnectAttemptPending = false;
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const attemptReconnect = (session: StoredSession) => {
+      if (reconnectAttemptPending) return;
+      reconnectAttemptPending = true;
+
+      // Set a timeout for the reconnection attempt
+      reconnectTimeout = setTimeout(() => {
+        console.log('Reconnection timeout - clearing session');
+        clearSession();
+        reconnectAttemptPending = false;
+      }, 10000); // 10 second timeout
+
+      socket.emit('room:reconnect', {
+        code: session.roomCode,
+        playerId: session.playerId
+      }, (response) => {
+        // Clear the timeout since we got a response
+        if (reconnectTimeout) {
+          clearTimeout(reconnectTimeout);
+          reconnectTimeout = null;
+        }
+        reconnectAttemptPending = false;
+
+        if (response.success && response.room && response.playerId) {
+          // Check if room is in a valid state (not finished)
+          if (response.room.status === 'finished') {
+            console.log('Room is finished, clearing session');
+            clearSession();
+            return;
+          }
+          dispatch({
+            type: 'JOIN_ROOM',
+            room: response.room,
+            playerId: response.playerId,
+            playerName: session.playerName
+          });
+          updateSessionTimestamp();
+        } else {
+          // Session invalid, clear it
+          console.log('Reconnection failed:', response.error);
+          clearSession();
+        }
+      });
+    };
 
     socket.on('connect', () => {
       console.log('Connected to server');
@@ -410,28 +502,34 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // Try to reconnect to existing session
       const session = getStoredSession();
       if (session) {
-        socket.emit('room:reconnect', {
-          code: session.roomCode,
-          playerId: session.playerId
-        }, (response) => {
-          if (response.success && response.room && response.playerId) {
-            dispatch({
-              type: 'JOIN_ROOM',
-              room: response.room,
-              playerId: response.playerId,
-              playerName: session.playerName
-            });
-          } else {
-            // Session invalid, clear it
-            clearSession();
-          }
-        });
+        attemptReconnect(session);
       }
     });
 
-    socket.on('disconnect', () => {
-      console.log('Disconnected from server');
+    socket.on('disconnect', (reason) => {
+      console.log('Disconnected from server:', reason);
       dispatch({ type: 'SET_CONNECTED', connected: false });
+
+      // If server disconnected us, it might mean the room is invalid
+      if (reason === 'io server disconnect') {
+        console.log('Server disconnected us, clearing session');
+        clearSession();
+        dispatch({ type: 'RESET' });
+      }
+    });
+
+    socket.on('connect_error', (error) => {
+      console.log('Connection error:', error.message);
+      // Don't clear session immediately on connection errors - might be temporary
+    });
+
+    // Handle reconnection after socket reconnects
+    // Note: When socket.io reconnects, it will fire 'connect' again,
+    // which will trigger attemptReconnect. This io.on('reconnect') is for
+    // the socket.io manager level reconnect event.
+    socket.io.on('reconnect', () => {
+      console.log('Socket.io manager reconnected');
+      // The 'connect' event will be fired next, which handles the session reconnection
     });
 
     socket.on('room:player-joined', (data) => {
@@ -525,14 +623,107 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     socket.on('error', (data) => {
       dispatch({ type: 'SET_ERROR', error: data.message });
+      // If error indicates room doesn't exist, clear session
+      if (data.message.toLowerCase().includes('room not found') ||
+          data.message.toLowerCase().includes('invalid room') ||
+          data.message.toLowerCase().includes('session expired')) {
+        clearSession();
+        dispatch({ type: 'RESET' });
+      }
+    });
+
+    // Handle room:kicked event (when server removes player from room)
+    socket.on('room:kicked' as keyof ServerToClientEvents, () => {
+      console.log('Kicked from room by server');
+      clearSession();
+      dispatch({ type: 'RESET' });
     });
 
     dispatch({ type: 'SET_SOCKET', socket });
 
+    // Handle page visibility changes - validate session when becoming visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const session = getStoredSession();
+        if (session && socket.connected && !reconnectAttemptPending) {
+          // Re-validate session when page becomes visible
+          updateSessionTimestamp();
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Handle beforeunload - notify server and clear session cleanly
+    const handleBeforeUnload = () => {
+      const session = getStoredSession();
+      if (session && socket.connected) {
+        // Try to notify server about leaving (synchronous)
+        socket.emit('room:leave');
+      }
+      // Note: We intentionally do NOT clear the session on beforeunload
+      // to allow reconnection if the user navigates back quickly.
+      // The session will expire after SESSION_MAX_AGE_MS anyway.
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Periodic session validation (every 5 minutes)
+    const sessionValidationInterval = setInterval(() => {
+      const session = getStoredSession();
+      if (!session) return;
+
+      // If we have a session but we're not in a room, something is wrong
+      if (session && socket.connected) {
+        // Ping the server to check if room still exists
+        socket.emit('room:reconnect', {
+          code: session.roomCode,
+          playerId: session.playerId
+        }, (response) => {
+          if (!response.success) {
+            console.log('Session validation failed, clearing session');
+            clearSession();
+            dispatch({ type: 'RESET' });
+          } else if (response.room?.status === 'finished') {
+            console.log('Room is finished, clearing session');
+            clearSession();
+            dispatch({ type: 'RESET' });
+          } else {
+            updateSessionTimestamp();
+          }
+        });
+      }
+    }, 5 * 60 * 1000); // Every 5 minutes
+
     return () => {
+      // Cleanup all listeners and timers
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+      clearInterval(sessionValidationInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       socket.disconnect();
     };
   }, []);
+
+  // Clean up session when phase returns to idle without a room
+  useEffect(() => {
+    if (state.phase === 'idle' && !state.room) {
+      // Clear any stale session when we're back to idle with no room
+      const session = getStoredSession();
+      if (session) {
+        console.log('Phase is idle with no room, clearing session');
+        clearSession();
+      }
+    }
+  }, [state.phase, state.room]);
+
+  // Clear session when game is finished and we go back to results
+  useEffect(() => {
+    if (state.phase === 'finished') {
+      // Session is cleared in game:finished handler, but double-check
+      clearSession();
+    }
+  }, [state.phase]);
 
   const createRoom = useCallback(async (playerName: string, gender: Gender, questionCount?: number, categories?: string[], questionTypes?: string[]): Promise<string> => {
     if (!state.socket) throw new Error('No socket connection');

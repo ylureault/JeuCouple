@@ -171,10 +171,29 @@ export function setupSocketHandlers(
     // Reconnect to room
     socket.on('room:reconnect', (data, callback) => {
       try {
+        // Validate input
+        if (!data.code || !data.playerId || (data.playerId !== 1 && data.playerId !== 2)) {
+          callback({ success: false, error: 'Invalid reconnection data' });
+          return;
+        }
+
         const room = roomModel.getRoomByCode(data.code);
 
         if (!room) {
           callback({ success: false, error: 'Room not found' });
+          return;
+        }
+
+        // Check if room is finished - don't allow reconnection to finished rooms
+        if (room.status === 'finished') {
+          callback({ success: false, error: 'Game already finished' });
+          return;
+        }
+
+        // Validate that the player slot exists in the room
+        const playerName = data.playerId === 1 ? room.player1_name : room.player2_name;
+        if (!playerName) {
+          callback({ success: false, error: 'Player slot not found in room' });
           return;
         }
 
@@ -184,6 +203,11 @@ export function setupSocketHandlers(
         for (const [oldSocketId, conn] of playerConnections.entries()) {
           if (conn.roomCode === room.code && conn.playerId === data.playerId && oldSocketId !== socket.id) {
             console.log('Cleaning up stale connection for player', data.playerId, 'socket', oldSocketId);
+            // Also leave the socket room for the old connection
+            const oldSocket = conn.socket;
+            if (oldSocket) {
+              oldSocket.leave(room.code);
+            }
             playerConnections.delete(oldSocketId);
           }
         }
@@ -792,6 +816,13 @@ function handleDisconnect(
   // Only notify room:player-left when NOT in an active game
   // During a game, the pause/resume system handles disconnect display
   if (!gameState) {
+    // Get the room to check if it's in lobby state
+    const room = roomModel.getRoomByCode(connection.roomCode);
+    if (room && room.status === 'waiting') {
+      // In lobby - remove player from room in database so slot can be taken by someone else
+      roomModel.removePlayerFromRoom(room.id, connection.playerId);
+      console.log('Removed player', connection.playerId, 'from room', room.code, 'in database (lobby state)');
+    }
     socket.to(connection.roomCode).emit('room:player-left', {
       playerId: connection.playerId
     });
