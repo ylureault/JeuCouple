@@ -7,8 +7,9 @@ app/frontend/dist/
 public_html/
 
 # Data
-data/
+/data/
 *.sqlite
+!app/backend/data/
 
 # Environment
 .env
