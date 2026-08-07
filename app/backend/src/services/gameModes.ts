@@ -26,6 +26,8 @@ export interface ModeContext {
   roundWinners: (1 | 2 | null)[];
   /** Pour chaque manche, si les deux joueurs se sont accordes. */
   roundAgreements: boolean[];
+  /** Escalade : dernier palier valide par les deux joueurs (0 = premier). */
+  acquiredPalier: number;
   /** Reglages choisis a la creation du salon. */
   settings: {
     questionCount: number;
@@ -41,7 +43,8 @@ export type ModeDecision =
   | { action: 'finish'; reason?: string }                // terminer la partie
   | { action: 'await-theme-choice'; chooser: 1 | 2 }     // rendre la main a un joueur
   | { action: 'next-from-category'; category: string }   // imposer le theme suivant
-  | { action: 'next-inverted' };                         // manche a l'envers
+  | { action: 'next-inverted' }                          // manche a l'envers
+  | { action: 'await-palier-consent'; nextCategory: string; stayCategory: string; palier: number };
 
 export interface GameModeDefinition {
   id: string;
@@ -122,7 +125,8 @@ const ESCALADE_LADDER = [
   'extreme',
   'sans_tabou',      // dernier palier
 ];
-const ESCALADE_PALIER_LEN = 3;
+// Longueur surchargeable en test (une manche par palier pour verifier le flux).
+const ESCALADE_PALIER_LEN = Number(process.env.ESCALADE_PALIER_LEN) || 3;
 
 const escalade: GameModeDefinition = {
   id: 'escalade',
@@ -132,12 +136,26 @@ const escalade: GameModeDefinition = {
   endless: false,
   initialQuestionCount: () => 1,
   afterRound: (ctx) => {
+    // La montee de palier n'est plus imposee : les DEUX joueurs la valident
+    // (constat GRAVE n.4 du coach, arbitre P1-11). Un refus n'arrete pas le
+    // jeu : on reste au palier acquis, sans commentaire.
     const nextRound = ctx.questionIndex;             // manche a venir, 0-based
-    const palier = Math.floor(nextRound / ESCALADE_PALIER_LEN);
-    if (palier >= ESCALADE_LADDER.length) {
+    if (nextRound >= ESCALADE_PALIER_LEN * ESCALADE_LADDER.length) {
       return { action: 'finish', reason: 'Vous avez gravi tous les paliers' };
     }
-    return { action: 'next-from-category', category: ESCALADE_LADDER[palier] };
+    const wanted = Math.min(
+      Math.floor(nextRound / ESCALADE_PALIER_LEN),
+      ESCALADE_LADDER.length - 1
+    );
+    if (wanted > ctx.acquiredPalier) {
+      return {
+        action: 'await-palier-consent',
+        nextCategory: ESCALADE_LADDER[ctx.acquiredPalier + 1],
+        stayCategory: ESCALADE_LADDER[ctx.acquiredPalier],
+        palier: ctx.acquiredPalier + 1,
+      };
+    }
+    return { action: 'next-from-category', category: ESCALADE_LADDER[ctx.acquiredPalier] };
   },
 };
 

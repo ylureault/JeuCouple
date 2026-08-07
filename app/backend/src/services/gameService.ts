@@ -83,6 +83,11 @@ interface GameState {
   awaitingThemeFrom: 1 | 2 | null;
   // Filet de securite : si le joueur ne choisit pas, on tire un theme au sort.
   themeChoiceTimer: ReturnType<typeof setTimeout> | null;
+  // --- Mode escalade ---
+  // Dernier palier valide par les DEUX joueurs (0 = premier palier).
+  escaladePalier: number;
+  // Montee en attente : accords recus et minuteur (timeout = on reste).
+  escaladeConsent: { nextCategory: string; stayCategory: string; palier: number; accepts: Set<1 | 2>; timer: ReturnType<typeof setTimeout> } | null;
 }
 
 interface PlayerConnection {
@@ -631,6 +636,8 @@ export function setupSocketHandlers(
         roundAgreements: [],
         awaitingThemeFrom: null,
         themeChoiceTimer: null,
+        escaladePalier: 0,
+        escaladeConsent: null,
         // Pause/resume state - both players connected at start
         paused: false,
         manualPause: false,
@@ -856,6 +863,24 @@ export function setupSocketHandlers(
       });
       // Le nouveau mode s'applique des la manche suivante : la question en
       // cours reste valable, on n'interrompt pas les joueurs en plein tour.
+    });
+
+    // Escalade : chaque joueur repond a la proposition de montee de palier.
+    socket.on('escalade:palier-respond', (data: { accept: boolean }) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+      const gameState = activeGames.get(connection.roomCode);
+      const consent = gameState?.escaladeConsent;
+      if (!gameState || !consent) return;
+      if (!data?.accept) {
+        // Un seul refus suffit, et il reste anonyme dans le resultat.
+        resolvePalierConsent(io, connection.roomCode, gameState, false);
+        return;
+      }
+      consent.accepts.add(connection.playerId);
+      if (consent.accepts.has(1) && consent.accepts.has(2)) {
+        resolvePalierConsent(io, connection.roomCode, gameState, true);
+      }
     });
 
     socket.on('duel:choose-theme', (data: { category: string }) => {
@@ -1665,6 +1690,7 @@ function scheduleNextQuestion(
       roundWinner: gameState.roundWinner,
       roundWinners: gameState.roundWinners,
       roundAgreements: gameState.roundAgreements,
+      acquiredPalier: gameState.escaladePalier,
       settings: {
         questionCount: settings?.questionCount ?? DEFAULT_QUESTION_COUNT,
         categories: settings?.categories ?? [],
@@ -1674,6 +1700,54 @@ function scheduleNextQuestion(
 
     applyModeDecision(io, roomCode, gameState, decision);
   }, 10000); // 10 seconds to view results
+}
+
+const PALIER_CONSENT_TIMEOUT_SECONDS = 25;
+
+/**
+ * Escalade (P1-11, constat GRAVE n.4 du coach) : la montee vers un palier plus
+ * explicite exige l'accord des DEUX joueurs. Meme patron que le choix de theme
+ * du duel — feuille + minuteur — pas de 4e protocole ad hoc. Un refus ou un
+ * silence n'arrete rien : on reste au palier acquis, sans commentaire.
+ */
+function requestPalierConsent(
+  io: Server,
+  roomCode: string,
+  gameState: GameState,
+  d: { nextCategory: string; stayCategory: string; palier: number }
+): void {
+  const info = categoryModel.getCategoryByCode(d.nextCategory);
+  const timer = setTimeout(() => {
+    resolvePalierConsent(io, roomCode, gameState, false);
+  }, PALIER_CONSENT_TIMEOUT_SECONDS * 1000);
+
+  gameState.escaladeConsent = { ...d, accepts: new Set(), timer };
+
+  io.to(roomCode).emit('escalade:palier', {
+    palier: d.palier,
+    category: { code: d.nextCategory, name: info?.name ?? d.nextCategory, icon: info?.icon ?? '🌡️' },
+    timeoutSeconds: PALIER_CONSENT_TIMEOUT_SECONDS,
+  });
+}
+
+function resolvePalierConsent(
+  io: Server,
+  roomCode: string,
+  gameState: GameState,
+  accepted: boolean
+): void {
+  const consent = gameState.escaladeConsent;
+  if (!consent) return;   // deja tranche
+  clearTimeout(consent.timer);
+  gameState.escaladeConsent = null;
+
+  if (accepted) gameState.escaladePalier = consent.palier;
+  io.to(roomCode).emit('escalade:palier-result', { accepted });
+
+  applyModeDecision(io, roomCode, gameState, {
+    action: 'next-from-category',
+    category: accepted ? consent.nextCategory : consent.stayCategory,
+  });
 }
 
 const THEME_CHOICE_TIMEOUT_SECONDS = 20;
@@ -1826,6 +1900,10 @@ function applyModeDecision(
 
     case 'await-theme-choice':
       requestThemeChoice(io, roomCode, gameState, decision.chooser);
+      return;
+
+    case 'await-palier-consent':
+      requestPalierConsent(io, roomCode, gameState, decision);
       return;
 
     case 'next-inverted': {
@@ -2050,6 +2128,11 @@ function finishGame(
   if (pendingProposal) {
     clearTimeout(pendingProposal.timer);
     pendingModeProposals.delete(roomCode);
+  }
+  // De meme pour une montee de palier en attente.
+  if (gameState.escaladeConsent) {
+    clearTimeout(gameState.escaladeConsent.timer);
+    gameState.escaladeConsent = null;
   }
   // De meme pour le choix de theme du mode duel.
   if (gameState.themeChoiceTimer) {

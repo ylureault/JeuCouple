@@ -74,6 +74,9 @@ interface GameState {
   modeNotice: { text: string; kind: 'changed' | 'declined' } | null;
   // P0-5 : recap des reglages montre au lobby + accord du joueur 2
   gameSettings: RoomSettingsInfo | null;
+  // Escalade : montee de palier en attente de l'accord des deux joueurs
+  palierRequest: { palier: number; category: { code: string; name: string; icon: string }; timeoutSeconds: number } | null;
+  myPalierVote: boolean;
 }
 
 type GameAction =
@@ -117,6 +120,9 @@ type GameAction =
   | { type: 'MODE_CLEAR_NOTICE' }
   | { type: 'SET_ROOM_SETTINGS'; settings: RoomSettingsInfo }
   | { type: 'SETTINGS_ACCEPTED' }
+  | { type: 'PALIER_REQUEST'; request: NonNullable<GameState['palierRequest']> }
+  | { type: 'PALIER_VOTED' }
+  | { type: 'PALIER_RESOLVED' }
   | { type: 'RESET' };
 
 const initialState: GameState = {
@@ -153,7 +159,9 @@ const initialState: GameState = {
   modeProposal: null,
   currentMode: 'classic',
   modeNotice: null,
-  gameSettings: null
+  gameSettings: null,
+  palierRequest: null,
+  myPalierVote: false
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -289,6 +297,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return state.gameSettings
         ? { ...state, gameSettings: { ...state.gameSettings, settingsAccepted: true } }
         : state;
+
+    case 'PALIER_REQUEST':
+      return { ...state, palierRequest: action.request, myPalierVote: false };
+    case 'PALIER_VOTED':
+      return { ...state, myPalierVote: true };
+    case 'PALIER_RESOLVED':
+      return { ...state, palierRequest: null, myPalierVote: false };
 
     case 'MODE_PROPOSED':
       return { ...state, modeProposal: action.proposal };
@@ -442,6 +457,7 @@ interface GameContextType extends GameState {
   respondToModeProposal: (accept: boolean) => void;
   dismissModeNotice: () => void;
   acceptSettings: () => void;
+  respondPalier: (accept: boolean) => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -699,6 +715,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'ADD_KISS', kiss: data });
       // Auto-clear kiss display after 2 seconds
       setTimeout(() => dispatch({ type: 'CLEAR_KISS' }), 2000);
+    });
+
+    socket.on('escalade:palier', (data) => {
+      dispatch({ type: 'PALIER_REQUEST', request: data });
+    });
+    socket.on('escalade:palier-result', () => {
+      dispatch({ type: 'PALIER_RESOLVED' });
     });
 
     socket.on('room:settings', (data) => {
@@ -1037,6 +1060,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'MODE_CLEAR_NOTICE' });
   }, []);
 
+  const respondPalier = useCallback((accept: boolean) => {
+    if (!state.socket) return;
+    state.socket.emit('escalade:palier-respond', { accept });
+    // Un refus ferme tout de suite (le serveur tranche a un seul non) ;
+    // un oui passe en "j'attends l'autre".
+    dispatch({ type: accept ? 'PALIER_VOTED' : 'PALIER_RESOLVED' });
+  }, [state.socket]);
+
   const acceptSettings = useCallback(() => {
     // La confirmation revient par room:settings-accepted, diffuse aux deux.
     state.socket?.emit('room:accept-settings');
@@ -1060,6 +1091,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         respondToModeProposal,
         dismissModeNotice,
         acceptSettings,
+        respondPalier,
         createRoom,
         joinRoom,
         startGame,

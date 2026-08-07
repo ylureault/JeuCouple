@@ -29,7 +29,7 @@ Correctifs déjà réalisés, hors périmètre : secret JWT en dur (Sécu 1), ha
 | 8 | Parties interrompues + purge roomSettings | ✅ livré, vérifié e2e |
 | 9 | CORS liste blanche + helmet/CSP | ✅ livré (révocation token admin : non faite, TTL 24 h en place) |
 | 10 | Révision éditoriale des questions | ✅ livrée (12 questions reformulées + 3 retouches) |
-| 11 | Refactor structurel puis validation des paliers Escalade | ⏳ prochain chantier — l'arbitre impose ce séquencement ; en attendant, le P0-5 fait consentir les DEUX joueurs au mode Escalade dès le lobby |
+| 11 | Refactor structurel puis validation des paliers Escalade | ✅ validation des paliers livrée (même patron que le choix de thème du duel, vérifiée e2e 10/10 : montée à deux, refus anonyme) — le refactor structurel (découpe des fichiers, workspace, CI) reste le prochain chantier |
 | 12 | Dette UI en continu | ⏳ entamée (contraste, accents) — le reste au fil de l'eau |
 
 ## Plan unique et priorisé (12 actions)

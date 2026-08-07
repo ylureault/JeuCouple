@@ -266,6 +266,9 @@ export interface ServerToClientEvents {
   // Player connection status
   'game:paused': (data: { disconnectedPlayer: 1 | 2; playerName: string }) => void;
   'game:resumed': (data: { reconnectedPlayer: 1 | 2; playerName: string }) => void;
+  // Escalade : montee de palier proposee aux DEUX joueurs
+  'escalade:palier': (data: { palier: number; category: { code: string; name: string; icon: string }; timeoutSeconds: number }) => void;
+  'escalade:palier-result': (data: { accepted: boolean }) => void;
   // Mode duel : le gagnant de la manche choisit le theme suivant
   'duel:choose-theme': (data: ThemeChoiceRequest) => void;      // -> au gagnant
   'duel:awaiting-theme': (data: ThemeChoiceWaiting) => void;    // -> a l'autre joueur
@@ -333,6 +336,7 @@ export interface ClientToServerEvents {
   'game:request-pause': (callback: (response: { success: boolean; paused?: boolean }) => void) => void;
   // Mode duel : theme choisi par le gagnant de la manche
   'duel:choose-theme': (data: { category: string }) => void;
+  'escalade:palier-respond': (data: { accept: boolean }) => void;
   // Changement de mode en cours de partie
   'mode:propose': (data: { mode: GameMode }) => void;
   'mode:respond': (data: { accept: boolean }) => void;

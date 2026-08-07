@@ -20,6 +20,7 @@ import SoundReactionHandler from '../components/SoundReactionHandler';
 // Le chat remplace les reactions toutes faites : il reste visible en permanence.
 import GameChat from '../components/GameChat';
 import DuelThemePicker from '../components/DuelThemePicker';
+import EscaladePalierSheet from '../components/EscaladePalierSheet';
 // Changement de jeu en cours de partie, sur validation du partenaire.
 import ModeSwitcher from '../components/ModeSwitcher';
 // Talkie-walkie : micro ferme au repos, ouvert tant qu'on maintient le bouton.
@@ -182,6 +183,7 @@ export default function Game() {
       <TextReactionOverlay />
       <SoundReactionHandler />
       <DuelThemePicker />
+      <EscaladePalierSheet />
       <GameAlerts
         otherAnswered={otherAnswered}
         myAnswer={myAnswer}
