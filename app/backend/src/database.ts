@@ -126,6 +126,7 @@ export function initDatabase() {
   initDefaultQuestions();
   addNewQuestionsV2();
   mergeLegacyCategories();
+  purgeSyntheticQuestions();
 
   console.log('Database initialized successfully');
 }
@@ -138,6 +139,20 @@ export function initDatabase() {
  * trop peu pour constituer un theme viable).
  * Idempotent : peut tourner a chaque demarrage.
  */
+/**
+ * Le mode "A l'envers" insere une question synthetique (inactive) a chaque
+ * manche, et c'est un mode sans fin : sans purge, la table questions grossit
+ * indefiniment (constat de l'audit d'architecture). On nettoie au demarrage ;
+ * la cle etrangere answers.question_id est en ON DELETE CASCADE, l'historique
+ * de ces manches synthetiques part avec, ce qui est voulu.
+ */
+function purgeSyntheticQuestions() {
+  const purged = db.prepare(
+    "DELETE FROM questions WHERE active = 0 AND text LIKE '%De quelle question cette réponse vient-elle%'"
+  ).run().changes;
+  if (purged > 0) console.log(`Purge: ${purged} questions synthetiques du mode inverse supprimees`);
+}
+
 function mergeLegacyCategories() {
   const merges: Record<string, string> = {
     connaissance: 'couple',        // "Selon toi, il/elle est plutot..."

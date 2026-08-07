@@ -176,7 +176,12 @@ export function setupSocketHandlers(
         const categories = data.categories && data.categories.length > 0 ? data.categories : [];
         // If no question types specified or empty array, use all types (auto mode)
         const questionTypes = data.questionTypes && data.questionTypes.length > 0 ? data.questionTypes : [];
-        const gameMode = data.gameMode === 'duel' ? 'duel' : 'classic';
+        // Valide contre le registre, pas contre une liste en dur : l'ancienne
+        // version (=== 'duel' ? 'duel' : 'classic') degradait silencieusement
+        // 6 des 8 modes en "classic" — constat de l'audit d'architecture.
+        const gameMode = listGameModes().some(m => m.id === data.gameMode)
+          ? (data.gameMode as string)
+          : 'classic';
         roomSettings.set(room.code, { questionCount, categories, questionTypes, gameMode });
 
         callback({ success: true, room, playerId: 1 });

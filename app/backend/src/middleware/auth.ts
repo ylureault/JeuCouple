@@ -1,7 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+// Le secret servait de valeur par defaut EN DUR ('your-secret-key-change-in-
+// production') : n'importe qui lisant le depot pouvait forger un token admin.
+// Sans JWT_SECRET, on genere desormais un secret aleatoire par demarrage :
+// les sessions admin sautent au redemarrage du serveur, mais personne ne peut
+// signer de token avec une constante publique.
+const JWT_SECRET = process.env.JWT_SECRET ?? (() => {
+  console.warn('[SECURITE] JWT_SECRET non defini : secret aleatoire genere pour ce demarrage (les sessions admin ne survivront pas a un redemarrage).');
+  return crypto.randomBytes(32).toString('hex');
+})();
 
 export interface AuthRequest extends Request {
   adminId?: number;
