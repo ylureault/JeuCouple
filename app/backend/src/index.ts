@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
@@ -22,6 +23,15 @@ const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 3004;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
+// P1-9 (audit securite) : origines autorisees en liste blanche.
+// L'ancien reglage etait origin:true en prod (toutes origines) + cors() ouvert.
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',').map(o => o.trim()).filter(Boolean);
+const DEV_ORIGINS = ['http://localhost:5174', 'http://localhost:5173', 'http://localhost:4173', 'http://localhost:3004', 'http://127.0.0.1:4173'];
+const corsOrigins = NODE_ENV === 'development'
+  ? [...DEV_ORIGINS, ...ALLOWED_ORIGINS]
+  : ALLOWED_ORIGINS;   // vide = aucune origine croisee (front servi ici meme)
+
 // Initialize Express
 const app = express();
 const httpServer = createServer(app);
@@ -30,9 +40,7 @@ const httpServer = createServer(app);
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
   maxHttpBufferSize: 100_000,  // audit securite : 100 Ko couvrent large (SDP ~10 Ko)
   cors: {
-    origin: NODE_ENV === 'development'
-      ? ['http://localhost:5174', 'http://localhost:3004']
-      : true,
+    origin: corsOrigins.length > 0 ? corsOrigins : false,
     methods: ['GET', 'POST']
   },
   pingTimeout: 60000,
@@ -40,7 +48,23 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
 });
 
 // Middleware
-app.use(cors());
+// helmet : en-tetes de durcissement + CSP. Le front (Vite) n'embarque aucun
+// script inline ; les styles compiles et Google Fonts sont explicitement permis.
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:', 'blob:'],
+      mediaSrc: ["'self'", 'blob:'],
+      connectSrc: ["'self'", 'ws:', 'wss:'],
+      frameAncestors: ["'none'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,  // WebRTC/audio inter-origine
+}));
+app.use(cors(corsOrigins.length > 0 ? { origin: corsOrigins } : { origin: false }));
 app.use(express.json());
 
 // Health check

@@ -204,9 +204,49 @@ const NO_ANSWER_PENALTY = -50;  // Penalty for not answering
 const UNLIMITED_MODE_QUESTION_COUNT = 50;  // When set to 50, it's unlimited
 const UNLIMITED_MODE_GAP_TO_WIN = 200;  // 200 point gap to win in unlimited
 
+/**
+ * P1-8 (ARCHI-2 amende par le coach) : l'etat de jeu vit en memoire. Apres un
+ * redemarrage, les rooms restees 'playing' sont des zombies — les joueurs s'y
+ * reconnectaient dans un salon sans question ni fin possible. On les clot au
+ * demarrage, et on retient leurs codes pour servir un message honnete
+ * ("partie interrompue") plutot qu'un "Game already finished" mensonger.
+ * Aucun faux podium possible : l'ecran de resultats ne s'affiche que sur
+ * l'evenement game:finished, jamais depuis la base.
+ */
+const interruptedRooms = new Set<string>();
+let interruptedSweepDone = false;
+function sweepInterruptedRooms() {
+  if (interruptedSweepDone) return;
+  interruptedSweepDone = true;
+  for (const room of roomModel.getAllRooms()) {
+    if (room.status === 'playing') {
+      interruptedRooms.add(room.code);
+      roomModel.updateRoomStatus(room.id, 'finished');
+    }
+  }
+  if (interruptedRooms.size > 0) {
+    console.log(`${interruptedRooms.size} partie(s) interrompue(s) par le redemarrage, cloturee(s)`);
+  }
+}
+
 export function setupSocketHandlers(
   io: Server<ClientToServerEvents, ServerToClientEvents>
 ) {
+  sweepInterruptedRooms();
+
+  // TL-7 : roomSettings (et l'acceptation qu'il porte) n'etait jamais purge.
+  // On retire les entrees dont la room n'existe plus ou est terminee.
+  setInterval(() => {
+    for (const code of roomSettings.keys()) {
+      const room = roomModel.getRoomByCode(code);
+      if (!room || room.status === 'finished') {
+        roomSettings.delete(code);
+        pendingModeProposals.get(code) && clearTimeout(pendingModeProposals.get(code)!.timer);
+        pendingModeProposals.delete(code);
+      }
+    }
+  }, 10 * 60_000).unref();
+
   io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
 
@@ -310,6 +350,17 @@ export function setupSocketHandlers(
           return;
         }
 
+        // Check if room is finished - don't allow reconnection to finished rooms
+        if (room.status === 'finished') {
+          callback({
+            success: false,
+            error: interruptedRooms.has(room.code)
+              ? 'Cette partie a été interrompue par un redémarrage du serveur — désolé ! Créez-en une nouvelle.'
+              : 'Game already finished'
+          });
+          return;
+        }
+
         // Le jeton remis au join est la seule preuve d'appartenance : sans
         // lui, connaitre un code suffisait a voler la place d'un joueur.
         if (!roomModel.verifySessionToken(room.id, data.playerId, data.sessionToken)) {
@@ -317,11 +368,6 @@ export function setupSocketHandlers(
           return;
         }
 
-        // Check if room is finished - don't allow reconnection to finished rooms
-        if (room.status === 'finished') {
-          callback({ success: false, error: 'Game already finished' });
-          return;
-        }
 
         // Validate that the player slot exists in the room
         const playerName = data.playerId === 1 ? room.player1_name : room.player2_name;

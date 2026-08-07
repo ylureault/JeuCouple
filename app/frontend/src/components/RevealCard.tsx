@@ -4,7 +4,12 @@ import type { Question, GameRevealData } from '../../../shared/types';
 import Confetti from './Confetti';
 import Fireworks from './Fireworks';
 
+const NEXT_QUESTION_DELAY_S = 10;  // delai serveur avant la question suivante
+
 interface RevealCardProps {
+  /** Genres reellement choisis au lobby — les avatars etaient codes en dur. */
+  player1Gender?: 'M' | 'F' | null;
+  player2Gender?: 'M' | 'F' | null;
   question: Question;
   revealData: GameRevealData;
   player1Name: string;
@@ -171,7 +176,9 @@ export default function RevealCard({
   player2Name,
   playerId,
   currentScore1,
-  currentScore2
+  currentScore2,
+  player1Gender,
+  player2Gender
 }: RevealCardProps) {
   const {
     answer1, answer2, correct, points1, points2, questionType,
@@ -179,6 +186,15 @@ export default function RevealCard({
     streak1, streak2, answerTime1, answerTime2, correctAnswer
   } = revealData;
   const [showFlash, setShowFlash] = useState(false);
+  const [nextIn, setNextIn] = useState(NEXT_QUESTION_DELAY_S);
+
+  // Decompte visible (UX 6, arbitre : un decompte, pas de double-ack) —
+  // sans lui, on ne sait pas combien de temps il reste pour comparer.
+  useEffect(() => {
+    setNextIn(NEXT_QUESTION_DELAY_S);
+    const id = setInterval(() => setNextIn((t) => (t <= 1 ? 0 : t - 1)), 1000);
+    return () => clearInterval(id);
+  }, [question.id]);
   const [countedPoints, setCountedPoints] = useState(0);
 
   const myPoints = playerId === 1 ? points1 : points2;
@@ -318,7 +334,7 @@ export default function RevealCard({
           </motion.div>
 
           {/* VS divider */}
-          <div className="text-white/40 font-bold text-sm">VS</div>
+          <div className="text-white/60 font-bold text-sm">VS</div>
 
           {/* Player 2 score */}
           <motion.div
@@ -628,7 +644,7 @@ export default function RevealCard({
           highlighted={answersMatch && questionType !== 'C'}
           questionType={questionType}
           delay={0.4}
-          emoji="👩"
+          emoji={player1Gender === 'M' ? '👨' : '👩'}
           answerTime={answerTime1}
           speedBonus={speedBonus1}
           question={question}
@@ -642,7 +658,7 @@ export default function RevealCard({
           highlighted={answersMatch && questionType !== 'C'}
           questionType={questionType}
           delay={0.5}
-          emoji="👨"
+          emoji={player2Gender === 'F' ? '👩' : '👨'}
           answerTime={answerTime2}
           speedBonus={speedBonus2}
           question={question}
@@ -688,7 +704,7 @@ export default function RevealCard({
           transition={{ duration: 1.5, repeat: Infinity }}
           className="text-white/60 font-semibold text-sm"
         >
-          Question suivante dans un instant...
+          {nextIn > 0 ? `Question suivante dans ${nextIn} s — comparez vos réponses !` : 'On enchaîne…'}
         </motion.p>
       </motion.div>
     </motion.div>

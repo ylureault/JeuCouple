@@ -46,7 +46,7 @@
     {"type":"G","category":"fantasmes","text":"Vrai ou faux : Tu as déjà réalisé un fantasme cette année.","timer":15},
     {"type":"G","category":"fantasmes","text":"Vrai ou faux : Tes fantasmes sont parfois très extrêmes.","timer":15},
     {"type":"G","category":"fantasmes","text":"Vrai ou faux : Tu fantasmes pendant les rapports.","timer":15},
-    {"type":"G","category":"fantasmes","text":"Vrai ou faux : Tu as déjà eu un fantasme sur un(e) ami(e) de ton/ta partenaire.","timer":15},
+    {"type": "G", "category": "fantasmes", "text": "Vrai ou faux : Tu aimerais qu'on se raconte un fantasme chacun ce soir.", "timer": 15},
     {"type":"G","category":"fantasmes","text":"Vrai ou faux : Tu serais prêt(e) à tout pour réaliser ton fantasme ultime.","timer":15},
     {"type":"G","category":"fantasmes","text":"Vrai ou faux : Tes fantasmes ont évolué avec l'âge.","timer":15},
     {"type":"G","category":"fantasmes","text":"Vrai ou faux : Tu fantasmes plus que tu ne le montres.","timer":15}

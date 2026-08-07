@@ -100,7 +100,7 @@ export default function LobbyChat() {
             {/* Messages */}
             <div className="h-48 overflow-y-auto p-2 space-y-2">
               {chatMessages.length === 0 ? (
-                <p className="text-white/40 text-center text-sm py-8">
+                <p className="text-white/60 text-center text-sm py-8">
                   Envoie un message à ton partenaire !
                 </p>
               ) : (
@@ -144,7 +144,7 @@ export default function LobbyChat() {
                   onChange={(e) => setMessage(e.target.value.slice(0, 200))}
                   onKeyDown={handleKeyDown}
                   placeholder="Ton message..."
-                  className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
+                  className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder-white/60 focus:outline-none focus:border-purple-500"
                 />
                 <motion.button
                   onClick={handleSend}

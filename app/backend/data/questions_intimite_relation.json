@@ -1,6 +1,6 @@
 {
   "questions": [
-    {"type": "A", "category": "intime", "text": "Qu'est-ce qui te fait te sentir le plus désiré(e) ?", "options": ["Ses regards", "Ses mots", "Ses mains sur moi", "Son initiative", "Sa jalousie discrète", "Son attention au quotidien"], "timer": 25},
+    {"type": "A", "category": "intime", "text": "Qu'est-ce qui te fait te sentir le plus désiré(e) ?", "options": ["Ses regards", "Ses mots", "Ses mains sur moi", "Son initiative", "Sa façon de me chercher du regard", "Son attention au quotidien"], "timer": 25},
     {"type": "A", "category": "intime", "text": "Qu'est-ce qui tue le désir chez toi le plus vite ?", "options": ["La routine", "Les disputes non réglées", "La fatigue", "Le manque de tendresse", "Le stress du travail", "Le manque de communication"], "timer": 25},
     {"type": "A", "category": "intime", "text": "Comment préfères-tu qu'on t'annonce une envie ?", "options": ["Un message dans la journée", "Un geste direct", "Un regard appuyé", "Une phrase murmurée", "Une surprise préparée", "Sans détour, franchement"], "timer": 25},
     {"type": "A", "category": "intime", "text": "Après l'amour, qu'est-ce qui compte le plus pour toi ?", "options": ["Rester enlacés", "Parler doucement", "S'endormir ensemble", "Un moment de silence", "Prendre une douche à deux", "Recommencer bientôt"], "timer": 25},
@@ -57,7 +57,7 @@
     {"type": "F", "category": "intime", "text": "Qui ose le plus demander ce qu'il/elle veut ?", "timer": 15},
     {"type": "G", "category": "intime", "text": "Vrai ou faux : Tu aimerais qu'on en parle plus souvent.", "timer": 15},
     {"type": "G", "category": "intime", "text": "Vrai ou faux : Tu te sens totalement libre au lit avec moi.", "timer": 15},
-    {"type": "G", "category": "intime", "text": "Vrai ou faux : Tu as déjà fait semblant d'avoir envie.", "timer": 15},
+    {"type": "G", "category": "intime", "text": "Vrai ou faux : Tu préfères qu'on se dise quand l'envie n'est pas là.", "timer": 15},
     {"type": "G", "category": "intime", "text": "Vrai ou faux : La routine a entamé ton désir.", "timer": 15},
     {"type": "G", "category": "intime", "text": "Vrai ou faux : Tu te sens désiré(e) au quotidien.", "timer": 15},
     {"type": "G", "category": "intime", "text": "Vrai ou faux : Tu penses qu'on se connaît vraiment sur ce plan.", "timer": 15},

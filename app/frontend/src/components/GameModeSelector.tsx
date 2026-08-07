@@ -53,7 +53,7 @@ export default function GameModeSelector({ value, onChange, disabled, variant = 
 
   const c = {
     title:    dark ? 'text-white/85'  : 'text-gray-600',
-    count:    dark ? 'text-white/45'  : 'text-gray-400',
+    count:    dark ? 'text-white/60'  : 'text-gray-400',
     cardOn:   dark ? 'bg-white/16 border-white/45' : 'bg-[#a3235e]/10 border-[#a3235e]',
     cardOff:  dark ? 'bg-white/6 border-white/12 hover:bg-white/10'
                    : 'bg-gray-50 border-gray-200 hover:bg-gray-100',

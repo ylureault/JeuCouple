@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
+import { GAME_MODES } from '../../../shared/types';
 import { useAudio } from '../context/AudioContext';
 import { useTheme } from '../context/ThemeContext';
 import MuteButton from '../components/MuteButton';
@@ -118,7 +119,7 @@ function CategoryBar({ category, delay = 0 }: { category: CategoryScore; delay?:
 }
 
 export default function Results() {
-  const { room, playerId, finalResults, restartGame, phase } = useGame();
+  const { room, playerId, finalResults, restartGame, phase, gameSettings } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
@@ -205,7 +206,13 @@ export default function Results() {
   const mySpeedBonus = playerId === 1 ? finalResults.speedBonusTotal1 : finalResults.speedBonusTotal2;
   const bestCategory = finalResults.categoryScores?.[0];
 
+  // Modes cooperatifs/sans points (P1-7) : l'ecran criait "Tu as gagne !"
+  // avec podium la ou le jeu promettait "sans points — juste vous deux".
+  const scorelessResult = GAME_MODES.find((m) => m.id === gameSettings?.gameMode)?.scoreless
+    || gameSettings?.gameMode === 'complices';
+
   const getHeadline = () => {
+    if (scorelessResult) return { emoji: '💞', text: 'Vous deux, tout simplement' };
     if (isTie) return { emoji: '🤝', text: 'Égalité parfaite !' };
     if (isWinner) return { emoji: '🏆', text: 'Tu as gagné !' };
     return { emoji: '💪', text: 'Belle tentative !' };
@@ -494,7 +501,7 @@ export default function Results() {
                 />
                 <StatBox
                   value={finalResults.correctAnswers1}
-                  label="Matches"
+                  label="Accords"
                   emoji="🤝"
                   delay={0.3}
                 />

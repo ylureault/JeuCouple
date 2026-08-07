@@ -48,7 +48,7 @@ export default function GameChat() {
           >
             {chatMessages.length === 0 ? (
               <p className="text-white/35 text-xs text-center py-6">
-                Aucun message. Ecrivez-vous pendant la partie.
+                Aucun message. Écrivez-vous pendant la partie.
               </p>
             ) : (
               chatMessages.map((m) => (
@@ -99,10 +99,10 @@ export default function GameChat() {
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value.slice(0, MAX_LEN))}
-          placeholder="Ecrire un message…"
-          aria-label="Message a envoyer a votre partenaire"
+          placeholder="Écrire un message…"
+          aria-label="Message à envoyer à votre partenaire"
           enterKeyHint="send"
-          className="flex-1 min-w-0 h-11 rounded-full px-4 text-white placeholder-white/40
+          className="flex-1 min-w-0 h-11 rounded-full px-4 text-white placeholder-white/60
                      bg-white/10 border border-white/15 focus:border-[#f2789a]
                      focus:bg-white/14 outline-none transition-colors"
           style={{ fontSize: 16 }}  /* 16px : en dessous, iOS zoome a la mise au point */

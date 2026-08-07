@@ -732,7 +732,7 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <div className="text-center py-2 text-white/40 text-xs">
+      <div className="text-center py-2 text-white/60 text-xs">
         Made with 💕
       </div>
     </div>

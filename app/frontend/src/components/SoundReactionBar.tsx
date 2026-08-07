@@ -21,7 +21,7 @@ export default function SoundReactionBar() {
 
   return (
     <div className="flex items-center justify-center gap-1.5">
-      <span className="text-white/40 text-xs mr-1">Sons:</span>
+      <span className="text-white/60 text-xs mr-1">Sons:</span>
       {SOUND_REACTIONS.map((reaction) => (
         <motion.button
           key={reaction.id}

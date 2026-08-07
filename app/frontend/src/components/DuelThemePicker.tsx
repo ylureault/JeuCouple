@@ -43,7 +43,7 @@ export default function DuelThemePicker() {
                        p-5 pb-7 m-0 sm:m-4"
             role="dialog"
             aria-modal="true"
-            aria-label="Choix du theme de la prochaine question"
+            aria-label="Choix du thème de la prochaine question"
           >
             {/* Poignee de feuille, purement visuelle */}
             <div className="sm:hidden w-10 h-1 rounded-full bg-white/25 mx-auto mb-4" aria-hidden="true" />
@@ -57,7 +57,7 @@ export default function DuelThemePicker() {
                   Tu remportes la manche
                 </h2>
                 <p className="text-white/65 text-sm mb-4">
-                  A toi de choisir le theme de la prochaine question.
+                  À toi de choisir le thème de la prochaine question.
                 </p>
 
                 <div className="grid grid-cols-2 gap-2.5">
@@ -77,7 +77,7 @@ export default function DuelThemePicker() {
                       <span className="block text-white font-bold text-sm leading-tight break-words">
                         {opt.name}
                       </span>
-                      <span className="block text-white/45 text-[11px] mt-0.5">
+                      <span className="block text-white/60 text-[11px] mt-0.5">
                         {opt.questionCount} questions
                       </span>
                     </motion.button>
@@ -99,8 +99,8 @@ export default function DuelThemePicker() {
                 </h2>
                 <p className="text-white/65 text-sm">
                   {duelWaiting!.reason === 'tiebreak'
-                    ? 'Egalite : la main lui revient pour ce tour.'
-                    : 'Il/elle choisit le theme de la prochaine question.'}
+                    ? 'Égalité : la main lui revient pour ce tour.'
+                    : 'Il/elle choisit le thème de la prochaine question.'}
                 </p>
               </div>
             )}
@@ -115,7 +115,7 @@ export default function DuelThemePicker() {
                   transition={{ ease: 'linear', duration: 1 }}
                 />
               </div>
-              <p className="text-white/45 text-[11px] text-center mt-2">
+              <p className="text-white/60 text-[11px] text-center mt-2">
                 {remaining > 0
                   ? `${remaining} s — sans choix, le theme est tire au sort`
                   : 'Tirage au sort en cours…'}

@@ -21,7 +21,7 @@
     {"type": "C", "category": "oser_dire", "text": "J'ai parfois l'impression de ne pas être à la hauteur quand...", "timer": 60},
     {"type": "C", "category": "oser_dire", "text": "Ce que j'aimerais que tu comprennes sur ma façon d'aimer :", "timer": 60},
     {"type": "C", "category": "oser_dire", "text": "Il m'arrive de garder pour moi une envie parce que je crains d'être jugé(e). Par exemple :", "timer": 60},
-    {"type": "C", "category": "oser_dire", "text": "Ce qui me manque le plus de nos débuts, c'est...", "timer": 55},
+    {"type": "C", "category": "oser_dire", "text": "Ce que j'aimerais qu'on retrouve de nos débuts, c'est...", "timer": 90},
     {"type": "C", "category": "oser_dire", "text": "Une chose sur mon corps que j'aimerais que tu saches :", "timer": 60},
     {"type": "C", "category": "oser_dire", "text": "Quand tu me touches comme ça, ce que je ressens vraiment, c'est...", "timer": 60},
     {"type": "C", "category": "oser_dire", "text": "Ce que je n'ose pas te dire au lit, c'est...", "timer": 60},
@@ -36,7 +36,7 @@
     {"type": "C", "category": "oser_dire", "text": "Une fierté que j'ai sur nous et que je n'exprime pas :", "timer": 55},
     {"type": "C", "category": "oser_dire", "text": "Ce dont j'ai envie pour nous dans un an :", "timer": 60},
     {"type": "C", "category": "oser_dire", "text": "Quelque chose que tu fais et qui me fait du bien sans que tu le saches :", "timer": 55},
-    {"type": "C", "category": "oser_dire", "text": "Ce que j'aimerais te pardonner pour de bon :", "timer": 60},
+    {"type": "C", "category": "oser_dire", "text": "Ce que je voudrais qu'on laisse derrière nous, ensemble :", "timer": 90},
     {"type": "C", "category": "oser_dire", "text": "Ce que j'aimerais me pardonner à moi-même :", "timer": 60},
     {"type": "C", "category": "oser_dire", "text": "Un mot que j'aimerais que tu me dises plus souvent :", "timer": 50},
     {"type": "C", "category": "oser_dire", "text": "Ce qui me ferait me sentir désiré(e) en ce moment :", "timer": 60},
@@ -49,6 +49,7 @@
     {"type": "C", "category": "oser_dire", "text": "Ce que je n'ai jamais dit à personne d'autre que toi :", "timer": 60},
     {"type": "C", "category": "oser_dire", "text": "Ce qui me donne envie de construire avec toi :", "timer": 55},
     {"type": "C", "category": "oser_dire", "text": "Un besoin que j'ai du mal à formuler sans culpabiliser :", "timer": 60},
+    {"type": "C", "category": "oser_dire", "text": "Il m'est arrivé de dire oui sans en avoir vraiment envie, et voilà ce que j'aurais aimé pouvoir te dire :", "timer": 90},
     {"type": "C", "category": "oser_dire", "text": "Ce que j'espère que tu sais déjà, mais que je préfère dire :", "timer": 55}
   ]
 }

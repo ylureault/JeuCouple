@@ -289,10 +289,13 @@ export default function Game() {
         className="bg-black/35 backdrop-blur-xl px-2 py-2 sticky top-0 z-50 safe-top"
       >
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
-          {/* Left: Question progress */}
+          {/* Compteur masque dans les modes sans fin : "2/2" puis "3/3"
+              n'avait aucun sens (UX 4, flag endless du catalogue). */}
           <div className="bg-white/20 rounded-full px-3 py-1 flex-shrink-0">
             <span className="font-bold text-white text-sm">
-              {questionNumber}<span className="text-white/50">/{totalQuestions}</span>
+              {GAME_MODES.find((m) => m.id === (gameSettings?.gameMode ?? currentMode))?.endless
+                ? <>Manche {questionNumber}</>
+                : <>{questionNumber}<span className="text-white/60">/{totalQuestions}</span></>}
             </span>
           </div>
 
@@ -312,7 +315,7 @@ export default function Game() {
                 <span className="font-bold text-white text-sm">{myScore}</span>
               </div>
             </div>
-            <span className="text-white/40">vs</span>
+            <span className="text-white/60">vs</span>
             <div className="flex items-center gap-1">
               <div className="bg-white/20 rounded px-2 py-0.5">
                 <span className="font-bold text-white text-sm">{theirScore}</span>
@@ -592,6 +595,8 @@ export default function Game() {
                 playerId={playerId!}
                 currentScore1={scores.player1}
                 currentScore2={scores.player2}
+                player1Gender={room.player1_gender}
+                player2Gender={room.player2_gender}
               />
             </motion.div>
           )}
