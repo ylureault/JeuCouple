@@ -87,6 +87,8 @@ interface GameState {
   // Dernier palier valide par les DEUX joueurs (0 = premier palier).
   escaladePalier: number;
   // Montee en attente : accords recus et minuteur (timeout = on reste).
+  // Questions deja jouees dans CETTE partie : les tirages les excluent.
+  servedIds: Set<number>;
   escaladeConsent: { nextCategory: string; stayCategory: string; palier: number; accepts: Set<1 | 2>; timer: ReturnType<typeof setTimeout> } | null;
 }
 
@@ -640,6 +642,7 @@ export function setupSocketHandlers(
         awaitingThemeFrom: null,
         themeChoiceTimer: null,
         escaladePalier: 0,
+        servedIds: new Set<number>(),
         escaladeConsent: null,
         // Pause/resume state - both players connected at start
         paused: false,
@@ -1276,6 +1279,7 @@ function sendQuestion(
   }
 
   const question = { ...gameState.questions[gameState.currentQuestionIndex] };
+  gameState.servedIds.add(question.id);
   gameState.phase = 'question';
   gameState.questionStartTime = Date.now();
   console.log(`[SEND_QUESTION] Sending question ID ${question.id}, type ${question.type}`);
@@ -1856,6 +1860,22 @@ function resolveThemeChoice(
   applyModeDecision(io, roomCode, gameState, { action: 'next-from-category', category });
 }
 
+/**
+ * Tirage excluant les questions deja servies dans la partie. Si le vivier est
+ * epuise (petite categorie en mode sans fin), on recommence un cycle complet
+ * plutot que de couper la partie.
+ */
+function drawFresh(
+  gameState: GameState,
+  count: number,
+  categories: string[],
+  questionTypes: string[]
+): Question[] {
+  const fresh = questionModel.getMixedQuestions(count, categories, questionTypes, [...gameState.servedIds]);
+  if (fresh.length > 0) return fresh;
+  return questionModel.getMixedQuestions(count, categories, questionTypes);
+}
+
 /** Execute la decision prise par le mode de jeu apres une manche. */
 function applyModeDecision(
   io: Server,
@@ -1877,7 +1897,7 @@ function applyModeDecision(
       return;
 
     case 'load-more': {
-      const more = questionModel.getMixedQuestions(decision.count, categories, questionTypes);
+      const more = drawFresh(gameState, decision.count, categories, questionTypes);
       if (more.length === 0) {
         finishGame(io, roomCode, gameState);
         return;
@@ -1890,10 +1910,10 @@ function applyModeDecision(
     case 'next-from-category': {
       // Le mode impose le theme (escalade). On retombe sur les themes du salon
       // si la categorie demandee est epuisee, pour ne jamais bloquer la partie.
-      const picked = questionModel.getMixedQuestions(1, [decision.category], questionTypes);
+      const picked = drawFresh(gameState, 1, [decision.category], questionTypes);
       const fallback = picked.length > 0
         ? picked
-        : questionModel.getMixedQuestions(1, categories, questionTypes);
+        : drawFresh(gameState, 1, categories, questionTypes);
       if (fallback.length === 0) {
         finishGame(io, roomCode, gameState);
         return;

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
@@ -250,8 +251,9 @@ export default function PushToTalk() {
 
   return (
     <>
-      {/* Bandeau quand le partenaire parle */}
-      <AnimatePresence>
+      {/* Bandeau quand le partenaire parle. Portail : le bouton vit dans la
+          barre animee, son transform capturait ce position:fixed. */}
+      {createPortal(<AnimatePresence>
         {peerSpeaking && (
           <motion.div
             initial={{ opacity: 0, y: -12 }}
@@ -273,7 +275,7 @@ export default function PushToTalk() {
             {partnerName} parle…
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>, document.body)}
 
       {/* Bouton maintenu. onPointerDown/Up plutot que onClick : il faut
           distinguer l'appui du relachement. */}

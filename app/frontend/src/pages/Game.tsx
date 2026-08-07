@@ -128,11 +128,17 @@ export default function Game() {
     return () => clearInterval(timer);
   }, [phase, showIntro, myAnswer, gamePaused, playSound]); // gamePaused stops/resumes timer
 
+  // Signal sonore quand la partie se met en pause (partenaire absent ou
+  // pause volontaire) : sans lui, on peut fixer l'ecran sans comprendre.
+  useEffect(() => {
+    if (gamePaused) playSound('notification');
+  }, [gamePaused, playSound]);
+
   useEffect(() => {
     if (revealData) {
       if (revealData.correct) {
         playSound('correct');
-      } else if (revealData.questionType !== 'C') {
+      } else if (revealData.questionType !== 'C' && revealData.questionType !== 'E') {
         playSound('wrong');
       }
     }

@@ -27,7 +27,10 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 // L'ancien reglage etait origin:true en prod (toutes origines) + cors() ouvert.
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
   .split(',').map(o => o.trim()).filter(Boolean);
-const DEV_ORIGINS = ['http://localhost:5174', 'http://localhost:5173', 'http://localhost:4173', 'http://localhost:3004', 'http://127.0.0.1:4173'];
+// localhost ET 127.0.0.1 pour chaque port : un navigateur sur 127.0.0.1:5173
+// etait rejete par la liste (l'ack socket se perdait silencieusement).
+const DEV_PORTS = [5173, 5174, 4173, 3004];
+const DEV_ORIGINS = DEV_PORTS.flatMap(p => [`http://localhost:${p}`, `http://127.0.0.1:${p}`]);
 const corsOrigins = NODE_ENV === 'development'
   ? [...DEV_ORIGINS, ...ALLOWED_ORIGINS]
   : ALLOWED_ORIGINS;   // vide = aucune origine croisee (front servi ici meme)

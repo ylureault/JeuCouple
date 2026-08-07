@@ -63,7 +63,7 @@ export function getRandomQuestions(count: number): Question[] {
  * @param categories Optional array of categories to filter by (empty = all categories)
  * @param questionTypes Optional array of question types to filter by (empty = all types)
  */
-export function getMixedQuestions(count: number, categories: string[] = [], questionTypes: string[] = []): Question[] {
+export function getMixedQuestions(count: number, categories: string[] = [], questionTypes: string[] = [], excludeIds: number[] = []): Question[] {
   // Build filters
   const hasCategories = categories.length > 0;
   const hasTypes = questionTypes.length > 0;
@@ -80,6 +80,16 @@ export function getMixedQuestions(count: number, categories: string[] = [], ques
   if (hasTypes) {
     conditions.push(`type IN (${questionTypes.map(() => '?').join(',')})`);
     params.push(...questionTypes);
+  }
+
+  // Questions deja servies dans la partie : sans cette exclusion, chaque
+  // tirage des modes sans fin etait independant et les petites categories
+  // (petits noms...) rejouaient les memes questions en trois manches.
+  // Cap a 500 : limite de parametres SQLite, et au-dela le cycle est sain.
+  const exclude = excludeIds.slice(-500);
+  if (exclude.length > 0) {
+    conditions.push(`id NOT IN (${exclude.map(() => '?').join(',')})`);
+    params.push(...exclude);
   }
 
   const whereClause = conditions.join(' AND ');

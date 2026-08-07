@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import GameModeSelector from './GameModeSelector';
@@ -60,8 +61,10 @@ export default function ModeSwitcher() {
         </span>
       </button>
 
-      {/* Panneau de proposition */}
-      <AnimatePresence>
+      {/* Panneau de proposition. Portail vers <body> : le declencheur vit dans
+          la barre du haut animee par framer-motion, dont le transform capturait
+          le position:fixed — la feuille s'affichait DANS la barre, decentree. */}
+      {createPortal(<AnimatePresence>
         {open && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -105,10 +108,10 @@ export default function ModeSwitcher() {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>, document.body)}
 
       {/* Demande recue : c'est au partenaire de trancher */}
-      <AnimatePresence>
+      {createPortal(<AnimatePresence>
         {modeProposal && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -150,10 +153,10 @@ export default function ModeSwitcher() {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>, document.body)}
 
       {/* Confirmation ou refus, en bandeau ephemere */}
-      <AnimatePresence>
+      {createPortal(<AnimatePresence>
         {modeNotice && (
           <motion.div
             initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
@@ -168,7 +171,7 @@ export default function ModeSwitcher() {
             {modeNotice.text}
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>, document.body)}
     </>
   );
 }
