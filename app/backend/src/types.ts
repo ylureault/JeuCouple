@@ -313,7 +313,7 @@ export const QUESTION_TYPE_CONFIG = [
   { id: 'E', label: 'Choix binaire', emoji: '⚖️', description: 'Choisir entre deux options' },
   { id: 'F', label: 'Qui de nous', emoji: '👫', description: 'Désigner toi, ton partenaire ou les deux' },
   { id: 'G', label: 'Vrai ou Faux', emoji: '✅', description: 'Deviner si c\'est vrai ou faux' },
-  { id: 'H', label: 'Culture G.', emoji: '🧠', description: 'Questions de culture générale' },
+  { id: 'H', label: 'Culture générale', emoji: '🧠', description: 'Questions de culture générale' },
   { id: 'J', label: 'Date exacte', emoji: '📅', description: 'Deviner la date d\'un souvenir' },
   { id: 'K', label: 'Il y a combien?', emoji: '⏰', description: 'Estimer le temps écoulé' },
   { id: 'L', label: 'Avant/Après', emoji: '↔️', description: 'Ordre chronologique de 2 événements' },
@@ -459,7 +459,7 @@ export const GAME_MODES: {
     // le selecteur de themes n'a donc aucun effet ici.
     id: 'quiz_express',
     label: 'Quiz Express',
-    tagline: 'Culture G, à toute vitesse',
+    tagline: 'Culture générale, à toute vitesse',
     description: "Que des QCM de culture générale, sur un rythme serré. Chacun marque ses propres points : ici, on joue l'un contre l'autre.",
     icon: '🧠',
     endless: false,

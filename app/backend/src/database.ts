@@ -339,7 +339,7 @@ function initDefaultCategories() {
     { code: 'sexy', name: 'Sexy', icon: '🔥', color: '#f44336', description: 'Questions coquines', sort_order: 6 },
     { code: 'coquin', name: 'Coquin', icon: '😈', color: '#e91e63', description: 'Pour pimenter', sort_order: 7 },
     { code: 'fun', name: 'Fun', icon: '🎉', color: '#ffeb3b', description: 'Questions fun et legeres', sort_order: 8 },
-    { code: 'culture', name: 'Culture G', icon: '🧠', color: '#673ab7', description: 'Culture generale', sort_order: 9 },
+    { code: 'culture', name: 'Culture générale', icon: '🧠', color: '#673ab7', description: 'Culture generale', sort_order: 9 },
     // Categories thematiques - source unique de verite (import-thematic.ts les reutilise)
     { code: 'profond', name: 'Profond', icon: '🌌', color: '#6366f1', description: 'Philosophie, spiritualite et secrets', sort_order: 10 },
     { code: 'swipe', name: 'Envies express', icon: '💫', color: '#e8557f', description: 'Glissez : oui a droite, non a gauche', sort_order: 13 },
@@ -370,6 +370,10 @@ function initDefaultCategories() {
   for (const cat of categories) {
     insert.run(cat.code, cat.name, cat.icon, cat.color, cat.description, cat.sort_order);
   }
+
+  // INSERT OR IGNORE ne renomme pas les bases deja en service : l'ancien libelle
+  // "Culture G" y resterait affiche indefiniment. On le corrige explicitement.
+  db.prepare(`UPDATE categories SET name = 'Culture générale' WHERE code = 'culture' AND name = 'Culture G'`).run();
 }
 
 function initDefaultQuestions() {

@@ -12,7 +12,8 @@
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest --forceExit",
     "test:verbose": "NODE_OPTIONS='--experimental-vm-modules' jest --verbose --forceExit",
     "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
-    "verify:e2e": "tsx src/__tests__/p0.verify.mts"
+    "verify:e2e": "tsx src/__tests__/p0.verify.mts",
+    "test:gameplay": "tsx src/__tests__/gameplay/run.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.5.0",

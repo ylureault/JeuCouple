@@ -101,6 +101,14 @@ export function removePlayerFromRoom(id: number, playerId: 1 | 2): void {
     SET ${nameField} = NULL, ${genderField} = NULL, last_activity = datetime('now')
     WHERE id = ?
   `).run(id);
+
+  // Un salon d'attente que tout le monde a quitte n'a plus de raison d'exister :
+  // le laisser en base reservait son code pour rien et alimentait les salons
+  // fantomes. On le supprime tout de suite, le code redevient disponible.
+  const room = getRoomById(id);
+  if (room && room.status === 'waiting' && !room.player1_name && !room.player2_name) {
+    deleteRoom(id);
+  }
 }
 
 export function updateRoomActivity(id: number): void {

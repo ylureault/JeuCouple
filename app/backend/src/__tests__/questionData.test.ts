@@ -177,4 +177,155 @@ describe('Contenu des questions', () => {
       .map(({ file, q }) => `${file}: ${q.text}`);
     expect(broken).toEqual([]);
   });
+
+  // --- Garde-fous complementaires -----------------------------------------
+
+  const TYPES_CONNUS = 'ABCDEFGHIJKLMNOPQRS'.split('');
+
+  it('n\'utilise que des types de saisie connus du moteur', () => {
+    const inconnus = [...new Set(
+      questions.filter(({ q }) => !TYPES_CONNUS.includes(q.type)).map(({ q }) => q.type)
+    )];
+    expect(inconnus).toEqual([]);
+  });
+
+  it('donne un enonce non vide a chaque question', () => {
+    const broken = questions
+      .filter(({ q }) => typeof q.text !== 'string' || q.text.trim().length === 0)
+      .map(({ file }) => file);
+    expect(broken).toEqual([]);
+  });
+
+  it('garde des enonces lisibles sur un telephone (250 caracteres maximum)', () => {
+    const broken = questions
+      .filter(({ q }) => q.text.length > 250)
+      .map(({ file, q }) => `${file}: ${q.text.slice(0, 60)}...`);
+    expect(broken).toEqual([]);
+  });
+
+  it('n\'introduit ni retour a la ligne ni tabulation dans les enonces', () => {
+    const broken = questions
+      .filter(({ q }) => /[\n\r\t]/.test(q.text))
+      .map(({ file, q }) => `${file}: ${q.text}`);
+    expect(broken).toEqual([]);
+  });
+
+  it('ne laisse ni espace superflu ni double espace dans les enonces', () => {
+    const broken = questions
+      .filter(({ q }) => q.text !== q.text.trim() || /  /.test(q.text))
+      .map(({ file, q }) => `${file}: [${q.text}]`);
+    expect(broken).toEqual([]);
+  });
+
+  it('n\'injecte aucun balisage HTML dans les enonces', () => {
+    const broken = questions
+      .filter(({ q }) => /<[a-z/]/i.test(q.text))
+      .map(({ file, q }) => `${file}: ${q.text}`);
+    expect(broken).toEqual([]);
+  });
+
+  it('utilise des codes de categorie techniques (minuscules, chiffres, tiret bas)', () => {
+    const invalides = [...new Set(
+      questions.filter(({ q }) => !/^[a-z0-9_]+$/.test(q.category)).map(({ q }) => q.category)
+    )];
+    expect(invalides).toEqual([]);
+  });
+
+  it('propose entre deux et six options aux questions a choix', () => {
+    const broken = questions
+      .filter(({ q }) => Array.isArray(q.options))
+      .filter(({ q }) => q.options!.length < 2 || q.options!.length > 6)
+      .map(({ file, q }) => `${file}: ${q.text} (${q.options!.length})`);
+    expect(broken).toEqual([]);
+  });
+
+  it('ne propose jamais une option vide ou mal detouree', () => {
+    const broken = questions
+      .filter(({ q }) => Array.isArray(q.options))
+      .filter(({ q }) => q.options!.some(o => typeof o !== 'string' || o.trim().length === 0 || o !== o.trim()))
+      .map(({ file, q }) => `${file}: ${q.text}`);
+    expect(broken).toEqual([]);
+  });
+
+  it('ne propose pas deux fois la meme chose dans un choix binaire (type E)', () => {
+    const broken = questions
+      .filter(({ q }) => q.type === 'E' && q.option_a === q.option_b)
+      .map(({ file, q }) => `${file}: ${q.text}`);
+    expect(broken).toEqual([]);
+  });
+
+  it('donne deux emojis distincts aux choix visuels (type I)', () => {
+    const broken = questions
+      .filter(({ q }) => q.type === 'I')
+      .filter(({ q }) => (q as { emoji_a?: string }).emoji_a === (q as { emoji_b?: string }).emoji_b)
+      .map(({ file, q }) => `${file}: ${q.text}`);
+    expect(broken).toEqual([]);
+  });
+
+  it('propose au moins trois options aux QCM de culture generale (type H)', () => {
+    const broken = questions
+      .filter(({ q }) => q.type === 'H' && (q.options ?? []).length < 3)
+      .map(({ file, q }) => `${file}: ${q.text}`);
+    expect(broken).toEqual([]);
+  });
+
+  it('ne declare une bonne reponse que sur les types qui en ont une (H)', () => {
+    const broken = questions
+      .filter(({ q }) => q.type !== 'H' && !!q.correct_answer)
+      .map(({ file, q }) => `${file}: ${q.text}`);
+    expect(broken).toEqual([]);
+  });
+
+  it('reserve le substitut {player} au type « Vrai ou Faux » (G)', () => {
+    const broken = questions
+      .filter(({ q }) => q.type !== 'G' && /\{player\}/i.test(q.text))
+      .map(({ file, q }) => `${file}: ${q.text}`);
+    expect(broken).toEqual([]);
+  });
+
+  it('ne donne pas d\'options aux types a interface fixe (C, D, F, G)', () => {
+    const broken = questions
+      .filter(({ q }) => ['C', 'D', 'F', 'G'].includes(q.type) && Array.isArray(q.options))
+      .map(({ file, q }) => `${file}: ${q.text}`);
+    expect(broken).toEqual([]);
+  });
+
+  it('donne un nombre de reference aux questions Plus/Moins (type N)', () => {
+    const broken = questions
+      .filter(({ q }) => q.type === 'N')
+      .filter(({ q }) => typeof (q as { reference_value?: number }).reference_value !== 'number')
+      .map(({ file, q }) => `${file}: ${q.text}`);
+    expect(broken).toEqual([]);
+  });
+
+  it('donne trois elements a classer aux questions Top 3 (type M)', () => {
+    const broken = questions
+      .filter(({ q }) => q.type === 'M')
+      .filter(({ q }) => !Array.isArray((q as { ranking_items?: string[] }).ranking_items))
+      .map(({ file, q }) => `${file}: ${q.text}`);
+    expect(broken).toEqual([]);
+  });
+
+  it('accorde plus de temps aux questions ouvertes qu\'aux choix binaires', () => {
+    const moyenne = (type: string) => {
+      const t = questions.filter(({ q }) => q.type === type).map(({ q }) => q.timer ?? 0);
+      return t.length ? t.reduce((a, b) => a + b, 0) / t.length : 0;
+    };
+    expect(moyenne('C')).toBeGreaterThan(moyenne('E'));
+  });
+
+  it('couvre au moins huit themes distincts', () => {
+    expect(new Set(questions.map(({ q }) => q.category)).size).toBeGreaterThanOrEqual(8);
+  });
+
+  it('couvre au moins cinq types de saisie distincts', () => {
+    expect(new Set(questions.map(({ q }) => q.type)).size).toBeGreaterThanOrEqual(5);
+  });
+
+  it('ne laisse aucun fichier de donnees vide', () => {
+    const parFichier = new Map<string, number>();
+    for (const { file } of questions) parFichier.set(file, (parFichier.get(file) ?? 0) + 1);
+    expect([...parFichier.entries()].filter(([, n]) => n === 0)).toEqual([]);
+    expect(parFichier.size).toBeGreaterThan(10);
+  });
 });

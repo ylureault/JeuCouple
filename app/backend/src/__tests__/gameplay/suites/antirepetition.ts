@@ -7,6 +7,7 @@
  *  - un vivier volontairement minuscule (les 7 questions de type L du theme
  *    « Souvenirs ») pour observer l'epuisement puis le recyclage.
  */
+import Database from 'better-sqlite3';
 import type { Session } from '../harness/runner.js';
 import { accord, desaccord, playRound } from '../harness/client.js';
 import { MODES, P, type ModeCfg } from './modes.js';
@@ -73,8 +74,25 @@ const epuisement: Session = {
   id: 'anti-repetition/vivier-epuise',
   group: 'transverse',
   expected: 2,
-  timeoutMs: 240_000,
+  timeoutMs: 250_000,
   async run(t) {
+    // Taille reelle du vivier, mesuree en lecture seule sur la base du serveur :
+    // le catalogue bouge, le test s'y adapte au lieu de figer un chiffre.
+    const db = new Database(t.dbPath, { readonly: true });
+    const vivier = (db.prepare(
+      `SELECT COUNT(*) AS n FROM questions
+       WHERE active = 1 AND category = 'souvenirs' AND type = 'L'
+         AND option_a IS NOT NULL AND option_a <> '' AND option_b IS NOT NULL AND option_b <> ''`
+    ).get() as { n: number }).n;
+    db.close();
+
+    if (vivier < 3 || vivier > 9) {
+      throw new Error(
+        `vivier « souvenirs / type L » inadapte au test : ${vivier} questions jouables ` +
+        '(le test attend entre 3 et 9 ; choisir un autre couple theme/type)'
+      );
+    }
+
     const party = await t.party({
       gameMode: 'complices',
       categories: ['souvenirs'],
@@ -85,25 +103,25 @@ const epuisement: Session = {
     if (!started.success) throw new Error(`game:start refuse : ${started.error}`);
 
     const vus: number[] = [];
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < vivier + 2; i++) {
       // Desaccord systematique : la serie de complices ne monte pas, la
       // partie ne se termine pas avant la fin de l'observation.
       const r = await playRound(party, { a1: accord, a2: desaccord });
       vus.push(r.question.id);
     }
 
-    const sept = vus.slice(0, 7);
+    const premier = vus.slice(0, vivier);
     t.ok(
-      '[anti-repetition] les 7 questions d\'un vivier restreint sortent toutes avant la moindre repetition',
-      new Set(sept).size === 7,
-      `identifiants servis : ${sept.join(', ')}`
+      `[anti-repetition] les ${vivier} questions d'un vivier restreint sortent toutes avant la moindre repetition`,
+      new Set(premier).size === vivier,
+      `identifiants servis : ${premier.join(', ')}`
     );
 
-    const suite = vus.slice(7);
+    const suite = vus.slice(vivier);
     t.ok(
       '[anti-repetition] le vivier epuise recycle les questions au lieu d\'interrompre la partie',
-      suite.length === 2 && suite.every((id) => sept.includes(id)),
-      `manches 8 et 9 : ${suite.join(', ')} — vivier initial : ${sept.join(', ')}`
+      suite.length === 2 && suite.every((id) => premier.includes(id)),
+      `manches ${vivier + 1} et ${vivier + 2} : ${suite.join(', ')} — vivier initial : ${premier.join(', ')}`
     );
   },
 };

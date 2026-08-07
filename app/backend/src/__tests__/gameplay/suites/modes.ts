@@ -29,6 +29,9 @@ export const MODES: ModeCfg[] = [
   // Les 20 questions "petits noms" sont toutes de type C : revelation a 14 s.
   { id: 'petits_noms', label: 'Petits noms', questionTypes: ['C'], revealSeconds: 14 },
   { id: 'mix', label: 'Mix total', questionTypes: ['E'], revealSeconds: 7 },
+  // Le quiz express impose lui-meme son perimetre (culture / type H) et
+  // raccourcit la revelation a 4 s : c'est son identite.
+  { id: 'quiz_express', label: 'Quiz Express', questionTypes: ['H'], categories: ['culture'], questionCount: 8, revealSeconds: 4 },
 ];
 
 export function cfg(id: string): ModeCfg {

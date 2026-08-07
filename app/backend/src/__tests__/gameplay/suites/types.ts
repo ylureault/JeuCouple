@@ -43,6 +43,23 @@ function session(tc: TypeCfg): Session {
       });
       await party.accept();
       const started = await party.start();
+
+      // Un type dont AUCUNE question n'est jouable ne peut pas etre teste : on
+      // le signale comme un trou du catalogue plutot que de faire semblant.
+      if (!started.success && /no questions available/i.test(started.error ?? '')) {
+        const raison =
+          `aucune question de type ${tc.code} n'est jouable : le serveur refuse de lancer une partie ` +
+          `restreinte a ce type (isPlayable(), models/question.ts:77). Le type est donc mort dans le jeu.`;
+        t.bug(
+          `[type ${tc.code} — ${tc.libelle}] la reponse attendue par le serveur est acceptee`,
+          false, raison, `game:start -> "${started.error}"`
+        );
+        t.bug(
+          `[type ${tc.code} — ${tc.libelle}] l'accord des deux joueurs vaut ${baremeAccord(tc.code)} points de base`,
+          false, raison, 'aucune manche jouable'
+        );
+        return;
+      }
       if (!started.success) throw new Error(`game:start refuse : ${started.error}`);
 
       const r = await playRound(party, { a1: accord, a2: accord });

@@ -1,98 +1,1226 @@
 {
   "questions": [
-    {"type": "H", "category": "culture", "text": "Quel édit signé en 1598 accorde la liberté de culte aux protestants français ?", "options": ["L'édit de Nantes", "L'édit de Fontainebleau", "L'édit de Saint-Germain", "L'édit d'Amboise"], "correct_answer": "L'édit de Nantes", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quelle révolte aristocratique agite la France durant la minorité de Louis XIV ?", "options": ["La Fronde", "La Jacquerie", "La Ligue", "La guerre des Camisards"], "correct_answer": "La Fronde", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel général romain bat Hannibal à Zama en 202 av. J.-C. ?", "options": ["Scipion l'Africain", "Marius", "Sylla", "Fabius Maximus"], "correct_answer": "Scipion l'Africain", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel chef franc arrête l'expansion arabe à Poitiers en 732 ?", "options": ["Charles Martel", "Pépin le Bref", "Clovis", "Charlemagne"], "correct_answer": "Charles Martel", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel conquistador s'empare de l'Empire inca dans les années 1530 ?", "options": ["Francisco Pizarro", "Hernán Cortés", "Pedro de Alvarado", "Hernando de Soto"], "correct_answer": "Francisco Pizarro", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel régime succède à la Restauration en France en 1830 ?", "options": ["La monarchie de Juillet", "Le Second Empire", "La Deuxième République", "Le Consulat"], "correct_answer": "La monarchie de Juillet", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel homme d'État français est surnommé le Tigre pendant la Première Guerre mondiale ?", "options": ["Georges Clemenceau", "Raymond Poincaré", "Aristide Briand", "Paul Deschanel"], "correct_answer": "Georges Clemenceau", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel nom de code désigne le débarquement allié en Normandie ?", "options": ["Overlord", "Dynamo", "Torch", "Barbarossa"], "correct_answer": "Overlord", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel traité signé en 1992 fonde l'Union européenne ?", "options": ["Le traité de Maastricht", "Le traité de Rome", "Le traité de Nice", "Le traité de Lisbonne"], "correct_answer": "Le traité de Maastricht", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quelle bataille navale de 1805 donne aux Britanniques la maîtrise des mers ?", "options": ["Trafalgar", "Aboukir", "Lépante", "La Hougue"], "correct_answer": "Trafalgar", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel roi de Sparte résiste aux Perses aux Thermopyles ?", "options": ["Léonidas", "Cléomène", "Agésilas", "Lysandre"], "correct_answer": "Léonidas", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel code de lois babylonien est gravé sur une stèle conservée au Louvre ?", "options": ["Le Code de Hammurabi", "Le Code de Justinien", "La Loi des Douze Tables", "Le Code d'Ur-Nammu"], "correct_answer": "Le Code de Hammurabi", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel roi d'Angleterre est contraint de signer la Grande Charte en 1215 ?", "options": ["Jean sans Terre", "Richard Cœur de Lion", "Henri II", "Édouard Ier"], "correct_answer": "Jean sans Terre", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel événement de 1773 voit des colons américains jeter des cargaisons de thé à la mer ?", "options": ["La Boston Tea Party", "Le massacre de Boston", "La bataille de Lexington", "La convention de Philadelphie"], "correct_answer": "La Boston Tea Party", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quelle bataille de 1863 marque le tournant de la guerre de Sécession ?", "options": ["Gettysburg", "Antietam", "Bull Run", "Appomattox"], "correct_answer": "Gettysburg", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel est le plus long fleuve d'Europe ?", "options": ["La Volga", "Le Danube", "Le Rhin", "Le Dniepr"], "correct_answer": "La Volga", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel désert d'Amérique du Sud est réputé le plus aride du monde ?", "options": ["Le désert d'Atacama", "Le désert de Patagonie", "Le désert de Sechura", "Le désert du Namib"], "correct_answer": "Le désert d'Atacama", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel sommet est le deuxième plus haut des Alpes après le mont Blanc ?", "options": ["Le mont Rose", "Le Cervin", "La Jungfrau", "Le Grand Paradis"], "correct_answer": "Le mont Rose", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel fleuve traverse successivement Vienne, Budapest et Belgrade ?", "options": ["Le Danube", "L'Elbe", "La Vistule", "Le Rhin"], "correct_answer": "Le Danube", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quelle chaîne de montagnes marque traditionnellement la limite entre l'Europe et l'Asie ?", "options": ["L'Oural", "Le Caucase", "Les Carpates", "L'Altaï"], "correct_answer": "L'Oural", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quelle est la plus grande étendue d'eau fermée du monde ?", "options": ["La mer Caspienne", "Le lac Supérieur", "La mer d'Aral", "Le lac Victoria"], "correct_answer": "La mer Caspienne", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel est le plus grand delta du monde ?", "options": ["Le delta du Gange-Brahmapoutre", "Le delta du Nil", "Le delta du Mississippi", "Le delta du Mékong"], "correct_answer": "Le delta du Gange-Brahmapoutre", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel pays européen possède le littoral le plus long et le plus découpé ?", "options": ["La Norvège", "La Grèce", "L'Italie", "Le Royaume-Uni"], "correct_answer": "La Norvège", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel pays a pour capitale Tbilissi ?", "options": ["La Géorgie", "L'Arménie", "L'Azerbaïdjan", "La Moldavie"], "correct_answer": "La Géorgie", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel est le point culminant des Pyrénées ?", "options": ["Le pic d'Aneto", "Le Vignemale", "Le pic du Midi d'Ossau", "Le Canigou"], "correct_answer": "Le pic d'Aneto", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel pays occupe la partie occidentale de l'île d'Hispaniola ?", "options": ["Haïti", "La République dominicaine", "Cuba", "La Jamaïque"], "correct_answer": "Haïti", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Dans quel pays est né l'Althing, l'un des plus anciens parlements du monde ?", "options": ["En Islande", "En Norvège", "Au Danemark", "En Suède"], "correct_answer": "En Islande", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel est le numéro atomique du carbone ?", "options": ["6", "8", "12", "14"], "correct_answer": "6", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel chimiste russe a établi la classification périodique des éléments ?", "options": ["Dmitri Mendeleïev", "Antoine Lavoisier", "John Dalton", "Robert Boyle"], "correct_answer": "Dmitri Mendeleïev", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel chimiste français a énoncé que rien ne se perd, rien ne se crée, tout se transforme ?", "options": ["Antoine Lavoisier", "Louis Pasteur", "Marcellin Berthelot", "Joseph Gay-Lussac"], "correct_answer": "Antoine Lavoisier", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel effet explique la variation du son d'une sirène qui s'éloigne ?", "options": ["L'effet Doppler", "L'effet Joule", "L'effet Compton", "L'effet photoélectrique"], "correct_answer": "L'effet Doppler", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel astronome a observé les quatre principaux satellites de Jupiter en 1610 ?", "options": ["Galilée", "Johannes Kepler", "Tycho Brahe", "Christiaan Huygens"], "correct_answer": "Galilée", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel astronome français a prédit par le calcul l'existence de Neptune ?", "options": ["Urbain Le Verrier", "Camille Flammarion", "Pierre-Simon de Laplace", "François Arago"], "correct_answer": "Urbain Le Verrier", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quelle unité de distance astronomique vaut environ 3,26 années-lumière ?", "options": ["Le parsec", "L'unité astronomique", "Le rayon solaire", "Le kiloparsec"], "correct_answer": "Le parsec", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel organite assure la production d'énergie dans la cellule ?", "options": ["La mitochondrie", "Le ribosome", "Le lysosome", "L'appareil de Golgi"], "correct_answer": "La mitochondrie", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel biologiste américain a décrit la double hélice de l'ADN avec Francis Crick ?", "options": ["James Watson", "Linus Pauling", "Maurice Wilkins", "Erwin Chargaff"], "correct_answer": "James Watson", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel organe humain possède la plus forte capacité de régénération ?", "options": ["Le foie", "Le rein", "Le cœur", "Le pancréas"], "correct_answer": "Le foie", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel vaisseau conduit le sang du cœur vers les poumons ?", "options": ["L'artère pulmonaire", "La veine pulmonaire", "L'aorte", "La veine cave"], "correct_answer": "L'artère pulmonaire", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quelle maladie a été déclarée éradiquée dans le monde en 1980 ?", "options": ["La variole", "La poliomyélite", "Le typhus", "La peste"], "correct_answer": "La variole", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel est le pH d'une solution neutre à 25 °C ?", "options": ["7", "0", "10", "14"], "correct_answer": "7", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quelle échelle mesure la dureté des minéraux ?", "options": ["L'échelle de Mohs", "L'échelle de Beaufort", "L'échelle de Mercalli", "L'échelle de Brinell"], "correct_answer": "L'échelle de Mohs", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel savant allemand a proposé la théorie de la dérive des continents ?", "options": ["Alfred Wegener", "Charles Lyell", "James Hutton", "Arthur Holmes"], "correct_answer": "Alfred Wegener", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel écrivain français est l'auteur de Bel-Ami ?", "options": ["Guy de Maupassant", "Émile Zola", "Alphonse Daudet", "Gustave Flaubert"], "correct_answer": "Guy de Maupassant", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel cycle romanesque d'Émile Zola compte vingt volumes ?", "options": ["Les Rougon-Macquart", "Les Quatre Évangiles", "Les Trois Villes", "Les Contes à Ninon"], "correct_answer": "Les Rougon-Macquart", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel personnage de Beaumarchais est barbier à Séville ?", "options": ["Figaro", "Almaviva", "Basile", "Chérubin"], "correct_answer": "Figaro", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Qui est l'auteur du Contrat social ?", "options": ["Jean-Jacques Rousseau", "Montesquieu", "Voltaire", "John Locke"], "correct_answer": "Jean-Jacques Rousseau", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel écrivain irlandais est l'auteur d'Ulysse ?", "options": ["James Joyce", "Oscar Wilde", "Samuel Beckett", "William Butler Yeats"], "correct_answer": "James Joyce", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel prix littéraire français est proclamé au restaurant Drouant ?", "options": ["Le prix Goncourt", "Le prix Renaudot", "Le prix Femina", "Le prix Médicis"], "correct_answer": "Le prix Goncourt", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Combien de membres compte l'Académie française ?", "options": ["Quarante", "Trente", "Cinquante", "Soixante"], "correct_answer": "Quarante", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel peintre français a réalisé Le Radeau de la Méduse ?", "options": ["Théodore Géricault", "Eugène Delacroix", "Jacques-Louis David", "Gustave Courbet"], "correct_answer": "Théodore Géricault", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel peintre florentin a réalisé La Naissance de Vénus ?", "options": ["Sandro Botticelli", "Filippo Lippi", "Le Pérugin", "Piero della Francesca"], "correct_answer": "Sandro Botticelli", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel écrivain a rédigé le Manifeste du surréalisme en 1924 ?", "options": ["André Breton", "Louis Aragon", "Paul Éluard", "Tristan Tzara"], "correct_answer": "André Breton", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel musée parisien est aménagé dans une ancienne gare ?", "options": ["Le musée d'Orsay", "Le Petit Palais", "Le musée Rodin", "Le musée du quai Branly"], "correct_answer": "Le musée d'Orsay", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel compositeur tchèque a écrit la Symphonie du Nouveau Monde ?", "options": ["Antonín Dvořák", "Bedřich Smetana", "Leoš Janáček", "Gustav Mahler"], "correct_answer": "Antonín Dvořák", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel film a remporté la Palme d'or du festival de Cannes en 2019 ?", "options": ["Parasite", "Joker", "Roma", "Nomadland"], "correct_answer": "Parasite", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel réalisateur a tourné À bout de souffle en 1960 ?", "options": ["Jean-Luc Godard", "François Truffaut", "Louis Malle", "Alain Resnais"], "correct_answer": "Jean-Luc Godard", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel film français muet et en noir et blanc a remporté l'Oscar du meilleur film ?", "options": ["The Artist", "Amélie", "Intouchables", "La Vie en rose"], "correct_answer": "The Artist", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel cinéaste japonais a réalisé Les Sept Samouraïs ?", "options": ["Akira Kurosawa", "Yasujiro Ozu", "Kenji Mizoguchi", "Nagisa Oshima"], "correct_answer": "Akira Kurosawa", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel compositeur a signé la musique de Star Wars ?", "options": ["John Williams", "Hans Zimmer", "Jerry Goldsmith", "Howard Shore"], "correct_answer": "John Williams", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quelle série met en scène un professeur de chimie devenu fabricant de méthamphétamine ?", "options": ["Breaking Bad", "Better Call Saul", "Weeds", "Ozark"], "correct_answer": "Breaking Bad", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quelle série française se déroule dans une agence d'artistes parisienne ?", "options": ["Dix pour cent", "Le Bureau des légendes", "Engrenages", "Baron noir"], "correct_answer": "Dix pour cent", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel album des Beatles paru en 1967 met en scène une fanfare imaginaire ?", "options": ["Sgt. Pepper's Lonely Hearts Club Band", "Revolver", "Abbey Road", "Rubber Soul"], "correct_answer": "Sgt. Pepper's Lonely Hearts Club Band", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quelle chanteuse française est l'auteure de la chanson Göttingen ?", "options": ["Barbara", "Juliette Gréco", "Anne Sylvestre", "Colette Renard"], "correct_answer": "Barbara", "timer": 25},
-    {"type": "H", "category": "culture", "text": "De quel instrument Django Reinhardt était-il un virtuose ?", "options": ["La guitare", "Le violon", "Le piano", "La clarinette"], "correct_answer": "La guitare", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel pays a organisé et remporté la première Coupe du monde de football en 1930 ?", "options": ["L'Uruguay", "L'Argentine", "Le Brésil", "L'Italie"], "correct_answer": "L'Uruguay", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel club français a remporté la Ligue des champions en 1993 ?", "options": ["L'Olympique de Marseille", "Le Paris Saint-Germain", "L'AS Monaco", "L'Olympique lyonnais"], "correct_answer": "L'Olympique de Marseille", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel tournoi du Grand Chelem se dispute sur gazon ?", "options": ["Wimbledon", "L'US Open", "L'Open d'Australie", "Roland-Garros"], "correct_answer": "Wimbledon", "timer": 20},
-    {"type": "H", "category": "culture", "text": "De quelle couleur est le maillot du leader du Tour d'Italie ?", "options": ["Rose", "Jaune", "Rouge", "Vert"], "correct_answer": "Rose", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel judoka français est le plus titré de l'histoire aux championnats du monde ?", "options": ["Teddy Riner", "David Douillet", "Djamel Bouras", "Angelo Parisi"], "correct_answer": "Teddy Riner", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel Français a rénové les Jeux olympiques à la fin du XIXe siècle ?", "options": ["Pierre de Coubertin", "Jules Rimet", "Paul Vidal de La Blache", "Henri Desgrange"], "correct_answer": "Pierre de Coubertin", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quelle course à la voile en solitaire et sans escale part des Sables-d'Olonne ?", "options": ["Le Vendée Globe", "La Route du Rhum", "La Transat Jacques-Vabre", "Le Trophée Jules-Verne"], "correct_answer": "Le Vendée Globe", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Avec quelle franchise Michael Jordan a-t-il remporté six titres NBA ?", "options": ["Les Chicago Bulls", "Les Los Angeles Lakers", "Les Boston Celtics", "Les Detroit Pistons"], "correct_answer": "Les Chicago Bulls", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Que désigne le sigle CPU en informatique ?", "options": ["L'unité centrale de traitement", "La mémoire vive", "La carte graphique", "Le disque dur"], "correct_answer": "L'unité centrale de traitement", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Qui est l'inventeur du World Wide Web ?", "options": ["Tim Berners-Lee", "Vinton Cerf", "Marc Andreessen", "Robert Kahn"], "correct_answer": "Tim Berners-Lee", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel test évalue la capacité d'une machine à se faire passer pour un humain ?", "options": ["Le test de Turing", "Le test de Shannon", "Le test de Gödel", "Le test de Church"], "correct_answer": "Le test de Turing", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel format d'image est le plus adapté aux photographies compressées avec perte ?", "options": ["Le JPEG", "Le PNG", "Le GIF", "Le SVG"], "correct_answer": "Le JPEG", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quelle loi énonce le doublement régulier du nombre de transistors sur une puce ?", "options": ["La loi de Moore", "La loi de Metcalfe", "La loi d'Amdahl", "La loi de Wirth"], "correct_answer": "La loi de Moore", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quelle technologie sans fil porte le nom d'un roi viking ?", "options": ["Le Bluetooth", "Le Wi-Fi", "Le NFC", "Le Zigbee"], "correct_answer": "Le Bluetooth", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quelle entreprise japonaise a commercialisé la console Mega Drive ?", "options": ["Sega", "Nintendo", "Sony", "Atari"], "correct_answer": "Sega", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel algorithme de chiffrement doit son nom aux initiales de trois chercheurs ?", "options": ["Le RSA", "L'AES", "Le DES", "Le SHA"], "correct_answer": "Le RSA", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Comment appelle-t-on un mot qui se lit identiquement dans les deux sens ?", "options": ["Un palindrome", "Une anagramme", "Un acronyme", "Un paronyme"], "correct_answer": "Un palindrome", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quelle figure de style associe deux termes contradictoires ?", "options": ["L'oxymore", "Le pléonasme", "La périphrase", "L'anacoluthe"], "correct_answer": "L'oxymore", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Que signifie l'expression avoir maille à partir avec quelqu'un ?", "options": ["Avoir un différend avec lui", "Lui devoir de l'argent", "Partager un secret avec lui", "Le rencontrer par hasard"], "correct_answer": "Avoir un différend avec lui", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Que désigne un hapax en linguistique ?", "options": ["Un mot attesté une seule fois dans un corpus", "Un mot d'origine grecque", "Un mot sans pluriel", "Un mot inventé par un auteur"], "correct_answer": "Un mot attesté une seule fois dans un corpus", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quelle est la lettre la plus fréquente dans un texte français ?", "options": ["Le E", "Le A", "Le S", "Le I"], "correct_answer": "Le E", "timer": 20},
-    {"type": "H", "category": "culture", "text": "À quel temps est conjuguée la forme il eut mangé ?", "options": ["Au passé antérieur", "Au plus-que-parfait", "Au passé composé", "Au conditionnel passé"], "correct_answer": "Au passé antérieur", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Comment appelle-t-on un texte écrit en s'interdisant une lettre de l'alphabet ?", "options": ["Un lipogramme", "Un pangramme", "Un palindrome", "Un calligramme"], "correct_answer": "Un lipogramme", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quel est le nom du mâle de la brebis ?", "options": ["Le bélier", "Le bouc", "Le taureau", "Le verrat"], "correct_answer": "Le bélier", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel mammifère australien pond des œufs ?", "options": ["L'ornithorynque", "Le koala", "Le wombat", "L'opossum"], "correct_answer": "L'ornithorynque", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel est le plus grand poisson du monde ?", "options": ["Le requin-baleine", "Le requin blanc", "Le poisson-lune", "Le mérou géant"], "correct_answer": "Le requin-baleine", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel arbre produit les faînes ?", "options": ["Le hêtre", "Le chêne", "Le châtaignier", "Le noisetier"], "correct_answer": "Le hêtre", "timer": 25},
-    {"type": "H", "category": "culture", "text": "Quelle spécialité alsacienne est une fine tarte garnie de crème, d'oignons et de lardons ?", "options": ["La flammekueche", "Le baeckeoffe", "Le kougelhopf", "La choucroute"], "correct_answer": "La flammekueche", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quel condiment vert et piquant accompagne traditionnellement les sushis ?", "options": ["Le wasabi", "Le gingembre", "Le miso", "Le yuzu"], "correct_answer": "Le wasabi", "timer": 20},
-    {"type": "H", "category": "culture", "text": "Quelle floraison emblématique du Japon est célébrée chaque printemps ?", "options": ["La fleur de cerisier", "Le chrysanthème", "La pivoine", "Le lotus"], "correct_answer": "La fleur de cerisier", "timer": 20}
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle crise de 1962 a opposé les États-Unis à l'URSS autour de missiles nucléaires ?",
+      "options": [
+        "La crise de Cuba",
+        "La crise de Suez",
+        "La crise de Berlin",
+        "La crise des Détroits"
+      ],
+      "correct_answer": "La crise de Cuba",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle révolte aristocratique agite la France durant la minorité de Louis XIV ?",
+      "options": [
+        "La Fronde",
+        "La Jacquerie",
+        "La Ligue",
+        "La guerre des Camisards"
+      ],
+      "correct_answer": "La Fronde",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel général romain bat Hannibal à Zama en 202 av. J.-C. ?",
+      "options": [
+        "Scipion l'Africain",
+        "Marius",
+        "Sylla",
+        "Fabius Maximus"
+      ],
+      "correct_answer": "Scipion l'Africain",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle ville soviétique a subi un siège de près de 900 jours pendant la Seconde Guerre mondiale ?",
+      "options": [
+        "Leningrad",
+        "Stalingrad",
+        "Moscou",
+        "Sébastopol"
+      ],
+      "correct_answer": "Leningrad",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel conquistador s'empare de l'Empire inca dans les années 1530 ?",
+      "options": [
+        "Francisco Pizarro",
+        "Hernán Cortés",
+        "Pedro de Alvarado",
+        "Hernando de Soto"
+      ],
+      "correct_answer": "Francisco Pizarro",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel régime succède à la Restauration en France en 1830 ?",
+      "options": [
+        "La monarchie de Juillet",
+        "Le Second Empire",
+        "La Deuxième République",
+        "Le Consulat"
+      ],
+      "correct_answer": "La monarchie de Juillet",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel homme d'État français est surnommé le Tigre pendant la Première Guerre mondiale ?",
+      "options": [
+        "Georges Clemenceau",
+        "Raymond Poincaré",
+        "Aristide Briand",
+        "Paul Deschanel"
+      ],
+      "correct_answer": "Georges Clemenceau",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel nom de code désigne le débarquement allié en Normandie ?",
+      "options": [
+        "Overlord",
+        "Dynamo",
+        "Torch",
+        "Barbarossa"
+      ],
+      "correct_answer": "Overlord",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel traité signé en 1992 fonde l'Union européenne ?",
+      "options": [
+        "Le traité de Maastricht",
+        "Le traité de Rome",
+        "Le traité de Nice",
+        "Le traité de Lisbonne"
+      ],
+      "correct_answer": "Le traité de Maastricht",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle bataille navale de 1805 donne aux Britanniques la maîtrise des mers ?",
+      "options": [
+        "Trafalgar",
+        "Aboukir",
+        "Lépante",
+        "La Hougue"
+      ],
+      "correct_answer": "Trafalgar",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel roi de Sparte résiste aux Perses aux Thermopyles ?",
+      "options": [
+        "Léonidas",
+        "Cléomène",
+        "Agésilas",
+        "Lysandre"
+      ],
+      "correct_answer": "Léonidas",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel code de lois babylonien est gravé sur une stèle conservée au Louvre ?",
+      "options": [
+        "Le Code de Hammurabi",
+        "Le Code de Justinien",
+        "La Loi des Douze Tables",
+        "Le Code d'Ur-Nammu"
+      ],
+      "correct_answer": "Le Code de Hammurabi",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle loi française de 1791 a interdit les corporations et les coalitions ouvrières ?",
+      "options": [
+        "La loi Le Chapelier",
+        "La loi Ferry",
+        "La loi Waldeck-Rousseau",
+        "La loi Guizot"
+      ],
+      "correct_answer": "La loi Le Chapelier",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel événement de 1773 voit des colons américains jeter des cargaisons de thé à la mer ?",
+      "options": [
+        "La Boston Tea Party",
+        "Le massacre de Boston",
+        "La bataille de Lexington",
+        "La convention de Philadelphie"
+      ],
+      "correct_answer": "La Boston Tea Party",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle bataille de 1863 marque le tournant de la guerre de Sécession ?",
+      "options": [
+        "Gettysburg",
+        "Antietam",
+        "Bull Run",
+        "Appomattox"
+      ],
+      "correct_answer": "Gettysburg",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel est le plus long fleuve d'Europe ?",
+      "options": [
+        "La Volga",
+        "Le Danube",
+        "Le Rhin",
+        "Le Dniepr"
+      ],
+      "correct_answer": "La Volga",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel désert d'Amérique du Sud est réputé le plus aride du monde ?",
+      "options": [
+        "Le désert d'Atacama",
+        "Le désert de Patagonie",
+        "Le désert de Sechura",
+        "Le désert du Namib"
+      ],
+      "correct_answer": "Le désert d'Atacama",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel sommet est le deuxième plus haut des Alpes après le mont Blanc ?",
+      "options": [
+        "Le mont Rose",
+        "Le Cervin",
+        "La Jungfrau",
+        "Le Grand Paradis"
+      ],
+      "correct_answer": "Le mont Rose",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel grand lac borde à la fois la France et la Suisse à Genève ?",
+      "options": [
+        "Le lac Léman",
+        "Le lac de Neuchâtel",
+        "Le lac de Constance",
+        "Le lac d'Annecy"
+      ],
+      "correct_answer": "Le lac Léman",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel micro-État est enclavé entre la France et l'Espagne dans les Pyrénées ?",
+      "options": [
+        "L'Andorre",
+        "Le Liechtenstein",
+        "Saint-Marin",
+        "Monaco"
+      ],
+      "correct_answer": "L'Andorre",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle est la plus grande étendue d'eau fermée du monde ?",
+      "options": [
+        "La mer Caspienne",
+        "Le lac Supérieur",
+        "La mer d'Aral",
+        "Le lac Victoria"
+      ],
+      "correct_answer": "La mer Caspienne",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel est le plus grand delta du monde ?",
+      "options": [
+        "Le delta du Gange-Brahmapoutre",
+        "Le delta du Nil",
+        "Le delta du Mississippi",
+        "Le delta du Mékong"
+      ],
+      "correct_answer": "Le delta du Gange-Brahmapoutre",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle est la plus grande île d'Europe ?",
+      "options": [
+        "La Grande-Bretagne",
+        "L'Islande",
+        "L'Irlande",
+        "La Sicile"
+      ],
+      "correct_answer": "La Grande-Bretagne",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel pays a pour capitale Tbilissi ?",
+      "options": [
+        "La Géorgie",
+        "L'Arménie",
+        "L'Azerbaïdjan",
+        "La Moldavie"
+      ],
+      "correct_answer": "La Géorgie",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel est le point culminant des Pyrénées ?",
+      "options": [
+        "Le pic d'Aneto",
+        "Le Vignemale",
+        "Le pic du Midi d'Ossau",
+        "Le Canigou"
+      ],
+      "correct_answer": "Le pic d'Aneto",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle est la capitale de la Lettonie ?",
+      "options": [
+        "Riga",
+        "Vilnius",
+        "Tallinn",
+        "Minsk"
+      ],
+      "correct_answer": "Riga",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Dans quel pays est né l'Althing, l'un des plus anciens parlements du monde ?",
+      "options": [
+        "En Islande",
+        "En Norvège",
+        "Au Danemark",
+        "En Suède"
+      ],
+      "correct_answer": "En Islande",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle durée approximative dure un jour solaire sur Mars ?",
+      "options": [
+        "Un peu plus de 24 heures",
+        "Environ 12 heures",
+        "Environ 48 heures",
+        "Environ 10 heures"
+      ],
+      "correct_answer": "Un peu plus de 24 heures",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle unité mesure l'intensité d'un courant électrique ?",
+      "options": [
+        "L'ampère",
+        "Le volt",
+        "Le watt",
+        "Le coulomb"
+      ],
+      "correct_answer": "L'ampère",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel chimiste français a énoncé que rien ne se perd, rien ne se crée, tout se transforme ?",
+      "options": [
+        "Antoine Lavoisier",
+        "Louis Pasteur",
+        "Marcellin Berthelot",
+        "Joseph Gay-Lussac"
+      ],
+      "correct_answer": "Antoine Lavoisier",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel effet explique la variation du son d'une sirène qui s'éloigne ?",
+      "options": [
+        "L'effet Doppler",
+        "L'effet Joule",
+        "L'effet Compton",
+        "L'effet photoélectrique"
+      ],
+      "correct_answer": "L'effet Doppler",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel astronome a observé les quatre principaux satellites de Jupiter en 1610 ?",
+      "options": [
+        "Galilée",
+        "Johannes Kepler",
+        "Tycho Brahe",
+        "Christiaan Huygens"
+      ],
+      "correct_answer": "Galilée",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel astronome français a prédit par le calcul l'existence de Neptune ?",
+      "options": [
+        "Urbain Le Verrier",
+        "Camille Flammarion",
+        "Pierre-Simon de Laplace",
+        "François Arago"
+      ],
+      "correct_answer": "Urbain Le Verrier",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle unité de distance astronomique vaut environ 3,26 années-lumière ?",
+      "options": [
+        "Le parsec",
+        "L'unité astronomique",
+        "Le rayon solaire",
+        "Le kiloparsec"
+      ],
+      "correct_answer": "Le parsec",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle glande sécrète la thyroxine ?",
+      "options": [
+        "La thyroïde",
+        "Le pancréas",
+        "L'hypophyse",
+        "La rate"
+      ],
+      "correct_answer": "La thyroïde",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle réaction produit l'énergie rayonnée par le Soleil ?",
+      "options": [
+        "La transformation de l'hydrogène en hélium",
+        "La fission de l'uranium",
+        "La combustion du carbone",
+        "La désintégration du radium"
+      ],
+      "correct_answer": "La transformation de l'hydrogène en hélium",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel savant a donné son nom à l'unité de température absolue ?",
+      "options": [
+        "Lord Kelvin",
+        "Anders Celsius",
+        "Daniel Fahrenheit",
+        "James Joule"
+      ],
+      "correct_answer": "Lord Kelvin",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel vaisseau conduit le sang du cœur vers les poumons ?",
+      "options": [
+        "L'artère pulmonaire",
+        "La veine pulmonaire",
+        "L'aorte",
+        "La veine cave"
+      ],
+      "correct_answer": "L'artère pulmonaire",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle maladie a été déclarée éradiquée dans le monde en 1980 ?",
+      "options": [
+        "La variole",
+        "La poliomyélite",
+        "Le typhus",
+        "La peste"
+      ],
+      "correct_answer": "La variole",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel est le pH d'une solution neutre à 25 °C ?",
+      "options": [
+        "7",
+        "0",
+        "10",
+        "14"
+      ],
+      "correct_answer": "7",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle échelle mesure la dureté des minéraux ?",
+      "options": [
+        "L'échelle de Mohs",
+        "L'échelle de Beaufort",
+        "L'échelle de Mercalli",
+        "L'échelle de Brinell"
+      ],
+      "correct_answer": "L'échelle de Mohs",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel savant allemand a proposé la théorie de la dérive des continents ?",
+      "options": [
+        "Alfred Wegener",
+        "Charles Lyell",
+        "James Hutton",
+        "Arthur Holmes"
+      ],
+      "correct_answer": "Alfred Wegener",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel écrivain français est l'auteur de Bel-Ami ?",
+      "options": [
+        "Guy de Maupassant",
+        "Émile Zola",
+        "Alphonse Daudet",
+        "Gustave Flaubert"
+      ],
+      "correct_answer": "Guy de Maupassant",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel cycle romanesque d'Émile Zola compte vingt volumes ?",
+      "options": [
+        "Les Rougon-Macquart",
+        "Les Quatre Évangiles",
+        "Les Trois Villes",
+        "Les Contes à Ninon"
+      ],
+      "correct_answer": "Les Rougon-Macquart",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel personnage de Beaumarchais est barbier à Séville ?",
+      "options": [
+        "Figaro",
+        "Almaviva",
+        "Basile",
+        "Chérubin"
+      ],
+      "correct_answer": "Figaro",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Qui est l'auteur du Contrat social ?",
+      "options": [
+        "Jean-Jacques Rousseau",
+        "Montesquieu",
+        "Voltaire",
+        "John Locke"
+      ],
+      "correct_answer": "Jean-Jacques Rousseau",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel dramaturge norvégien a écrit Une maison de poupée ?",
+      "options": [
+        "Henrik Ibsen",
+        "August Strindberg",
+        "Anton Tchekhov",
+        "Luigi Pirandello"
+      ],
+      "correct_answer": "Henrik Ibsen",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel compositeur autrichien a écrit le cycle de lieder Le Voyage d'hiver ?",
+      "options": [
+        "Franz Schubert",
+        "Robert Schumann",
+        "Gustav Mahler",
+        "Hugo Wolf"
+      ],
+      "correct_answer": "Franz Schubert",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Combien de membres compte l'Académie française ?",
+      "options": [
+        "Quarante",
+        "Trente",
+        "Cinquante",
+        "Soixante"
+      ],
+      "correct_answer": "Quarante",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel écrivain italien est l'auteur du Nom de la rose ?",
+      "options": [
+        "Umberto Eco",
+        "Italo Calvino",
+        "Alberto Moravia",
+        "Primo Levi"
+      ],
+      "correct_answer": "Umberto Eco",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel opéra de Verdi se déroule dans l'Égypte antique ?",
+      "options": [
+        "Aïda",
+        "Rigoletto",
+        "Nabucco",
+        "Otello"
+      ],
+      "correct_answer": "Aïda",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel écrivain américain est l'auteur des Raisins de la colère ?",
+      "options": [
+        "John Steinbeck",
+        "William Faulkner",
+        "Ernest Hemingway",
+        "John Dos Passos"
+      ],
+      "correct_answer": "John Steinbeck",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel musée parisien est aménagé dans une ancienne gare ?",
+      "options": [
+        "Le musée d'Orsay",
+        "Le Petit Palais",
+        "Le musée Rodin",
+        "Le musée du quai Branly"
+      ],
+      "correct_answer": "Le musée d'Orsay",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel musée londonien conserve la pierre de Rosette ?",
+      "options": [
+        "Le British Museum",
+        "La National Gallery",
+        "La Tate Modern",
+        "Le Victoria and Albert Museum"
+      ],
+      "correct_answer": "Le British Museum",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel film a remporté la Palme d'or du festival de Cannes en 2019 ?",
+      "options": [
+        "Parasite",
+        "Joker",
+        "Roma",
+        "Nomadland"
+      ],
+      "correct_answer": "Parasite",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel réalisateur a tourné À bout de souffle en 1960 ?",
+      "options": [
+        "Jean-Luc Godard",
+        "François Truffaut",
+        "Louis Malle",
+        "Alain Resnais"
+      ],
+      "correct_answer": "Jean-Luc Godard",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel volet du Seigneur des anneaux a remporté onze Oscars ?",
+      "options": [
+        "Le Retour du roi",
+        "La Communauté de l'anneau",
+        "Les Deux Tours",
+        "Le Hobbit : un voyage inattendu"
+      ],
+      "correct_answer": "Le Retour du roi",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel cinéaste japonais a réalisé Les Sept Samouraïs ?",
+      "options": [
+        "Akira Kurosawa",
+        "Yasujiro Ozu",
+        "Kenji Mizoguchi",
+        "Nagisa Oshima"
+      ],
+      "correct_answer": "Akira Kurosawa",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel compositeur allemand a signé les musiques d'Inception et d'Interstellar ?",
+      "options": [
+        "Hans Zimmer",
+        "John Williams",
+        "Alexandre Desplat",
+        "Howard Shore"
+      ],
+      "correct_answer": "Hans Zimmer",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel studio a produit Toy Story, premier long métrage entièrement en images de synthèse ?",
+      "options": [
+        "Pixar",
+        "DreamWorks",
+        "Blue Sky",
+        "Illumination"
+      ],
+      "correct_answer": "Pixar",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle série française se déroule dans une agence d'artistes parisienne ?",
+      "options": [
+        "Dix pour cent",
+        "Le Bureau des légendes",
+        "Engrenages",
+        "Baron noir"
+      ],
+      "correct_answer": "Dix pour cent",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel album des Beatles paru en 1967 met en scène une fanfare imaginaire ?",
+      "options": [
+        "Sgt. Pepper's Lonely Hearts Club Band",
+        "Revolver",
+        "Abbey Road",
+        "Rubber Soul"
+      ],
+      "correct_answer": "Sgt. Pepper's Lonely Hearts Club Band",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle chanteuse française est l'auteure de la chanson Göttingen ?",
+      "options": [
+        "Barbara",
+        "Juliette Gréco",
+        "Anne Sylvestre",
+        "Colette Renard"
+      ],
+      "correct_answer": "Barbara",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "De quel instrument Django Reinhardt était-il un virtuose ?",
+      "options": [
+        "La guitare",
+        "Le violon",
+        "Le piano",
+        "La clarinette"
+      ],
+      "correct_answer": "La guitare",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel pays a organisé et remporté la première Coupe du monde de football en 1930 ?",
+      "options": [
+        "L'Uruguay",
+        "L'Argentine",
+        "Le Brésil",
+        "L'Italie"
+      ],
+      "correct_answer": "L'Uruguay",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Combien de joueurs compte une équipe de rugby à XIII sur le terrain ?",
+      "options": [
+        "Treize",
+        "Quinze",
+        "Onze",
+        "Douze"
+      ],
+      "correct_answer": "Treize",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle sélection nationale de football est surnommée la Squadra Azzurra ?",
+      "options": [
+        "L'Italie",
+        "L'Espagne",
+        "Le Portugal",
+        "L'Argentine"
+      ],
+      "correct_answer": "L'Italie",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "De quelle couleur est le maillot du leader du Tour d'Italie ?",
+      "options": [
+        "Rose",
+        "Jaune",
+        "Rouge",
+        "Vert"
+      ],
+      "correct_answer": "Rose",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle nation a remporté le plus de titres en Coupe Davis ?",
+      "options": [
+        "Les États-Unis",
+        "L'Australie",
+        "La France",
+        "L'Espagne"
+      ],
+      "correct_answer": "Les États-Unis",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel Français a rénové les Jeux olympiques à la fin du XIXe siècle ?",
+      "options": [
+        "Pierre de Coubertin",
+        "Jules Rimet",
+        "Paul Vidal de La Blache",
+        "Henri Desgrange"
+      ],
+      "correct_answer": "Pierre de Coubertin",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel grand tour cycliste se dispute chaque année en Espagne ?",
+      "options": [
+        "La Vuelta",
+        "Le Giro",
+        "Le Tour de Romandie",
+        "Le Tour de Suisse"
+      ],
+      "correct_answer": "La Vuelta",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Avec quelle franchise Michael Jordan a-t-il remporté six titres NBA ?",
+      "options": [
+        "Les Chicago Bulls",
+        "Les Los Angeles Lakers",
+        "Les Boston Celtics",
+        "Les Detroit Pistons"
+      ],
+      "correct_answer": "Les Chicago Bulls",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Que désigne le sigle CPU en informatique ?",
+      "options": [
+        "L'unité centrale de traitement",
+        "La mémoire vive",
+        "La carte graphique",
+        "Le disque dur"
+      ],
+      "correct_answer": "L'unité centrale de traitement",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel service de streaming a débuté comme loueur de DVD par correspondance ?",
+      "options": [
+        "Netflix",
+        "Hulu",
+        "Amazon Prime Video",
+        "Disney+"
+      ],
+      "correct_answer": "Netflix",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel test évalue la capacité d'une machine à se faire passer pour un humain ?",
+      "options": [
+        "Le test de Turing",
+        "Le test de Shannon",
+        "Le test de Gödel",
+        "Le test de Church"
+      ],
+      "correct_answer": "Le test de Turing",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel format d'image est le plus adapté aux photographies compressées avec perte ?",
+      "options": [
+        "Le JPEG",
+        "Le PNG",
+        "Le GIF",
+        "Le SVG"
+      ],
+      "correct_answer": "Le JPEG",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle loi énonce le doublement régulier du nombre de transistors sur une puce ?",
+      "options": [
+        "La loi de Moore",
+        "La loi de Metcalfe",
+        "La loi d'Amdahl",
+        "La loi de Wirth"
+      ],
+      "correct_answer": "La loi de Moore",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle technologie sans fil porte le nom d'un roi viking ?",
+      "options": [
+        "Le Bluetooth",
+        "Le Wi-Fi",
+        "Le NFC",
+        "Le Zigbee"
+      ],
+      "correct_answer": "Le Bluetooth",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle entreprise japonaise a commercialisé la console Mega Drive ?",
+      "options": [
+        "Sega",
+        "Nintendo",
+        "Sony",
+        "Atari"
+      ],
+      "correct_answer": "Sega",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel algorithme de chiffrement doit son nom aux initiales de trois chercheurs ?",
+      "options": [
+        "Le RSA",
+        "L'AES",
+        "Le DES",
+        "Le SHA"
+      ],
+      "correct_answer": "Le RSA",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Que signifie l'expression jeter l'éponge ?",
+      "options": [
+        "Abandonner",
+        "Nettoyer à fond",
+        "Provoquer quelqu'un",
+        "Se réconcilier"
+      ],
+      "correct_answer": "Abandonner",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle figure de style associe deux termes contradictoires ?",
+      "options": [
+        "L'oxymore",
+        "Le pléonasme",
+        "La périphrase",
+        "L'anacoluthe"
+      ],
+      "correct_answer": "L'oxymore",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Que signifie l'expression avoir maille à partir avec quelqu'un ?",
+      "options": [
+        "Avoir un différend avec lui",
+        "Lui devoir de l'argent",
+        "Partager un secret avec lui",
+        "Le rencontrer par hasard"
+      ],
+      "correct_answer": "Avoir un différend avec lui",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Que désigne un hapax en linguistique ?",
+      "options": [
+        "Un mot attesté une seule fois dans un corpus",
+        "Un mot d'origine grecque",
+        "Un mot sans pluriel",
+        "Un mot inventé par un auteur"
+      ],
+      "correct_answer": "Un mot attesté une seule fois dans un corpus",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle est la lettre la plus fréquente dans un texte français ?",
+      "options": [
+        "Le E",
+        "Le A",
+        "Le S",
+        "Le I"
+      ],
+      "correct_answer": "Le E",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "À quel temps est conjuguée la forme il eut mangé ?",
+      "options": [
+        "Au passé antérieur",
+        "Au plus-que-parfait",
+        "Au passé composé",
+        "Au conditionnel passé"
+      ],
+      "correct_answer": "Au passé antérieur",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Comment appelle-t-on la répétition d'un même son consonantique dans un vers ?",
+      "options": [
+        "Une allitération",
+        "Une assonance",
+        "Une anaphore",
+        "Une paronomase"
+      ],
+      "correct_answer": "Une allitération",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel est le nom du mâle de la brebis ?",
+      "options": [
+        "Le bélier",
+        "Le bouc",
+        "Le taureau",
+        "Le verrat"
+      ],
+      "correct_answer": "Le bélier",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel mammifère australien pond des œufs ?",
+      "options": [
+        "L'ornithorynque",
+        "Le koala",
+        "Le wombat",
+        "L'opossum"
+      ],
+      "correct_answer": "L'ornithorynque",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel est le plus grand poisson du monde ?",
+      "options": [
+        "Le requin-baleine",
+        "Le requin blanc",
+        "Le poisson-lune",
+        "Le mérou géant"
+      ],
+      "correct_answer": "Le requin-baleine",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel arbre produit les faînes ?",
+      "options": [
+        "Le hêtre",
+        "Le chêne",
+        "Le châtaignier",
+        "Le noisetier"
+      ],
+      "correct_answer": "Le hêtre",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle spécialité alsacienne est une fine tarte garnie de crème, d'oignons et de lardons ?",
+      "options": [
+        "La flammekueche",
+        "Le baeckeoffe",
+        "Le kougelhopf",
+        "La choucroute"
+      ],
+      "correct_answer": "La flammekueche",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel condiment vert et piquant accompagne traditionnellement les sushis ?",
+      "options": [
+        "Le wasabi",
+        "Le gingembre",
+        "Le miso",
+        "Le yuzu"
+      ],
+      "correct_answer": "Le wasabi",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle floraison emblématique du Japon est célébrée chaque printemps ?",
+      "options": [
+        "La fleur de cerisier",
+        "Le chrysanthème",
+        "La pivoine",
+        "Le lotus"
+      ],
+      "correct_answer": "La fleur de cerisier",
+      "timer": 20
+    }
   ]
 }

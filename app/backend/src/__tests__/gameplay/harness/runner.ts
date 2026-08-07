@@ -21,6 +21,8 @@ export interface Result {
 export interface Ctx {
   readonly url: string;
   readonly ip: string;
+  /** Base SQLite jetable du serveur, pour mesurer un vivier reel en lecture seule. */
+  readonly dbPath: string;
   readonly escaladePalierLen: number;
   readonly mixDuelPeriod: number;
   /** Assertion normale : un echec fait echouer la suite. */
@@ -48,6 +50,7 @@ const DEFAULT_TIMEOUT = 260_000;
 
 export interface RunOptions {
   url: string;
+  dbPath: string;
   concurrency: number;
   escaladePalierLen: number;
   mixDuelPeriod: number;
@@ -82,6 +85,7 @@ async function runSession(session: Session, ip: string, o: RunOptions): Promise<
   const t: Ctx = {
     url: o.url,
     ip,
+    dbPath: o.dbPath,
     escaladePalierLen: o.escaladePalierLen,
     mixDuelPeriod: o.mixDuelPeriod,
     ok(name, cond, detail) {

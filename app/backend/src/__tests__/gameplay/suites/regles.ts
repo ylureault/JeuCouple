@@ -505,6 +505,61 @@ const classique: Session = {
   },
 };
 
+// ─────────────────────────────────────────────────────── quiz express ───────
+const QUIZ_ANSWER_SECONDS = 12;
+
+const quizExpress: Session = {
+  id: 'regles/quiz_express',
+  group: 'mode quiz_express',
+  expected: 4,
+  timeoutMs: 200_000,
+  async run(t) {
+    const NB = 5;
+    // On demande volontairement un perimetre absurde : le mode doit l'ecraser.
+    const party = await t.party({
+      gameMode: 'quiz_express',
+      categories: ['petits_noms'],
+      questionTypes: ['C'],
+      questionCount: NB,
+    });
+    const reglages = await party.guest.wait('room:settings', { timeout: 8000 });
+    await party.accept();
+    await party.start();
+
+    const r1 = await playRound(party, { a1: accord, a2: accord });
+    t.ok(
+      '[Quiz Express] le mode impose la culture generale en QCM, quels que soient les reglages demandes',
+      r1.question.category === 'culture' && r1.question.type === 'H' &&
+        reglages.data.categories.length === 1 && reglages.data.categories[0].code === 'culture',
+      `question servie : theme="${r1.question.category}", type=${r1.question.type} ; ` +
+        `themes annonces au salon : ${JSON.stringify(reglages.data.categories.map((c: any) => c.code))}`
+    );
+    t.ok(
+      `[Quiz Express] le temps de reponse est plafonne a ${QUIZ_ANSWER_SECONDS} s`,
+      r1.question.timer <= QUIZ_ANSWER_SECONDS,
+      `chrono annonce : ${r1.question.timer} s`
+    );
+
+    // Chacun marque ses propres points : bonne reponse d'un cote, erreur de l'autre.
+    const r2 = await playRound(party, { a1: accord, a2: desaccord });
+    t.ok(
+      '[Quiz Express] chacun marque ses propres points',
+      r2.reveal.points1 >= 100 && r2.reveal.points2 === 0 &&
+        r2.reveal.correctAnswer === r2.question.correct_answer,
+      `points=${r2.reveal.points1}/${r2.reveal.points2}, bonne reponse annoncee="${r2.reveal.correctAnswer}"`
+    );
+
+    for (let i = 2; i < NB; i++) await playRound(party, { a1: accord, a2: accord });
+    const fin = await party.host.wait('game:finished', { timeout: 20000, what: 'fin du quiz' });
+    t.ok(
+      '[Quiz Express] la partie s\'arrete au bout du quiz',
+      fin.data.totalQuestions === NB && Array.isArray(fin.data.questionHistory) &&
+        fin.data.questionHistory.length === NB,
+      `totalQuestions=${fin.data.totalQuestions} (attendu ${NB}), historique=${fin.data.questionHistory?.length}`
+    );
+  },
+};
+
 export const reglesSessions: Session[] = [
-  duel, escalade, complices, complicesFin, suddenDeath, inverse, envies, petitsNoms, mix, classique,
+  duel, escalade, complices, complicesFin, suddenDeath, inverse, envies, petitsNoms, mix, classique, quizExpress,
 ];

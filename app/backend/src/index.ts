@@ -11,6 +11,7 @@ import { initDatabase, cleanupExpiredRooms } from './database.js';
 import { initializeAdminIfNeeded } from './models/admin.js';
 import { setupSocketHandlers } from './services/gameService.js';
 import adminRouter from './routes/admin.js';
+import roomsRouter from './routes/rooms.js';
 
 import type {
   ServerToClientEvents,
@@ -77,6 +78,9 @@ app.get('/health', (_req, res) => {
 
 // API routes
 app.use('/api/admin', adminRouter);
+// Consultation publique d'un salon : permet au client d'annoncer un code
+// inconnu ou un lien perime au lieu d'echouer en silence.
+app.use('/api/rooms', roomsRouter);
 
 // Serve static files in production
 if (NODE_ENV === 'production') {
