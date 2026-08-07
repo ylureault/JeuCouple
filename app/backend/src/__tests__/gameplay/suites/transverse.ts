@@ -168,14 +168,17 @@ const interruptions: Session = {
       );
 
       const qRevenant = await revenant.wait('game:question', { timeout: 8000, what: 'question renvoyee au revenant' });
-      const scoreRevenant = await revenant.wait('game:score-update', { timeout: 4000 });
+      // Le score est envoye AVANT la question dans la sequence de reconnexion :
+      // on le relit dans le journal plutot que de l'attendre apres coup.
+      const scoreRevenant = revenant.last('game:score-update');
       t.ok(
         '[interruptions] le joueur reconnecte retrouve la question et le score en cours',
         qRevenant.data.question.id === q3.data.question.id &&
+          !!scoreRevenant &&
           scoreRevenant.data.score1 === score2.data.score1 &&
           scoreRevenant.data.score2 === score2.data.score2,
         `question renvoyee=${qRevenant.data.question.id} (en cours ${q3.data.question.id}), ` +
-          `score renvoye=${scoreRevenant.data.score1}/${scoreRevenant.data.score2} ` +
+          `score renvoye=${scoreRevenant?.data.score1}/${scoreRevenant?.data.score2} ` +
           `(en cours ${score2.data.score1}/${score2.data.score2}) — manche 1 : ${scoreApresR1.score1}/${scoreApresR1.score2}, ` +
           `revelation manche 2 : ${r2reveal.data.points1}/${r2reveal.data.points2}`
       );

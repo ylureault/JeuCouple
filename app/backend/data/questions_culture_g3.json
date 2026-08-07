@@ -211,6 +211,19 @@
     {
       "type": "H",
       "category": "culture",
+      "text": "Quelle mer s'étend entre la péninsule coréenne et le Japon ?",
+      "options": [
+        "La mer du Japon",
+        "La mer Jaune",
+        "La mer de Chine orientale",
+        "La mer d'Okhotsk"
+      ],
+      "correct_answer": "La mer du Japon",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
       "text": "Quel désert d'Amérique du Sud est réputé le plus aride du monde ?",
       "options": [
         "Le désert d'Atacama",
@@ -263,6 +276,19 @@
     {
       "type": "H",
       "category": "culture",
+      "text": "Quel pays d'Amérique centrale est le plus peuplé ?",
+      "options": [
+        "Le Guatemala",
+        "Le Honduras",
+        "Le Costa Rica",
+        "Le Panama"
+      ],
+      "correct_answer": "Le Guatemala",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
       "text": "Quelle est la plus grande étendue d'eau fermée du monde ?",
       "options": [
         "La mer Caspienne",
@@ -284,6 +310,19 @@
         "Le delta du Mékong"
       ],
       "correct_answer": "Le delta du Gange-Brahmapoutre",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quelle est la plus longue chaîne de montagnes sous-marine du monde ?",
+      "options": [
+        "La dorsale médio-atlantique",
+        "La dorsale de Kerguelen",
+        "La dorsale de Reykjanes",
+        "La ride de Ninety East"
+      ],
+      "correct_answer": "La dorsale médio-atlantique",
       "timer": 25
     },
     {
@@ -315,14 +354,14 @@
     {
       "type": "H",
       "category": "culture",
-      "text": "Quel est le point culminant des Pyrénées ?",
+      "text": "Quel archipel portugais se situe dans l'Atlantique au large du Maroc ?",
       "options": [
-        "Le pic d'Aneto",
-        "Le Vignemale",
-        "Le pic du Midi d'Ossau",
-        "Le Canigou"
+        "Madère",
+        "Les Açores",
+        "Les Canaries",
+        "Le Cap-Vert"
       ],
-      "correct_answer": "Le pic d'Aneto",
+      "correct_answer": "Madère",
       "timer": 25
     },
     {
@@ -497,15 +536,15 @@
     {
       "type": "H",
       "category": "culture",
-      "text": "Quelle maladie a été déclarée éradiquée dans le monde en 1980 ?",
+      "text": "Quel gaz est le principal constituant du gaz naturel ?",
       "options": [
-        "La variole",
-        "La poliomyélite",
-        "Le typhus",
-        "La peste"
+        "Le méthane",
+        "Le propane",
+        "Le butane",
+        "L'éthane"
       ],
-      "correct_answer": "La variole",
-      "timer": 25
+      "correct_answer": "Le méthane",
+      "timer": 20
     },
     {
       "type": "H",
@@ -536,14 +575,14 @@
     {
       "type": "H",
       "category": "culture",
-      "text": "Quel savant allemand a proposé la théorie de la dérive des continents ?",
+      "text": "Combien de faces compte un dodécaèdre régulier ?",
       "options": [
-        "Alfred Wegener",
-        "Charles Lyell",
-        "James Hutton",
-        "Arthur Holmes"
+        "Douze",
+        "Dix",
+        "Vingt",
+        "Huit"
       ],
-      "correct_answer": "Alfred Wegener",
+      "correct_answer": "Douze",
       "timer": 25
     },
     {
@@ -679,15 +718,15 @@
     {
       "type": "H",
       "category": "culture",
-      "text": "Quel musée parisien est aménagé dans une ancienne gare ?",
+      "text": "Quel musée new-yorkais occupe un bâtiment en spirale conçu par Frank Lloyd Wright ?",
       "options": [
-        "Le musée d'Orsay",
-        "Le Petit Palais",
-        "Le musée Rodin",
-        "Le musée du quai Branly"
+        "Le Guggenheim",
+        "Le MoMA",
+        "Le Metropolitan Museum",
+        "Le Whitney Museum"
       ],
-      "correct_answer": "Le musée d'Orsay",
-      "timer": 20
+      "correct_answer": "Le Guggenheim",
+      "timer": 25
     },
     {
       "type": "H",
@@ -835,14 +874,14 @@
     {
       "type": "H",
       "category": "culture",
-      "text": "Quel pays a organisé et remporté la première Coupe du monde de football en 1930 ?",
+      "text": "Quelle compétition réunit les meilleurs clubs de football d'Amérique du Sud ?",
       "options": [
-        "L'Uruguay",
-        "L'Argentine",
-        "Le Brésil",
-        "L'Italie"
+        "La Copa Libertadores",
+        "La Copa América",
+        "La Recopa Sudamericana",
+        "Le Torneo Apertura"
       ],
-      "correct_answer": "L'Uruguay",
+      "correct_answer": "La Copa Libertadores",
       "timer": 25
     },
     {
@@ -857,6 +896,19 @@
       ],
       "correct_answer": "Treize",
       "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel pilote français a été quatre fois champion du monde de Formule 1 ?",
+      "options": [
+        "Alain Prost",
+        "Jacques Laffite",
+        "René Arnoux",
+        "Didier Pironi"
+      ],
+      "correct_answer": "Alain Prost",
+      "timer": 25
     },
     {
       "type": "H",
@@ -882,6 +934,19 @@
         "Vert"
       ],
       "correct_answer": "Rose",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Dans quelle discipline olympique utilise-t-on un cheval d'arçons ?",
+      "options": [
+        "La gymnastique artistique",
+        "L'équitation",
+        "Le trampoline",
+        "L'haltérophilie"
+      ],
+      "correct_answer": "La gymnastique artistique",
       "timer": 20
     },
     {
@@ -1004,14 +1069,14 @@
     {
       "type": "H",
       "category": "culture",
-      "text": "Quelle technologie sans fil porte le nom d'un roi viking ?",
+      "text": "Dans quel laboratoire américain le langage C a-t-il été mis au point ?",
       "options": [
-        "Le Bluetooth",
-        "Le Wi-Fi",
-        "Le NFC",
-        "Le Zigbee"
+        "Les Bell Labs",
+        "IBM Research",
+        "Xerox PARC",
+        "Digital Equipment"
       ],
-      "correct_answer": "Le Bluetooth",
+      "correct_answer": "Les Bell Labs",
       "timer": 25
     },
     {
@@ -1181,6 +1246,19 @@
         "Le noisetier"
       ],
       "correct_answer": "Le hêtre",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "De quelle plante grimpante provient le poivre noir ?",
+      "options": [
+        "Le poivrier",
+        "Le piment",
+        "Le gingembre",
+        "Le cumin"
+      ],
+      "correct_answer": "Le poivrier",
       "timer": 25
     },
     {

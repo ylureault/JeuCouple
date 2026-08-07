@@ -73,7 +73,7 @@ function serieSession(m: ModeCfg): Session {
 const epuisement: Session = {
   id: 'anti-repetition/vivier-epuise',
   group: 'transverse',
-  expected: 2,
+  expected: 3,
   timeoutMs: 250_000,
   async run(t) {
     // Taille reelle du vivier, mesuree en lecture seule sur la base du serveur :
@@ -102,15 +102,25 @@ const epuisement: Session = {
     const started = await party.start();
     if (!started.success) throw new Error(`game:start refuse : ${started.error}`);
 
-    const vus: number[] = [];
+    // Boucle manuelle : sur une question resservie, le serveur peut refuser les
+    // reponses (voir le scenario final) et la revelation n'arrive alors qu'a
+    // l'expiration du chrono. On dimensionne les attentes en consequence.
+    const vus: { id: number; ack1: boolean; ack2: boolean }[] = [];
     for (let i = 0; i < vivier + 2; i++) {
+      const q = await party.host.wait('game:question', { timeout: 40000, what: `manche ${i + 1}` });
+      const question = q.data.question;
       // Desaccord systematique : la serie de complices ne monte pas, la
       // partie ne se termine pas avant la fin de l'observation.
-      const r = await playRound(party, { a1: accord, a2: desaccord });
-      vus.push(r.question.id);
+      const a1 = await party.host.answer(accord(question));
+      const a2 = await party.guest.answer(desaccord(question));
+      await party.host.wait('game:reveal', {
+        timeout: (question.timer + 12) * 1000,
+        what: `revelation manche ${i + 1}`,
+      });
+      vus.push({ id: question.id, ack1: a1.accepted, ack2: a2.accepted });
     }
 
-    const premier = vus.slice(0, vivier);
+    const premier = vus.slice(0, vivier).map((v) => v.id);
     t.ok(
       `[anti-repetition] les ${vivier} questions d'un vivier restreint sortent toutes avant la moindre repetition`,
       new Set(premier).size === vivier,
@@ -120,8 +130,19 @@ const epuisement: Session = {
     const suite = vus.slice(vivier);
     t.ok(
       '[anti-repetition] le vivier epuise recycle les questions au lieu d\'interrompre la partie',
-      suite.length === 2 && suite.every((id) => premier.includes(id)),
-      `manches ${vivier + 1} et ${vivier + 2} : ${suite.join(', ')} — vivier initial : ${premier.join(', ')}`
+      suite.length === 2 && suite.every((v) => premier.includes(v.id)),
+      `manches ${vivier + 1} et ${vivier + 2} : ${suite.map((v) => v.id).join(', ')} — ` +
+        `vivier initial : ${premier.join(', ')}`
+    );
+
+    t.bug(
+      '[anti-repetition] une question resservie apres epuisement accepte de nouvelles reponses',
+      suite.every((v) => v.ack1 && v.ack2),
+      'les reponses sont indexees par identifiant de question (gameService.ts:841, gameState.answers) : ' +
+        'quand le vivier est epuise et qu\'une question revient, les reponses de la premiere fois sont ' +
+        'toujours en memoire, les nouvelles sont refusees « Reponse deja enregistree » (gameService.ts:846) ' +
+        'et la manche se revele toute seule a l\'expiration du chrono, en rejouant l\'ancien resultat',
+      `acquittements des manches resservies : ${suite.map((v) => `${v.id}=${v.ack1}/${v.ack2}`).join(', ')}`
     );
   },
 };

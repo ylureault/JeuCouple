@@ -39,6 +39,8 @@ export default function Game() {
     currentQuestion,
     questionNumber,
     totalQuestions,
+    deadline,
+    serverClockOffset,
     myAnswer,
     otherAnswered,
     revealData,
@@ -93,7 +95,6 @@ export default function Game() {
     if (currentQuestion) {
       setShowIntro(true);
       setIntroStep('number');
-      setTimeLeft(currentQuestion.timer);
       playSound('reveal');
 
       // Cadence : la ceremonie complete (3 s) n'a de sens qu'a la premiere
@@ -111,27 +112,40 @@ export default function Game() {
     }
   }, [currentQuestion, playSound]);
 
+  /**
+   * B3 — le decompte se DEDUIT de l'echeance envoyee par le serveur.
+   *
+   * L'ancien minuteur etait un setInterval local qui retirait 1 chaque seconde :
+   * il derivait des que l'onglet passait en arriere-plan (les navigateurs
+   * brident les timers), il repartait de zero a chaque remontage du composant,
+   * et rien ne le raccrochait jamais a la verite du serveur. Les deux joueurs
+   * affichaient donc 8 s et 7 s sur la meme question.
+   *
+   * Ici on ne compte pas : on soustrait. `deadline` est un instant absolu dans
+   * l'horloge du serveur, `serverClockOffset` corrige l'ecart d'horloge du
+   * navigateur. Quel que soit le nombre d'onglets endormis, la valeur affichee
+   * est la meme des deux cotes. `deadline` a null (reveal, pause) fige
+   * l'affichage au lieu de le laisser filer.
+   */
   useEffect(() => {
-    // Only start timer when in question phase, intro is done, no answer given, and not paused
-    if (phase !== 'question' || showIntro || myAnswer || gamePaused) {
-      return;
-    }
+    if (deadline === null) return;
 
-    const timer = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        if (t <= 5) {
-          playSound('tick');
-        }
-        return t - 1;
-      });
-    }, 1000);
+    const compute = () =>
+      Math.max(0, Math.ceil((deadline - (Date.now() + serverClockOffset)) / 1000));
 
-    return () => clearInterval(timer);
-  }, [phase, showIntro, myAnswer, gamePaused, playSound]); // gamePaused stops/resumes timer
+    setTimeLeft(compute());
+    // 250 ms : la seconde affichee change au bon moment sans attendre un tick
+    // complet, et le cout reste negligeable.
+    const id = setInterval(() => setTimeLeft(compute()), 250);
+    return () => clearInterval(id);
+  }, [deadline, serverClockOffset]);
+
+  // Le tic-tac des 5 dernieres secondes est un effet separe : il suit la valeur
+  // affichee, il ne la produit pas.
+  useEffect(() => {
+    if (phase !== 'question' || showIntro || myAnswer || gamePaused) return;
+    if (timeLeft > 0 && timeLeft <= 5) playSound('tick');
+  }, [timeLeft, phase, showIntro, myAnswer, gamePaused, playSound]);
 
   // Signal sonore quand la partie se met en pause (partenaire absent ou
   // pause volontaire) : sans lui, on peut fixer l'ecran sans comprendre.
@@ -466,7 +480,7 @@ export default function Game() {
                   )}
                   {currentQuestion.type === 'H' && (
                     <p className="text-gray-500 text-xs mt-1">
-                      Culture G : chacun gagne des points s'il a la bonne réponse !
+                      Culture générale : chacun gagne des points s'il a la bonne réponse !
                     </p>
                   )}
                 </div>
@@ -490,7 +504,7 @@ export default function Game() {
                 key={currentQuestion.id}
                 question={currentQuestion}
                 onAnswer={handleAnswer}
-                disabled={!!myAnswer || timeLeft === 0}
+                disabled={!!myAnswer || deadline === null || timeLeft === 0}
                 selectedAnswer={myAnswer}
                 player1Name={player1Name}
                 player2Name={player2Name}

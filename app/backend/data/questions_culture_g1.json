@@ -42,6 +42,19 @@
     {
       "type": "H",
       "category": "culture",
+      "text": "Quel navigateur anglais a exploré le Pacifique au cours de trois grands voyages au XVIIIe siècle ?",
+      "options": [
+        "James Cook",
+        "Francis Drake",
+        "Walter Raleigh",
+        "Henry Hudson"
+      ],
+      "correct_answer": "James Cook",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
       "text": "Quelle reine d'Angleterre a fait exécuter Marie Stuart en 1587 ?",
       "options": [
         "Élisabeth Ire",
@@ -185,6 +198,19 @@
     {
       "type": "H",
       "category": "culture",
+      "text": "Quelle est la capitale de l'Ouzbékistan ?",
+      "options": [
+        "Tachkent",
+        "Douchanbé",
+        "Achgabat",
+        "Bichkek"
+      ],
+      "correct_answer": "Tachkent",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
       "text": "Quel est le lac le plus profond du monde ?",
       "options": [
         "Le lac Baïkal",
@@ -219,6 +245,32 @@
         "Le foehn"
       ],
       "correct_answer": "Le mistral",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel fleuve traverse Prague ?",
+      "options": [
+        "La Vltava",
+        "L'Oder",
+        "La Save",
+        "La Morava"
+      ],
+      "correct_answer": "La Vltava",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel golfe sépare l'Iran de la péninsule Arabique ?",
+      "options": [
+        "Le golfe Persique",
+        "Le golfe d'Aden",
+        "Le golfe d'Oman",
+        "Le golfe de Suez"
+      ],
+      "correct_answer": "Le golfe Persique",
       "timer": 20
     },
     {
@@ -302,14 +354,14 @@
     {
       "type": "H",
       "category": "culture",
-      "text": "Quelle est la capitale du Maroc ?",
+      "text": "Quelle est la plus grande ville d'Amérique du Sud ?",
       "options": [
-        "Rabat",
-        "Casablanca",
-        "Fès",
-        "Marrakech"
+        "São Paulo",
+        "Buenos Aires",
+        "Lima",
+        "Rio de Janeiro"
       ],
-      "correct_answer": "Rabat",
+      "correct_answer": "São Paulo",
       "timer": 20
     },
     {
@@ -337,6 +389,19 @@
       ],
       "correct_answer": "Le foehn",
       "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Comment se nomme la science qui étudie les fossiles ?",
+      "options": [
+        "La paléontologie",
+        "La géologie",
+        "L'archéologie",
+        "La minéralogie"
+      ],
+      "correct_answer": "La paléontologie",
+      "timer": 20
     },
     {
       "type": "H",
@@ -666,6 +731,19 @@
     {
       "type": "H",
       "category": "culture",
+      "text": "Quel compositeur hongrois a écrit les Rhapsodies hongroises ?",
+      "options": [
+        "Franz Liszt",
+        "Béla Bartók",
+        "Zoltán Kodály",
+        "Johannes Brahms"
+      ],
+      "correct_answer": "Franz Liszt",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
       "text": "Quel compositeur allemand a écrit la tétralogie de L'Anneau du Nibelung ?",
       "options": [
         "Richard Wagner",
@@ -752,6 +830,19 @@
         "Baron noir"
       ],
       "correct_answer": "Le Bureau des légendes",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel groupe britannique a enregistré l'album A Night at the Opera ?",
+      "options": [
+        "Queen",
+        "Led Zeppelin",
+        "The Kinks",
+        "Genesis"
+      ],
+      "correct_answer": "Queen",
       "timer": 25
     },
     {
@@ -848,15 +939,28 @@
     {
       "type": "H",
       "category": "culture",
-      "text": "Combien de joueurs compte une équipe de water-polo dans l'eau ?",
+      "text": "Par quelle nage débute une épreuve de quatre nages individuel ?",
       "options": [
-        "Sept",
-        "Six",
-        "Cinq",
-        "Huit"
+        "Le papillon",
+        "Le dos",
+        "La brasse",
+        "La nage libre"
       ],
-      "correct_answer": "Sept",
+      "correct_answer": "Le papillon",
       "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Combien de temps dure un match de rugby à XV, prolongations exclues ?",
+      "options": [
+        "80 minutes",
+        "90 minutes",
+        "70 minutes",
+        "60 minutes"
+      ],
+      "correct_answer": "80 minutes",
+      "timer": 20
     },
     {
       "type": "H",

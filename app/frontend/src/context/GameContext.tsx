@@ -4,6 +4,7 @@ import {
   useReducer,
   useEffect,
   useCallback,
+  useRef,
   type ReactNode
 } from 'react';
 import { io, Socket } from 'socket.io-client';
@@ -599,10 +600,91 @@ interface StoredSession {
   sessionToken?: string;
 }
 
+/* -------------------------------------------------------------------------
+ * B5 — MULTI-ONGLETS SUR UN MEME APPAREIL
+ *
+ * Deux onglets du meme navigateur partagent le MEME localStorage. Sans
+ * arbitrage, le second onglet reprenait la session du premier : deux clients
+ * se declaraient le meme joueur, le serveur en ejectait un, et l'onglet perdant
+ * restait affiche mais totalement muet (clic = rien). Or c'est un cas d'usage
+ * reel : un couple sur un seul ordinateur ouvre deux onglets.
+ *
+ * Solution : chaque onglet recoit une identite dans sessionStorage — qui
+ * SURVIT au rafraichissement (la reprise apres F5 continue donc de marcher)
+ * mais est propre a l'onglet. Un seul onglet a la fois detient la session, via
+ * un bail rafraichi en continu. Un onglet neuf ne vole donc plus la session en
+ * cours : il demarre vierge et peut rejoindre en tant que second joueur. Si le
+ * proprietaire disparait (onglet ferme), son bail expire et le suivant reprend.
+ * ------------------------------------------------------------------------- */
+const TAB_ID_KEY = 'jeucouple_tab_id';
+const SESSION_OWNER_KEY = 'jeucouple_session_owner';
+const OWNER_HEARTBEAT_MS = 2000;
+// Bail volontairement court : au-dela, on considere l'onglet proprietaire mort.
+const OWNER_LEASE_MS = 6000;
+
+function getTabId(): string {
+  try {
+    let id = sessionStorage.getItem(TAB_ID_KEY);
+    if (!id) {
+      id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+      sessionStorage.setItem(TAB_ID_KEY, id);
+    }
+    return id;
+  } catch {
+    // Sans sessionStorage on ne sait pas distinguer les onglets : on retombe
+    // sur l'ancien comportement (un seul onglet utile) plutot que de bloquer.
+    return 'onglet-unique';
+  }
+}
+
+function readSessionOwner(): { tabId: string; ts: number } | null {
+  try {
+    const raw = localStorage.getItem(SESSION_OWNER_KEY);
+    if (!raw) return null;
+    const owner = JSON.parse(raw);
+    if (typeof owner?.tabId !== 'string' || typeof owner?.ts !== 'number') return null;
+    return owner;
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionOwner() {
+  try {
+    localStorage.setItem(SESSION_OWNER_KEY, JSON.stringify({ tabId: getTabId(), ts: Date.now() }));
+  } catch (e) {
+    console.warn('Impossible d\'ecrire le bail de session:', e);
+  }
+}
+
+/** Cet onglet a-t-il le droit de reprendre la session stockee ? */
+function claimSessionOwnership(): boolean {
+  const owner = readSessionOwner();
+  const leaseAlive = owner !== null && Date.now() - owner.ts < OWNER_LEASE_MS;
+  if (leaseAlive && owner!.tabId !== getTabId()) return false;
+  writeSessionOwner();
+  return true;
+}
+
+/** Un create/join explicite prend la main sans discuter : c'est un acte du joueur. */
+function takeSessionOwnership() {
+  writeSessionOwner();
+}
+
+function releaseSessionOwnership() {
+  try {
+    const owner = readSessionOwner();
+    if (!owner || owner.tabId === getTabId()) localStorage.removeItem(SESSION_OWNER_KEY);
+  } catch (e) {
+    console.warn('Impossible de liberer le bail de session:', e);
+  }
+}
+
 function saveSession(roomCode: string, playerId: 1 | 2, playerName: string, sessionToken?: string) {
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode, playerId, playerName, sessionToken }));
     localStorage.setItem(SESSION_TIMESTAMP_KEY, Date.now().toString());
+    takeSessionOwnership();
   } catch (e) {
     console.warn('Failed to save session:', e);
   }
@@ -651,6 +733,9 @@ function forgetSession(reason: string) {
   try {
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SESSION_TIMESTAMP_KEY);
+    // Le bail part avec la session : sinon un onglet ferme continuerait a
+    // bloquer les suivants pendant la duree du bail.
+    releaseSessionOwnership();
     console.log('[reprise] session effacee :', reason);
   } catch (e) {
     console.warn('Failed to clear session:', e);
@@ -669,6 +754,9 @@ function updateSessionTimestamp() {
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, initialState);
+  // Cet onglet detient-il le bail sur la session locale ? Seul le detenteur
+  // rafraichit le bail, pour qu'un onglet spectateur ne le lui vole pas.
+  const ownsSessionRef = useRef(false);
 
   // Initialize socket connection
   useEffect(() => {
@@ -679,10 +767,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(socketUrl, {
       transports: ['websocket', 'polling'],
       timeout: 20000,
+      // B5 : on ne renonce JAMAIS. Avec 5 tentatives, le socket abandonnait au
+      // bout d'une quinzaine de secondes ; le badge "Connecte" disparaissait et
+      // plus rien ne se reconnectait, laissant une page vivante mais inerte.
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000
+      reconnectionAttempts: Infinity,
+      // Backoff exponentiel plafonne : rapide sur une micro-coupure, doux sur
+      // une panne longue, avec de l'aleatoire pour ne pas synchroniser les
+      // clients qui reviennent tous en meme temps apres un redemarrage.
+      reconnectionDelay: 500,
+      reconnectionDelayMax: 8000,
+      randomizationFactor: 0.5
     });
 
     // ---------------------------------------------------------------------
@@ -798,6 +893,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Multi-onglets : si un autre onglet vivant detient deja cette session,
+      // on ne la lui vole pas. Cet onglet demarre vierge sur l'accueil et peut
+      // servir au second joueur du couple, sur le meme ordinateur.
+      if (!claimSessionOwnership()) {
+        console.log('[reprise] session detenue par un autre onglet : demarrage a neuf');
+        ownsSessionRef.current = false;
+        settleLive();
+        return;
+      }
+      ownsSessionRef.current = true;
+
       dispatch({ type: 'RESUME_PHASE', phase: 'restoring' });
       runResumeAttempt(session, 0, resumeRun);
     };
@@ -815,6 +921,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     socket.on('disconnect', (reason) => {
       console.log('Disconnected from server:', reason);
       dispatch({ type: 'SET_CONNECTED', connected: false });
+      dispatch({ type: 'SET_RECONNECTING', reconnecting: true, attempts: 0 });
+      // 'io server disconnect' est le seul cas ou socket.io ne retente pas de
+      // lui-meme : on relance explicitement, sinon la page reste morte.
+      if (reason === 'io server disconnect') socket.connect();
       // Une sequence de reprise en vol devient caduque : le prochain 'connect'
       // en relancera une propre.
       resumeRun += 1;
@@ -833,6 +943,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
     socket.io.on('reconnect', () => {
       console.log('Socket.io manager reconnected');
       // 'connect' suit immediatement et relance startResume().
+    });
+
+    // Le bandeau "reconnexion en cours" s'appuie sur ces deux evenements :
+    // sans eux, l'interface n'avait aucun moyen de dire au joueur ce qui se
+    // passait, et une page morte ressemblait a une page normale.
+    socket.io.on('reconnect_attempt', (attempt: number) => {
+      dispatch({ type: 'SET_RECONNECTING', reconnecting: true, attempts: attempt });
+    });
+    socket.io.on('reconnect_error', () => {
+      dispatch({ type: 'SET_RECONNECTING', reconnecting: true });
     });
 
     socket.on('room:player-joined', (data) => {
@@ -866,6 +986,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     socket.on('game:score-update', (data) => {
       dispatch({ type: 'UPDATE_SCORES', scores: data });
+    });
+
+    // B3 : etat complet de la manche. C'est LUI qui fait autorite ; les
+    // evenements partiels ci-dessus restent pour les animations, mais ne
+    // peuvent plus faire diverger deux clients.
+    socket.on('game:round-state', (data) => {
+      dispatch({ type: 'ROUND_STATE', state: data });
     });
 
     socket.on('game:finished', (data) => {
@@ -1016,11 +1143,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // rafraichissement d'horodatage : il ne decide plus rien.
     const sessionKeepAliveInterval = setInterval(updateSessionTimestamp, 5 * 60 * 1000);
 
+    // Bail multi-onglets : seul l'onglet detenteur le rafraichit. Quand il se
+    // ferme, le bail perime tout seul et un autre onglet peut reprendre la
+    // partie — c'est ce qui evite qu'une session reste bloquee pour toujours.
+    const ownershipInterval = setInterval(() => {
+      if (ownsSessionRef.current && localStorage.getItem(SESSION_KEY)) writeSessionOwner();
+    }, OWNER_HEARTBEAT_MS);
+
     return () => {
       // Cleanup all listeners and timers
       resumeRun += 1;
       clearResumeTimers();
       clearInterval(sessionKeepAliveInterval);
+      clearInterval(ownershipInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
       socket.disconnect();
@@ -1036,7 +1171,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // L'effacement est desormais centralise dans forgetSession().
 
   const createRoom = useCallback(async (playerName: string, gender: Gender, questionCount?: number, categories?: string[], questionTypes?: string[], gameMode?: GameMode): Promise<string> => {
-    if (!state.socket) throw new Error('No socket connection');
+    // B5 : hors connexion on le DIT. L'ancienne version partait quand meme et
+    // l'ack ne revenait jamais : bouton sans effet et sans message.
+    if (!state.socket || !state.connected) {
+      const message = 'Connexion perdue. Reconnexion en cours...';
+      dispatch({ type: 'SET_ERROR', error: message });
+      throw new Error(message);
+    }
 
     return new Promise<string>((resolve, reject) => {
       state.socket!.emit('room:create', { playerName, gender, questionCount, categories, questionTypes, gameMode }, (response) => {
@@ -1048,6 +1189,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
             playerName
           });
           saveSession(response.room.code, response.playerId, playerName, response.sessionToken);
+          // Cet onglet vient d'entrer dans un salon : il devient detenteur du
+          // bail (multi-onglets), c'est lui qui reprendra apres un refresh.
+          ownsSessionRef.current = true;
           resolve(response.room.code); // Return the room code
         } else {
           dispatch({ type: 'SET_ERROR', error: response.error || 'Failed to create room' });
@@ -1055,10 +1199,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
       });
     });
-  }, [state.socket]);
+  }, [state.socket, state.connected]);
 
   const joinRoom = useCallback(async (code: string, playerName: string, gender: Gender): Promise<string> => {
-    if (!state.socket) throw new Error('No socket connection');
+    if (!state.socket || !state.connected) {
+      const message = 'Connexion perdue. Reconnexion en cours...';
+      dispatch({ type: 'SET_ERROR', error: message });
+      throw new Error(message);
+    }
 
     return new Promise<string>((resolve, reject) => {
       state.socket!.emit('room:join', { code: code.toUpperCase(), playerName, gender }, (response) => {
@@ -1070,6 +1218,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
             playerName
           });
           saveSession(response.room.code, response.playerId, playerName, response.sessionToken);
+          // Cet onglet vient d'entrer dans un salon : il devient detenteur du
+          // bail (multi-onglets), c'est lui qui reprendra apres un refresh.
+          ownsSessionRef.current = true;
           resolve(response.room.code); // Return the room code
         } else {
           dispatch({ type: 'SET_ERROR', error: response.error || 'Failed to join room' });
@@ -1077,7 +1228,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
       });
     });
-  }, [state.socket]);
+  }, [state.socket, state.connected]);
 
   const startGame = useCallback(async () => {
     if (!state.socket) return;

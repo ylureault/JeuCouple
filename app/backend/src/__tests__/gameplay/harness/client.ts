@@ -111,6 +111,12 @@ export class Peer {
     });
   }
 
+  /** Dernier evenement `ev` recu depuis le debut (independant du curseur). */
+  last(ev: string): Entry | undefined {
+    for (let i = this.log.length - 1; i >= 0; i--) if (this.log[i].ev === ev) return this.log[i];
+    return undefined;
+  }
+
   /** Vrai si AUCUN evenement `ev` n'arrive pendant `ms` (assertion de silence). */
   async silence(ev: string, ms: number, pred?: (d: any) => boolean): Promise<boolean> {
     try {
@@ -300,6 +306,16 @@ export function baremeAccord(type: string): number {
   // Type C : pas de bonne reponse, mais une reponse fournie (>= 20 caracteres)
   // vaut le bonus "reponse reflechie" de 50 points.
   return type === 'C' ? 50 : 100;
+}
+
+/** Attend qu'une condition devienne vraie (scrutation), ou renonce. */
+export async function until(pred: () => boolean, ms: number, pas = 200): Promise<boolean> {
+  const fin = Date.now() + ms;
+  while (Date.now() < fin) {
+    if (pred()) return true;
+    await new Promise((r) => setTimeout(r, pas));
+  }
+  return pred();
 }
 
 export interface RoundResult {

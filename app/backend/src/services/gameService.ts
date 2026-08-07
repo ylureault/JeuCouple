@@ -550,8 +550,10 @@ export function setupSocketHandlers(
 
           // Send current question if available (for question or reveal phase)
           if (gameState.currentQuestion) {
+            // Meme regle a la reconnexion : la bonne reponse reste au serveur.
+            const { correct_answer: _s, ...questionPublique } = gameState.currentQuestion;
             socket.emit('game:question', {
-              question: gameState.currentQuestion,
+              question: questionPublique as typeof gameState.currentQuestion,
               questionNumber: gameState.currentQuestionIndex + 1,
               totalQuestions: gameState.questions.length
             });
@@ -1518,8 +1520,12 @@ function sendQuestion(
   // Store the prepared question so it can be re-sent on reconnect
   gameState.currentQuestion = question;
 
+  // La bonne reponse ne quitte JAMAIS le serveur avant la revelation :
+  // elle partait dans game:question, donc visible dans la trame socket avant
+  // meme de repondre (quiz et mode "A l'envers" trichables).
+  const { correct_answer: _secret, ...questionPublique } = question;
   io.to(roomCode).emit('game:question', {
-    question,
+    question: questionPublique as typeof question,
     questionNumber: gameState.currentQuestionIndex + 1,
     totalQuestions: gameState.questions.length
   });

@@ -328,6 +328,19 @@
     {
       "type": "H",
       "category": "culture",
+      "text": "Quelle vaste plaine d'Argentine est le cœur de l'élevage bovin du pays ?",
+      "options": [
+        "La Pampa",
+        "Le Chaco",
+        "La Patagonie",
+        "Les Llanos"
+      ],
+      "correct_answer": "La Pampa",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
       "text": "Quelle mer sépare la Turquie de l'Ukraine ?",
       "options": [
         "La mer Noire",
@@ -367,14 +380,14 @@
     {
       "type": "H",
       "category": "culture",
-      "text": "Quel pays possède le plus grand nombre de lacs au monde ?",
+      "text": "Quel fleuve traverse la ville de Séville ?",
       "options": [
-        "Le Canada",
-        "La Finlande",
-        "La Russie",
-        "La Suède"
+        "Le Guadalquivir",
+        "L'Èbre",
+        "Le Tage",
+        "Le Douro"
       ],
-      "correct_answer": "Le Canada",
+      "correct_answer": "Le Guadalquivir",
       "timer": 25
     },
     {
@@ -523,14 +536,14 @@
     {
       "type": "H",
       "category": "culture",
-      "text": "Quel médecin anglais a mis au point la vaccination contre la variole ?",
+      "text": "Quelle vitesse faut-il atteindre pour échapper à l'attraction terrestre ?",
       "options": [
-        "Edward Jenner",
-        "Louis Pasteur",
-        "Robert Koch",
-        "Alexander Fleming"
+        "Environ 11,2 km/s",
+        "Environ 7,9 km/s",
+        "Environ 3 km/s",
+        "Environ 30 km/s"
       ],
-      "correct_answer": "Edward Jenner",
+      "correct_answer": "Environ 11,2 km/s",
       "timer": 25
     },
     {
@@ -562,15 +575,15 @@
     {
       "type": "H",
       "category": "culture",
-      "text": "Quel instrument mesure la vitesse du vent ?",
+      "text": "Quel type d'onde peut se propager dans le vide ?",
       "options": [
-        "L'anémomètre",
-        "Le baromètre",
-        "L'hygromètre",
-        "La girouette"
+        "L'onde électromagnétique",
+        "L'onde sonore",
+        "L'onde sismique",
+        "L'onde de gravité de surface"
       ],
-      "correct_answer": "L'anémomètre",
-      "timer": 20
+      "correct_answer": "L'onde électromagnétique",
+      "timer": 25
     },
     {
       "type": "H",
@@ -627,15 +640,15 @@
     {
       "type": "H",
       "category": "culture",
-      "text": "Quel écrivain de langue allemande a écrit La Métamorphose ?",
+      "text": "Quel romancier tchèque a écrit L'Insoutenable Légèreté de l'être ?",
       "options": [
-        "Franz Kafka",
-        "Thomas Mann",
-        "Stefan Zweig",
-        "Hermann Hesse"
+        "Milan Kundera",
+        "Bohumil Hrabal",
+        "Jaroslav Hasek",
+        "Vaclav Havel"
       ],
-      "correct_answer": "Franz Kafka",
-      "timer": 20
+      "correct_answer": "Milan Kundera",
+      "timer": 25
     },
     {
       "type": "H",
@@ -926,6 +939,19 @@
     {
       "type": "H",
       "category": "culture",
+      "text": "Quelle ville accueillera les Jeux olympiques d'été de 2028 ?",
+      "options": [
+        "Los Angeles",
+        "Brisbane",
+        "Tokyo",
+        "Madrid"
+      ],
+      "correct_answer": "Los Angeles",
+      "timer": 20
+    },
+    {
+      "type": "H",
+      "category": "culture",
       "text": "Quelle épreuve d'athlétisme féminine regroupe sept disciplines ?",
       "options": [
         "L'heptathlon",
@@ -965,15 +991,28 @@
     {
       "type": "H",
       "category": "culture",
-      "text": "Quel sport d'hiver associe le ski de fond et le tir à la carabine ?",
+      "text": "Quelle distance de course à pied clôt un triathlon au format olympique ?",
       "options": [
-        "Le biathlon",
-        "Le combiné nordique",
-        "Le skeleton",
-        "Le saut à ski"
+        "10 kilomètres",
+        "5 kilomètres",
+        "21 kilomètres",
+        "42 kilomètres"
       ],
-      "correct_answer": "Le biathlon",
-      "timer": 20
+      "correct_answer": "10 kilomètres",
+      "timer": 25
+    },
+    {
+      "type": "H",
+      "category": "culture",
+      "text": "Quel dispositif de pointage a été inventé par Douglas Engelbart dans les années 1960 ?",
+      "options": [
+        "La souris",
+        "Le clavier",
+        "L'écran tactile",
+        "Le scanner"
+      ],
+      "correct_answer": "La souris",
+      "timer": 25
     },
     {
       "type": "H",
@@ -1095,15 +1134,15 @@
     {
       "type": "H",
       "category": "culture",
-      "text": "Que signifie l'expression poser un lapin ?",
+      "text": "Que signifie l'expression avoir voix au chapitre ?",
       "options": [
-        "Ne pas se rendre à un rendez-vous",
-        "Raconter un mensonge",
-        "Piéger quelqu'un",
-        "Faire une farce"
+        "Avoir le droit de donner son avis",
+        "Chanter juste",
+        "Lire à haute voix",
+        "Présider une réunion"
       ],
-      "correct_answer": "Ne pas se rendre à un rendez-vous",
-      "timer": 20
+      "correct_answer": "Avoir le droit de donner son avis",
+      "timer": 25
     },
     {
       "type": "H",
@@ -1160,15 +1199,15 @@
     {
       "type": "H",
       "category": "culture",
-      "text": "Quel légume-racine donne sa couleur au bortsch ?",
+      "text": "De quel animal provient le lait de la mozzarella di bufala ?",
       "options": [
-        "La betterave",
-        "La carotte",
-        "Le navet",
-        "Le panais"
+        "La bufflonne",
+        "La vache",
+        "La brebis",
+        "La chèvre"
       ],
-      "correct_answer": "La betterave",
-      "timer": 25
+      "correct_answer": "La bufflonne",
+      "timer": 20
     },
     {
       "type": "H",

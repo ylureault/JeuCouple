@@ -3,7 +3,7 @@
  * Chaque session joue de vraies manches et observe la mecanique annoncee.
  */
 import type { Session } from '../harness/runner.js';
-import { accord, desaccord, playRound } from '../harness/client.js';
+import { accord, desaccord, playRound, until } from '../harness/client.js';
 
 // Themes disposant tous de questions de type E : le choix du gagnant peut donc
 // etre honore sans repli sur un autre theme.
@@ -71,11 +71,13 @@ const duel: Session = {
     await party.guest.answer(accord(q2.data.question));
     await party.host.wait('game:reveal', { timeout: 15000 });
     await playRound(party, { a1: accord, a2: accord });
-    const pasDeFin = await party.host.silence('game:finished', 1000);
+    const r4 = await playRound(party, { a1: accord, a2: accord });
+    const finiHote = party.host.log.some((e) => e.ev === 'game:finished');
+    const finiInvite = party.guest.log.some((e) => e.ev === 'game:finished');
     t.ok(
       '[duel] le duel ne se termine jamais de lui-meme (mode sans fin)',
-      pasDeFin && finQ2.accepted === true,
-      'un evenement game:finished est arrive alors que le duel est annonce sans limite'
+      finQ2.accepted === true && !finiHote && !finiInvite && r4.reveal.questionId > 0,
+      `game:finished recu par l'hote=${finiHote}, par l'invite=${finiInvite} apres 4 manches jouees`
     );
   },
 };
@@ -235,12 +237,15 @@ const suddenDeath: Session = {
       `base=${r1.reveal.basePoints}, points=${r1.reveal.points1}/${r1.reveal.points2}`
     );
 
-    // Manche 2 : personne ne repond => manche nulle, aucune vie perdue.
+    // Manche 2 : personne ne repond => manche strictement nulle (le serveur ne
+    // penalise plus l'absence de reponse, NO_ANSWER_PENALTY = 0).
     const r2 = await playRound(party, { a1: null, a2: null });
     t.ok(
-      '[mort subite] une manche sans aucune reponse penalise les deux joueurs de 50 points',
-      r2.reveal.points1 === -50 && r2.reveal.points2 === -50,
-      `points : ${r2.reveal.points1}/${r2.reveal.points2} (attendu -50/-50)`
+      '[mort subite] une manche sans aucune reponse ne rapporte ni ne retire de points',
+      r2.reveal.points1 === 0 && r2.reveal.points2 === 0 &&
+        r2.reveal.answer1 === null && r2.reveal.answer2 === null,
+      `points : ${r2.reveal.points1}/${r2.reveal.points2} (attendu 0/0), ` +
+        `reponses revelees : ${JSON.stringify(r2.reveal.answer1)}/${JSON.stringify(r2.reveal.answer2)}`
     );
 
     // Manche 3 : deuxieme victoire de l'hote. Si la manche nulle avait coute
@@ -294,11 +299,15 @@ const inverse: Session = {
       `options=${JSON.stringify(inv.options)}`
     );
 
-    const r2 = await playRound(party, { a1: inv.options[0], a2: inv.options[0] });
+    // On repond a CETTE manche (deja recuperee ci-dessus) pour lire la bonne
+    // reponse telle que le serveur l'annonce a la revelation.
+    await party.host.answer(inv.options[0]);
+    await party.guest.answer(inv.options[0]);
+    const rev2 = await party.host.wait('game:reveal', { timeout: 15000, what: 'revelation de la manche inversee' });
     t.ok(
       "[a l'envers] la bonne reponse figure bien parmi les options proposees",
-      typeof r2.reveal.correctAnswer === 'string' && inv.options.includes(r2.reveal.correctAnswer),
-      `bonne reponse annoncee="${r2.reveal.correctAnswer}" ; options=${JSON.stringify(inv.options)}`
+      typeof rev2.data.correctAnswer === 'string' && inv.options.includes(rev2.data.correctAnswer),
+      `bonne reponse annoncee="${rev2.data.correctAnswer}" ; options=${JSON.stringify(inv.options)}`
     );
 
     const q3 = await party.host.wait('game:question', { timeout: 20000, what: 'seconde manche inversee' });
@@ -323,7 +332,7 @@ const inverse: Session = {
     t.bug(
       "[a l'envers] la bonne reponse n'est pas envoyee avec la question",
       typeof inv3.correct_answer !== 'string',
-      "gameService.ts:1302 (sendQuestion) diffuse l'objet Question complet : le champ correct_answer " +
+      "gameService.ts:1521 (sendQuestion) diffuse l'objet Question complet : le champ correct_answer " +
         "des questions de type H part vers les deux clients avant la reponse, la bonne reponse est lisible " +
         'dans la trame socket',
       `correct_answer recu = "${String(inv3.correct_answer).slice(0, 60)}"`
@@ -360,15 +369,17 @@ const envies: Session = {
       '[envies express] aucun point n\'est compte dans ce mode sans score',
       r3.score.score1 === 0 && r3.score.score2 === 0,
       "le mode annonce « Aucun point, on compare juste vos envies » (gameModes.ts:250) mais le moteur " +
-        'score les questions de type S comme un accord ordinaire (gameService.ts:2041) : le score monte',
+        'score les questions de type S comme un accord ordinaire (gameService.ts:2279) : le score monte',
       `score apres 3 manches : ${r3.score.score1}/${r3.score.score2}`
     );
 
-    const pasDeFin = await party.host.silence('game:finished', 1000);
+    const r4 = await playRound(party, { a1: 'daccord', a2: 'daccord' });
+    const fini = party.host.log.some((e) => e.ev === 'game:finished') ||
+      party.guest.log.some((e) => e.ev === 'game:finished');
     t.ok(
       "[envies express] la partie ne s'arrete pas d'elle-meme apres quelques manches",
-      pasDeFin,
-      'la partie s\'est terminee avant les 200 manches annoncees'
+      !fini && r4.question.category === 'swipe',
+      `game:finished recu=${fini} apres 4 manches (le mode annonce 200 manches)`
     );
   },
 };
@@ -405,7 +416,7 @@ const petitsNoms: Session = {
       "[petits noms] aucun point n'est compte dans ce mode sans score",
       r2.score.score1 === 0 && r2.score.score2 === 0,
       "le mode annonce « Sans points : le seul enjeu est de faire rire l'autre » (gameModes.ts:265) mais " +
-        'le moteur applique le bonus de reponse reflechie des questions de type C (gameService.ts:1508)',
+        'le moteur applique le bonus de reponse reflechie des questions de type C (gameService.ts:1731)',
       `score apres 2 manches : ${r2.score.score1}/${r2.score.score2}`
     );
   },
@@ -439,24 +450,25 @@ const mix: Session = {
       [...party.host.log, ...party.guest.log]
         .filter((e) => e.ev === 'duel:choose-theme' || e.ev === 'duel:awaiting-theme').length;
 
+    // Manches 1 a P-1 : elles doivent s'enchainer sans le moindre choix de theme.
     for (let i = 0; i < t.mixDuelPeriod - 1; i++) {
       await playRound(party, { a1: accord, a2: desaccord, first: 1, gapMs: 60 });
     }
-    // La manche suivante doit encore arriver sans passer par un choix de theme.
-    await party.host.wait('game:question', { timeout: 20000, what: 'manche intermediaire' });
+    const qP = await party.host.wait('game:question', { timeout: 20000, what: `manche ${t.mixDuelPeriod}` });
     t.ok(
       '[mix total] entre deux duels, les manches s\'enchainent sans choix de theme',
       duelEvents() === 0,
       `${duelEvents()} evenement(s) de duel recus avant la manche ${t.mixDuelPeriod}`
     );
 
-    await playRound(party, { a1: accord, a2: desaccord, first: 1, gapMs: 60 });
-    const main = await party.host.wait('duel:choose-theme', { timeout: 15000, what: 'declenchement du duel' })
-      .then(() => true)
-      .catch(async () => party.guest.log.some((e) => e.ev === 'duel:choose-theme'));
+    // La manche P doit, elle, rendre la main a un joueur.
+    await party.host.answer(accord(qP.data.question));
+    await party.guest.answer(desaccord(qP.data.question));
+    await party.host.wait('game:reveal', { timeout: 15000, what: `revelation manche ${t.mixDuelPeriod}` });
+    const declenche = await until(() => duelEvents() >= 1, 15000);
     t.ok(
       `[mix total] la mecanique du duel se declenche toutes les ${t.mixDuelPeriod} manches`,
-      main && duelEvents() >= 1,
+      declenche,
       `${duelEvents()} evenement(s) de duel apres ${t.mixDuelPeriod} manches jouees`
     );
   },

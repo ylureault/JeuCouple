@@ -7,13 +7,14 @@ import { useTheme } from '../context/ThemeContext';
 import MuteButton from '../components/MuteButton';
 import ThemeSelector from '../components/ThemeSelector';
 import GameModeSelector from '../components/GameModeSelector';
+import { consulterSalon, traduireErreur } from '../lib/salon';
 import type { Gender, GameMode } from '../../../shared/types';
 
 type Mode = 'home' | 'create' | 'join' | 'thematic';
 
 // Thematic game configuration - explicit themes
 const THEMATIC_THEMES = [
-  { id: 'mix_all', label: 'Mix de TOUT', emoji: '🎲', description: 'Tous les thèmes du jeu mélangés — tendre, culture G, coquin, profond', color: 'from-indigo-500 to-purple-600' },
+  { id: 'mix_all', label: 'Mix de TOUT', emoji: '🎲', description: 'Tous les thèmes du jeu mélangés — tendre, culture générale, coquin, profond', color: 'from-indigo-500 to-purple-600' },
   { id: 'fantasmes', label: 'Fantasmes', emoji: '💭', description: 'Vos désirs secrets et inavoués', color: 'from-violet-500 to-purple-600' },
   { id: 'preliminaires', label: 'Préliminaires', emoji: '💋', description: "L'art de faire monter le désir", color: 'from-red-400 to-pink-600' },
   { id: 'kamasutra', label: 'Kamasutra', emoji: '🧘', description: 'Positions et techniques', color: 'from-amber-500 to-orange-600' },
@@ -39,7 +40,7 @@ const CATEGORY_CONFIG = [
   { id: 'fun', label: 'Fun', emoji: '🎉' },
   { id: 'preferences', label: 'Goûts', emoji: '⭐' },
   { id: 'profond', label: 'Profond', emoji: '💭' },
-  { id: 'culture', label: 'Culture G', emoji: '🧠' },
+  { id: 'culture', label: 'Culture générale', emoji: '🧠' },
   { id: 'intime', label: 'Intimité', emoji: '🕯️' },
   { id: 'oser_dire', label: 'Oser le dire', emoji: '🕊️' },
 ] as const;
@@ -70,7 +71,10 @@ export default function Home() {
   // C'est le chemin par defaut du jeu : il ne tourne PAS autour du sexe.
   const [quickStart, setQuickStart] = useState(false);
   const [gameMode, setGameMode] = useState<GameMode>('classic');
-  const { createRoom, joinRoom, error, connected } = useGame();
+  // Message propre a l'ecran Rejoindre (code inconnu, salon complet). Il prime
+  // sur l'erreur du contexte, qui est plus generique.
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const { createRoom, joinRoom, error, connected, reconnecting, clearError } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
   const location = useLocation();
@@ -148,14 +152,41 @@ export default function Home() {
   };
 
   const handleJoin = async () => {
-    if (!playerName.trim() || !roomCode.trim() || !gender) return;
+    // Le garde `connected` manquait ici : hors connexion le bouton "Rejoindre"
+    // partait dans le vide et laissait le spinner tourner pour toujours.
+    if (!playerName.trim() || !roomCode.trim() || !gender || !connected) return;
+    const code = roomCode.trim().toUpperCase();
     setLoading(true);
+    setJoinError(null);
+    clearError();
     playSound('click');
     try {
-      const code = await joinRoom(roomCode.trim().toUpperCase(), playerName.trim(), gender);
-      navigate(`/salon/${code}`);
-    } catch {
-      // Error handled in context
+      // SALON FANTOME (B6) : on demande d'abord au serveur si ce code existe.
+      // Un code inconnu se solde par un message clair, et surtout par AUCUNE
+      // tentative d'entree — rejoindre n'a jamais eu le droit de creer une
+      // partie. Si le serveur ne repond pas (etat null), on laisse la tentative
+      // suivre son cours : c'est lui l'arbitre, pas cette verification.
+      const etat = await consulterSalon(code);
+      if (etat && !etat.exists) {
+        setJoinError('Aucune partie avec ce code. Vérifie le code ou crée une partie.');
+        return;
+      }
+      if (etat && !etat.joinable) {
+        setJoinError('Partie introuvable ou déjà complète');
+        return;
+      }
+
+      const codeRejoint = await joinRoom(code, playerName.trim(), gender);
+      // Ceinture et bretelles : sans code confirme par le serveur, on ne bouge
+      // pas. Naviguer "au cas ou" est precisement ce qui fabriquait un salon
+      // dans lequel personne n'etait jamais entre.
+      if (!codeRejoint) {
+        setJoinError('Aucune partie avec ce code. Vérifie le code ou crée une partie.');
+        return;
+      }
+      navigate(`/salon/${codeRejoint}`);
+    } catch (e) {
+      setJoinError(traduireErreur(e instanceof Error ? e.message : null));
     } finally {
       setLoading(false);
     }
@@ -163,10 +194,15 @@ export default function Home() {
 
   const switchMode = (newMode: Mode) => {
     playSound('click');
+    // Une banniere d'erreur laissee d'un ecran a l'autre fait croire a un
+    // probleme qui n'existe plus.
+    setJoinError(null);
+    clearError();
     setMode(newMode);
   };
 
   const { theme } = useTheme();
+  const messageErreur = joinError ?? traduireErreur(error);
 
   return (
     <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-y-auto`}>
@@ -236,25 +272,31 @@ export default function Home() {
           className={`rounded-full px-4 py-2 mb-4 flex items-center gap-2 ${
             connected
               ? 'bg-green-500/20 border border-green-400/50'
-              : 'bg-yellow-500/20 border border-yellow-400/50'
+              : reconnecting
+                ? 'bg-red-500/20 border border-red-400/60'
+                : 'bg-yellow-500/20 border border-yellow-400/50'
           }`}
         >
-          <div className={`w-3 h-3 rounded-full ${
-            connected ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-pulse'
+          <div className={`w-3 h-3 rounded-full animate-pulse ${
+            connected ? 'bg-green-400' : reconnecting ? 'bg-red-400' : 'bg-yellow-400'
           }`} />
           <p className="text-white text-sm font-medium">
-            {connected ? 'Connecté' : 'Connexion...'}
+            {/* Distinguer "je me connecte" de "j'ai perdu la connexion" : le
+                joueur doit savoir si les boutons sont grises pour une seconde
+                ou parce que le serveur ne repond plus. */}
+            {connected ? 'Connecté' : reconnecting ? 'Connexion perdue : reconnexion...' : 'Connexion...'}
           </p>
         </motion.div>}
 
-        {/* Error message */}
-        {error && (
+        {/* Error message — toujours en francais, jamais le brut du serveur */}
+        {messageErreur && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#e21b3c] rounded-xl px-6 py-3 mb-6 shadow-lg"
+            className="bg-[#e21b3c] rounded-xl px-6 py-3 mb-6 shadow-lg max-w-md"
+            role="alert"
           >
-            <p className="text-white font-bold">{error}</p>
+            <p className="text-white font-bold">{messageErreur}</p>
           </motion.div>
         )}
 
@@ -269,9 +311,15 @@ export default function Home() {
               transition={{ type: 'spring', damping: 20 }}
               className="w-full max-w-md space-y-3"
             >
+              {/* B5 : `disabled` et non un simple style. Un bouton qui a l'air
+                  cliquable mais ne fait rien est le pire des deux mondes : le
+                  joueur clique dix fois sans comprendre. Grise + curseur
+                  interdit + inerte pour le clavier et le lecteur d'ecran. */}
               <motion.button
                 onClick={() => { if (connected) { setQuickStart(true); switchMode('create'); } }}
-                className={`btn-start w-full ${!connected ? 'opacity-70 cursor-wait' : ''}`}
+                disabled={!connected}
+                aria-disabled={!connected}
+                className={`btn-start w-full ${!connected ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
                 whileHover={connected ? { scale: 1.02 } : {}}
                 whileTap={connected ? { scale: 0.98 } : {}}
               >
@@ -286,7 +334,9 @@ export default function Home() {
 
               <motion.button
                 onClick={() => { if (connected) { setQuickStart(false); switchMode('create'); } }}
-                className={`btn-create w-full ${!connected ? 'opacity-70 cursor-wait' : ''}`}
+                disabled={!connected}
+                aria-disabled={!connected}
+                className={`btn-create w-full ${!connected ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
                 whileHover={connected ? { scale: 1.02 } : {}}
                 whileTap={connected ? { scale: 0.98 } : {}}
               >
@@ -299,7 +349,9 @@ export default function Home() {
 
               <motion.button
                 onClick={() => connected && switchMode('thematic')}
-                className={`w-full py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-pink-500 to-rose-600 shadow-lg ${!connected ? 'opacity-70 cursor-wait' : ''}`}
+                disabled={!connected}
+                aria-disabled={!connected}
+                className={`w-full py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-pink-500 to-rose-600 shadow-lg ${!connected ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
                 whileHover={connected ? { scale: 1.02 } : {}}
                 whileTap={connected ? { scale: 0.98 } : {}}
               >
@@ -311,7 +363,9 @@ export default function Home() {
 
               <motion.button
                 onClick={() => connected && switchMode('join')}
-                className={`btn-join w-full ${!connected ? 'opacity-70 cursor-wait' : ''}`}
+                disabled={!connected}
+                aria-disabled={!connected}
+                className={`btn-join w-full ${!connected ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
                 whileHover={connected ? { scale: 1.02 } : {}}
                 whileTap={connected ? { scale: 0.98 } : {}}
               >
@@ -475,7 +529,7 @@ export default function Home() {
                 <div className="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
                   <motion.button
                     onClick={handleCreate}
-                    disabled={!playerName.trim() || !gender || loading}
+                    disabled={!playerName.trim() || !gender || loading || !connected}
                     className="btn-create w-full disabled:opacity-50 disabled:cursor-not-allowed text-lg py-4"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -525,7 +579,7 @@ export default function Home() {
                       type="text"
                       value={playerName}
                       onChange={(e) => setPlayerName(e.target.value)}
-                      placeholder="Ex: Pierre"
+                      placeholder="Ex: Marie"
                       className="input-kahoot"
                       maxLength={20}
                       autoFocus
@@ -570,13 +624,16 @@ export default function Home() {
 
                   <div>
                     <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
-                      Code du salon (4 chiffres)
+                      Code du salon (6 chiffres)
                     </label>
                     <input
                       type="text"
                       value={roomCode}
-                      onChange={(e) => setRoomCode(e.target.value.replace(/\D/g, ''))}
-                      placeholder="1234"
+                      onChange={(e) => {
+                        setRoomCode(e.target.value.replace(/\D/g, ''));
+                        setJoinError(null);
+                      }}
+                      placeholder="123456"
                       className="input-kahoot text-center text-4xl tracking-[0.5em] font-black"
                       maxLength={6}
                       inputMode="numeric"
@@ -588,7 +645,7 @@ export default function Home() {
 
                   <motion.button
                     onClick={handleJoin}
-                    disabled={!playerName.trim() || !gender || roomCode.length < 4 || loading}
+                    disabled={!playerName.trim() || !gender || roomCode.length < 6 || loading}
                     className="btn-join w-full disabled:opacity-50 disabled:cursor-not-allowed mt-6"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -740,7 +797,7 @@ export default function Home() {
                 <div className="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
                   <motion.button
                     onClick={handleCreateThematic}
-                    disabled={!playerName.trim() || !gender || !selectedTheme || loading}
+                    disabled={!playerName.trim() || !gender || !selectedTheme || loading || !connected}
                     className="w-full py-4 rounded-xl font-bold text-lg text-white bg-gradient-to-r from-pink-500 to-rose-600 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}

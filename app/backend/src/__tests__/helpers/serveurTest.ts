@@ -32,6 +32,23 @@ export interface HarnaisServeur {
 
 const clientsOuverts: ClientSocket[] = [];
 
+/** Ecoute sur le port demande, ou sur un port ephemere s'il est deja pris. */
+function ecouter(http: HttpServer, port: number): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const surErreur = (erreur: NodeJS.ErrnoException) => {
+      if (erreur.code !== 'EADDRINUSE') { reject(erreur); return; }
+      http.removeListener('error', surErreur);
+      http.once('error', reject);
+      http.listen(0, () => resolve((http.address() as { port: number }).port));
+    };
+    http.once('error', surErreur);
+    http.listen(port, () => {
+      http.removeListener('error', surErreur);
+      resolve((http.address() as { port: number }).port);
+    });
+  });
+}
+
 export async function demarrerServeur(port: number): Promise<HarnaisServeur> {
   const { setupSocketHandlers } = await import('../../services/gameService.js');
   const http = createServer();
@@ -42,16 +59,15 @@ export async function demarrerServeur(port: number): Promise<HarnaisServeur> {
   });
   setupSocketHandlers(io as never);
 
-  await new Promise<void>((resolve, reject) => {
-    http.once('error', reject);
-    http.listen(port, resolve);
-  });
+  // Chaque suite a son port dedie ; si un reliquat d'execution le retient
+  // encore, on bascule sur un port ephemere plutot que d'echouer.
+  const portEffectif = await ecouter(http, port);
 
   return {
     io,
     http,
-    port,
-    url: `http://127.0.0.1:${port}`,
+    port: portEffectif,
+    url: `http://127.0.0.1:${portEffectif}`,
     async fermer() {
       for (const c of clientsOuverts.splice(0)) {
         c.removeAllListeners();

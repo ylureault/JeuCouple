@@ -117,7 +117,7 @@ export default function DuelThemePicker() {
               </div>
               <p className="text-white/60 text-[11px] text-center mt-2">
                 {remaining > 0
-                  ? `${remaining} s — sans choix, le theme est tire au sort`
+                  ? `${remaining} s — sans choix, le thème est tiré au sort`
                   : 'Tirage au sort en cours…'}
               </p>
             </div>

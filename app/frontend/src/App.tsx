@@ -9,12 +9,15 @@ import Game from './pages/Game';
 import Results from './pages/Results';
 import Admin from './pages/Admin';
 import AdminLogin from './pages/AdminLogin';
+// Bandeau global : une perte de socket doit se VOIR, sur n'importe quel ecran.
+import ConnectionBanner from './components/ConnectionBanner';
 
 function App() {
   return (
     <ThemeProvider>
       <AudioProvider>
         <GameProvider>
+          <ConnectionBanner />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/join/:code" element={<Join />} />

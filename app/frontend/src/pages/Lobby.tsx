@@ -13,7 +13,16 @@ import TextReactionOverlay from '../components/TextReactionOverlay';
 import LobbyChat from '../components/LobbyChat';
 import SoundReactionHandler from '../components/SoundReactionHandler';
 import ResumeGate from '../components/ResumeGate';
+import { consulterSalon, raisonSalonIndisponible, traduireErreur } from '../lib/salon';
 import type { Gender } from '../../../shared/types';
+
+// Verdict de la consultation du salon quand on arrive sur /salon/:code sans y
+// avoir sa place (lien partage, lien perime, onglet rouvert trop tard).
+type VerdictSalon =
+  | { etape: 'attente' }                                    // consultation en cours
+  | { etape: 'inconnu' }                                    // serveur muet : on ne conclut rien
+  | { etape: 'rejoignable' }                                // le salon existe et attend un 2e joueur
+  | { etape: 'indisponible'; titre: string; detail: string };
 
 export default function Lobby() {
   const {
@@ -24,12 +33,14 @@ export default function Lobby() {
     phase,
     error,
     gameSettings,
-    acceptSettings
+    acceptSettings,
+    resumePhase
   } = useGame();
   const { playSound, playLobbyMusic, stopLobbyMusic } = useAudio();
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
   const [copied, setCopied] = useState(false);
+  const [verdict, setVerdict] = useState<VerdictSalon>({ etape: 'attente' });
 
   // Navigate to game when it starts (with room code in URL)
   // Ambiance d'attente : tout le systeme musical existait mais n'etait
@@ -51,6 +62,44 @@ export default function Lobby() {
       navigate('/');
     }
   }, [room, code, navigate]);
+
+  /**
+   * B7 — /salon/:code ouvert sans avoir sa place dans ce salon.
+   *
+   * Cas reel : un lien partage, rouvert apres expiration. Il n'y a rien a
+   * restaurer, la reprise se termine donc sans rien faire et l'ecran restait
+   * noir, sans un mot, sans une erreur console. On demande maintenant au
+   * serveur ce que vaut ce code, et on le dit.
+   */
+  useEffect(() => {
+    if (room || !code) return;
+    let annule = false;
+    setVerdict({ etape: 'attente' });
+    consulterSalon(code).then((etat) => {
+      if (annule) return;
+      if (!etat) {
+        // Serveur injoignable : surtout ne pas annoncer une disparition dont
+        // on n'a aucune preuve.
+        setVerdict({ etape: 'inconnu' });
+        return;
+      }
+      if (etat.joinable) {
+        setVerdict({ etape: 'rejoignable' });
+        return;
+      }
+      setVerdict({ etape: 'indisponible', ...raisonSalonIndisponible(etat) });
+    });
+    return () => { annule = true; };
+  }, [room, code]);
+
+  // Le salon existe et attend un partenaire, mais nous n'y avons pas de place :
+  // on envoie le joueur sur l'ecran Rejoindre, code deja saisi.
+  useEffect(() => {
+    if (room || !code) return;
+    if (verdict.etape !== 'rejoignable') return;
+    if (resumePhase === 'restoring') return;   // une reprise est en vol, on la laisse finir
+    navigate('/', { state: { joinCode: code } });
+  }, [room, code, verdict, resumePhase, navigate]);
 
   const handleStart = async () => {
     playSound('click');
@@ -114,10 +163,23 @@ export default function Lobby() {
 
   // Un `return null` laissait une page blanche quand la reprise de session
   // echouait sur /salon/:code : on montre desormais l'attente ou le motif.
-  if (!room) return <ResumeGate />;
+  if (!room) {
+    // Le serveur a tranche : ce salon ne peut pas nous accueillir. Ce verdict
+    // prime sur la machine de reprise — s'il n'y a plus de partie, il n'y a
+    // rien a reprendre, et il n'y a aucune raison de faire tourner un spinner.
+    if (verdict.etape === 'indisponible') {
+      return <SalonIndisponible titre={verdict.titre} detail={verdict.detail} />;
+    }
+    return <ResumeGate />;
+  }
 
   const isHost = playerId === 1;
-  const bothPlayersReady = room.player1_name && room.player2_name;
+  // Un prenom vide ou fait d'espaces ne vaut pas une presence : la condition
+  // est explicitement booleenne pour qu'aucune chaine vide ne se glisse dans
+  // l'affichage.
+  const player1Present = !!room.player1_name?.trim();
+  const player2Present = !!room.player2_name?.trim();
+  const bothPlayersReady = player1Present && player2Present;
 
   return (
     <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col overflow-x-hidden pb-16`}>
@@ -223,7 +285,7 @@ export default function Lobby() {
               name={room.player1_name}
               gender={room.player1_gender}
               isYou={playerId === 1}
-              isReady={!!room.player1_name}
+              isReady={player1Present}
               position={1}
             />
           </motion.div>
@@ -249,14 +311,19 @@ export default function Lobby() {
               name={room.player2_name}
               gender={room.player2_gender}
               isYou={playerId === 2}
-              isReady={!!room.player2_name}
+              isReady={player2Present}
               position={2}
             />
           </motion.div>
         </div>
 
         {/* Status / Actions */}
-        <AnimatePresence mode="wait">
+        {/* `mode="wait"` etait faux ici : AnimatePresence n'attend qu'UN enfant
+            a la fois. Avec plusieurs blocs simultanes (recap, attente, bouton),
+            un enfant sortant pouvait rester monte indefiniment — d'ou le
+            "En attente de ton partenaire..." qui survivait a l'arrivee du
+            partenaire. Chaque bloc s'anime desormais pour son compte. */}
+        <AnimatePresence>
           {gameSettings && (
             <motion.div
               key="recap"
@@ -398,8 +465,9 @@ export default function Lobby() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-[#e21b3c] rounded-xl px-6 py-3 mt-4"
+            role="alert"
           >
-            <p className="text-white font-bold">{error}</p>
+            <p className="text-white font-bold">{traduireErreur(error)}</p>
           </motion.div>
         )}
 
@@ -421,6 +489,37 @@ export default function Lobby() {
       >
         <ReactionBar />
       </motion.div>
+    </div>
+  );
+}
+
+/**
+ * Ecran affiche quand /salon/:code ne mene nulle part.
+ *
+ * Il remplace la page noire et muette de la recette (B7) : un lien partage
+ * ouvert trop tard doit dire ce qui s'est passe et proposer une sortie.
+ */
+function SalonIndisponible({ titre, detail }: { titre: string; detail: string }) {
+  const navigate = useNavigate();
+  const { resetGame } = useGame();
+
+  return (
+    <div className="min-h-[100dvh] bg-[#180512] flex items-center justify-center px-6">
+      <div className="max-w-sm text-center">
+        <div className="text-6xl mb-6">🕳️</div>
+        <h1 className="text-2xl font-black text-white mb-3">{titre}</h1>
+        <p className="text-white/70 mb-8">{detail}</p>
+        <button
+          onClick={() => {
+            resetGame();
+            navigate('/');
+          }}
+          className="w-full py-4 rounded-2xl bg-pink-500 hover:bg-pink-400 transition-colors
+                     text-white font-bold text-lg"
+        >
+          Retour à l&apos;accueil
+        </button>
+      </div>
     </div>
   );
 }
