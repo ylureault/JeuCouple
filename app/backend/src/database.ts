@@ -127,6 +127,7 @@ export function initDatabase() {
   addNewQuestionsV2();
   mergeLegacyCategories();
   purgeSyntheticQuestions();
+  fixQuestionInputTypes();
 
   console.log('Database initialized successfully');
 }
@@ -146,6 +147,41 @@ export function initDatabase() {
  * la cle etrangere answers.question_id est en ON DELETE CASCADE, l'historique
  * de ces manches synthetiques part avec, ce qui est voulu.
  */
+/**
+ * Repare le type de saisie des questions DEJA EN BASE.
+ *
+ * Les fichiers data/ ont ete corriges, mais import-thematic saute toute
+ * question dont (texte, categorie) existe deja : une base peuplee avant la
+ * correction gardait donc l'ancien type pour toujours. Resultat vu en prod :
+ * "Decris la position qui te fait le plus jouir." servie avec un curseur 1-10.
+ *
+ * Regles, alignees sur database.ts et sur les tests de contenu :
+ *  - enonce descriptif ("Decris...", "Quel mot...", "Comment...") => C (texte)
+ *  - enonce "sur 10 / a quel point / quel pourcentage"            => D (echelle)
+ * Idempotent : peut tourner a chaque demarrage.
+ */
+function fixQuestionInputTypes() {
+  const descriptif = /^(décris|decris|quel mot|comment |qu'est-ce qui|qu'est-ce que|quel conseil|raconte|avoue|décrivez)/i;
+  const echelle = /(sur 10|note sur 10|à quel point|a quel point|quel pourcentage|à quel pourcentage)/i;
+
+  const rows = db.prepare("SELECT id, type, text FROM questions WHERE type IN ('C','D')")
+    .all() as { id: number; type: string; text: string }[];
+
+  const toText = db.prepare("UPDATE questions SET type = 'C' WHERE id = ?");
+  const toScale = db.prepare("UPDATE questions SET type = 'D' WHERE id = ?");
+  let fixed = 0;
+
+  for (const r of rows) {
+    const t = (r.text || '').trim();
+    if (r.type === 'D' && descriptif.test(t) && !echelle.test(t)) {
+      toText.run(r.id); fixed++;
+    } else if (r.type === 'C' && echelle.test(t)) {
+      toScale.run(r.id); fixed++;
+    }
+  }
+  if (fixed > 0) console.log(`Types de saisie corriges en base : ${fixed} question(s)`);
+}
+
 function purgeSyntheticQuestions() {
   const purged = db.prepare(
     "DELETE FROM questions WHERE active = 0 AND text LIKE '%De quelle question cette réponse vient-elle%'"
