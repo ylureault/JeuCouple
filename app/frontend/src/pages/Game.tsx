@@ -36,6 +36,10 @@ export default function Game() {
     requestPause,
   } = useGame();
   const { playSound } = useAudio();
+  // Doit rester avec les autres hooks, AVANT tout return conditionnel :
+  // appele plus bas, il changeait le nombre de hooks entre deux rendus
+  // (React: "Rendered more hooks than during the previous render").
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
   const [timeLeft, setTimeLeft] = useState(0);
@@ -137,7 +141,6 @@ export default function Game() {
     );
   }
 
-  const { theme } = useTheme();
   const player1Name = room.player1_name || 'Joueur 1';
   const player2Name = room.player2_name || 'Joueur 2';
   const myScore = playerId === 1 ? scores.player1 : scores.player2;
@@ -423,7 +426,10 @@ export default function Game() {
               </div>
 
               {/* Answers */}
+              {/* key = remonte le composant a chaque question, sinon son etat local
+                  (texte saisi, position du curseur 1-10) persiste d'une question a l'autre */}
               <QuestionCard
+                key={currentQuestion.id}
                 question={currentQuestion}
                 onAnswer={handleAnswer}
                 disabled={!!myAnswer}

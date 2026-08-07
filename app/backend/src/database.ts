@@ -125,8 +125,40 @@ export function initDatabase() {
   initDefaultCategories();
   initDefaultQuestions();
   addNewQuestionsV2();
+  mergeLegacyCategories();
 
   console.log('Database initialized successfully');
+}
+
+/**
+ * Certaines questions historiques portent un code de categorie qui n'a jamais
+ * ete enregistre dans la table categories. Le selecteur de themes ne listant que
+ * cette table, ces questions n'etaient jamais jouables. On les rattache a la
+ * categorie equivalente (les orphelines les plus petites tenaient sur 3 questions,
+ * trop peu pour constituer un theme viable).
+ * Idempotent : peut tourner a chaque demarrage.
+ */
+function mergeLegacyCategories() {
+  const merges: Record<string, string> = {
+    connaissance: 'couple',        // "Selon toi, il/elle est plutot..."
+    amour: 'couple',               // "Tu te sens aime(e) quand..."
+    quotidien: 'habitudes',        // "Ta matinee ideale..."
+    comportement: 'habitudes',     // "Comment ton partenaire reagit face au stress"
+    sextoys: 'coquin',
+    confessions: 'coquin',
+    seduction: 'preliminaires',
+    massage: 'preliminaires',
+    anal: 'sodomie'                // doublon avec la categorie sodomie existante
+  };
+
+  const update = db.prepare('UPDATE questions SET category = ? WHERE category = ?');
+  let moved = 0;
+  for (const [from, to] of Object.entries(merges)) {
+    moved += update.run(to, from).changes;
+  }
+  if (moved > 0) {
+    console.log(`Categories: ${moved} questions rattachees a une categorie jouable`);
+  }
 }
 
 function runMigrations() {
@@ -250,7 +282,22 @@ function initDefaultCategories() {
     { code: 'sexy', name: 'Sexy', icon: '🔥', color: '#f44336', description: 'Questions coquines', sort_order: 6 },
     { code: 'coquin', name: 'Coquin', icon: '😈', color: '#e91e63', description: 'Pour pimenter', sort_order: 7 },
     { code: 'fun', name: 'Fun', icon: '🎉', color: '#ffeb3b', description: 'Questions fun et legeres', sort_order: 8 },
-    { code: 'culture', name: 'Culture G', icon: '🧠', color: '#673ab7', description: 'Culture generale', sort_order: 9 }
+    { code: 'culture', name: 'Culture G', icon: '🧠', color: '#673ab7', description: 'Culture generale', sort_order: 9 },
+    // Categories thematiques - source unique de verite (import-thematic.ts les reutilise)
+    { code: 'profond', name: 'Profond', icon: '🌌', color: '#6366f1', description: 'Philosophie, spiritualite et secrets', sort_order: 10 },
+    { code: 'fellation', name: 'Fellation', icon: '👄', color: '#ec4899', description: 'Questions sur les plaisirs oraux masculins', sort_order: 100 },
+    { code: 'cunnilingus', name: 'Cunnilingus', icon: '👅', color: '#d946ef', description: 'Questions sur les plaisirs oraux feminins', sort_order: 101 },
+    { code: 'sodomie', name: 'Sodomie', icon: '🍑', color: '#f97316', description: 'Plaisir anal et stimulation', sort_order: 102 },
+    { code: '69', name: 'Position 69', icon: '🔄', color: '#8b5cf6', description: 'Plaisir mutuel simultane', sort_order: 103 },
+    { code: 'kamasutra', name: 'Kamasutra', icon: '🧘', color: '#f59e0b', description: 'Positions et techniques', sort_order: 104 },
+    { code: 'fantasmes', name: 'Fantasmes', icon: '💭', color: '#a855f7', description: 'Desirs secrets et inavoues', sort_order: 105 },
+    { code: 'jeux_role', name: 'Jeux de role', icon: '🎭', color: '#10b981', description: 'Scenarios coquins', sort_order: 106 },
+    { code: 'bdsm', name: 'BDSM', icon: '⛓️', color: '#374151', description: 'Domination et soumission', sort_order: 107 },
+    { code: 'preliminaires', name: 'Preliminaires', icon: '💋', color: '#f43f5e', description: 'L\'art de faire monter le desir', sort_order: 108 },
+    { code: 'public', name: 'Sexe en public', icon: '🏖️', color: '#0ea5e9', description: 'Oser en dehors de la chambre', sort_order: 109 },
+    { code: 'extreme', name: 'Ultra coquin', icon: '🔞', color: '#dc2626', description: 'Pour les couples audacieux', sort_order: 110 },
+    { code: 'masturbation', name: 'Masturbation', icon: '✋', color: '#c026d3', description: 'Plaisir solitaire et mutuel', sort_order: 111 },
+    { code: 'orgasme', name: 'Orgasme', icon: '💥', color: '#be123c', description: 'Jouissance, sensations et intensite', sort_order: 112 }
   ];
 
   const insert = db.prepare(`

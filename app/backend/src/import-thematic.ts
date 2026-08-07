@@ -1,5 +1,5 @@
-import { db } from './database.js';
-import { readFileSync, existsSync, readdirSync } from 'fs';
+import { db, initDatabase } from './database.js';
+import { readFileSync, readdirSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
@@ -19,43 +19,18 @@ interface QuestionImport {
   timer: number;
 }
 
-interface CategoryImport {
-  code: string;
-  name: string;
-  icon: string;
-  color: string;
-  description: string;
-  sort_order: number;
-}
-
 const dataPath = path.join(__dirname, '../data');
 
-// Thematic categories to add
-const thematicCategories: CategoryImport[] = [
-  { code: 'fellation', name: 'Fellation', icon: '👄', color: '#ec4899', description: 'Questions sur les plaisirs oraux masculins', sort_order: 100 },
-  { code: 'cunnilingus', name: 'Cunnilingus', icon: '👅', color: '#d946ef', description: 'Questions sur les plaisirs oraux féminins', sort_order: 101 },
-  { code: 'sodomie', name: 'Sodomie', icon: '🍑', color: '#f97316', description: 'Questions sur le plaisir anal', sort_order: 102 },
-  { code: '69', name: 'Position 69', icon: '🔄', color: '#8b5cf6', description: 'Plaisir mutuel simultané', sort_order: 103 },
-  { code: 'kamasutra', name: 'Kamasutra', icon: '🧘', color: '#f59e0b', description: 'Positions et techniques', sort_order: 104 },
-  { code: 'fantasmes', name: 'Fantasmes', icon: '💭', color: '#a855f7', description: 'Désirs secrets et inavoués', sort_order: 105 },
-  { code: 'jeux_role', name: 'Jeux de rôle', icon: '🎭', color: '#10b981', description: 'Scénarios coquins', sort_order: 106 },
-  { code: 'bdsm', name: 'BDSM', icon: '⛓️', color: '#374151', description: 'Domination et soumission', sort_order: 107 },
-  { code: 'preliminaires', name: 'Préliminaires', icon: '💋', color: '#f43f5e', description: 'L\'art de faire monter le désir', sort_order: 108 },
-  { code: 'public', name: 'Sexe en public', icon: '🏖️', color: '#0ea5e9', description: 'Oser en dehors de la chambre', sort_order: 109 },
-  { code: 'extreme', name: 'Ultra coquin', icon: '🔞', color: '#dc2626', description: 'Pour les couples audacieux', sort_order: 110 },
-];
+// Cree les tables et seed les categories/types (idempotent).
+// Les categories sont definies une seule fois, dans database.ts.
+initDatabase();
 
-// Add thematic categories
-const insertCategory = db.prepare(`
-  INSERT OR IGNORE INTO categories (code, name, icon, color, description, sort_order, active)
-  VALUES (?, ?, ?, ?, ?, ?, 1)
-`);
-
-console.log('Adding thematic categories...');
-for (const cat of thematicCategories) {
-  insertCategory.run(cat.code, cat.name, cat.icon, cat.color, cat.description, cat.sort_order);
-}
-console.log(`Added ${thematicCategories.length} thematic categories`);
+// Garde-fou : une question dont la categorie n'est pas enregistree serait
+// importee en base mais resterait injouable (le selecteur de themes ne liste
+// que la table categories). On refuse l'import plutot que de perdre la question.
+const knownCategories = new Set(
+  (db.prepare('SELECT code FROM categories').all() as { code: string }[]).map(r => r.code)
+);
 
 // Import questions from all JSON files in data folder
 const insertQuestion = db.prepare(`
@@ -70,6 +45,7 @@ const checkDuplicate = db.prepare(`
 
 let totalImported = 0;
 let totalSkipped = 0;
+let totalRejected = 0;
 
 const files = readdirSync(dataPath).filter(f => f.endsWith('.json'));
 console.log(`Found ${files.length} JSON files to import`);
@@ -88,6 +64,13 @@ const transaction = db.transaction(() => {
     let fileSkipped = 0;
 
     for (const q of data.questions as QuestionImport[]) {
+      // Categorie inconnue => la question serait injouable. On alerte au lieu d'importer silencieusement.
+      if (!knownCategories.has(q.category)) {
+        console.error(`  ERREUR ${file}: categorie inconnue "${q.category}" - question ignoree: "${q.text.slice(0, 60)}"`);
+        totalRejected++;
+        continue;
+      }
+
       // Check for duplicate
       const existing = checkDuplicate.get(q.text, q.category);
       if (existing) {
@@ -119,6 +102,9 @@ const transaction = db.transaction(() => {
 transaction();
 
 console.log(`\nTotal: imported ${totalImported} questions, skipped ${totalSkipped} duplicates`);
+if (totalRejected > 0) {
+  console.error(`ATTENTION: ${totalRejected} questions rejetees (categorie inconnue). Ajoutez la categorie dans database.ts.`);
+}
 
 // Show category stats
 const stats = db.prepare(`

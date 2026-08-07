@@ -6,10 +6,13 @@ app/backend/dist/
 app/frontend/dist/
 public_html/
 
-# Data
+# Base de donnees runtime (database.ts: app/data/database.sqlite)
 /data/
+/app/data/
 *.sqlite
-!app/backend/data/
+*.sqlite-wal
+*.sqlite-shm
+# app/backend/data/ contient les fixtures de questions : versionnees volontairement
 
 # Environment
 .env

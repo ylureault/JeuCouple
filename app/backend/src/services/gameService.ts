@@ -91,6 +91,9 @@ const SPEED_BONUS_THRESHOLD_FAST = 5;  // seconds for 25% bonus
 const SPEED_BONUS_THRESHOLD_MEDIUM = 10;  // seconds for 10% bonus
 const SPEED_BONUS_FAST = 0.25;  // 25% bonus
 const SPEED_BONUS_MEDIUM = 0.10;  // 10% bonus
+// Seuils exprimes en fraction du temps alloue a la question (cf. calculateSpeedBonus)
+const SPEED_BONUS_RATIO_FAST = 0.3;    // repondu dans le premier tiers du temps
+const SPEED_BONUS_RATIO_MEDIUM = 0.6;  // repondu avant les deux tiers du temps
 const STREAK_MULTIPLIERS: Record<number, number> = {
   2: 1.2,   // 2 streak = 20% bonus
   3: 1.5,   // 3 streak = 50% bonus
@@ -99,6 +102,28 @@ const STREAK_MULTIPLIERS: Record<number, number> = {
 };
 const TYPE_C_THOUGHTFUL_BONUS = 50;  // Bonus for answers > 20 chars
 const JOKER_PENALTY = -50;  // Penalty for using joker
+
+// Echelle 1-10 (types D et Q) : bareme degressif indexe par l'ecart entre les
+// deux reponses. Un ecart de 5 ou plus ne figure pas dans la table => 0 point.
+const SCALE_POINTS_BY_DIFF: Record<number, number> = {
+  0: 100,  // meme note
+  1: 80,
+  2: 60,
+  3: 40,
+  4: 20,
+};
+// Au-dela de cet ecart, les points restent partiels mais la reponse n'est plus
+// presentee comme un accord (pas d'animation de match).
+const SCALE_CORRECT_MAX_DIFF = 2;
+
+// Type F : valeurs envoyees par le selecteur "Qui de nous deux"
+const PLAYER_BOTH = 'both';
+const PLAYER_UNKNOWN = 'dontknow';
+const PARTIAL_AGREEMENT_POINTS = 40;  // "Nous deux" face a une personne precise
+
+// Type C : les questions ouvertes n'ont pas de bonne reponse, mais y repondre
+// tous les deux vaut mieux que zero point.
+const OPEN_ANSWER_POINTS = 25;
 const NO_ANSWER_PENALTY = -50;  // Penalty for not answering
 const UNLIMITED_MODE_QUESTION_COUNT = 50;  // When set to 50, it's unlimited
 const UNLIMITED_MODE_GAP_TO_WIN = 200;  // 200 point gap to win in unlimited
@@ -944,11 +969,29 @@ function sendQuestion(
   }, (question.timer + 3) * 1000); // Extra 3 seconds for network latency
 }
 
-function calculateSpeedBonus(answerTimeMs: number, questionStartTime: number): number {
+/**
+ * Bonus de rapidite, proportionnel au temps alloue a la question.
+ * Des seuils fixes penalisaient les questions courtes : repondre en 6 s a une
+ * question de 15 s est rapide, alors que c'est lent sur une question de 35 s.
+ * On raisonne donc en fraction du temps imparti.
+ */
+function calculateSpeedBonus(
+  answerTimeMs: number,
+  questionStartTime: number,
+  questionTimer: number
+): number {
   const seconds = (answerTimeMs - questionStartTime) / 1000;
-  if (seconds <= SPEED_BONUS_THRESHOLD_FAST) {
+  // Garde-fou : sans timer exploitable, on retombe sur les anciens seuils absolus.
+  if (!questionTimer || questionTimer <= 0) {
+    if (seconds <= SPEED_BONUS_THRESHOLD_FAST) return SPEED_BONUS_FAST;
+    if (seconds <= SPEED_BONUS_THRESHOLD_MEDIUM) return SPEED_BONUS_MEDIUM;
+    return 0;
+  }
+
+  const ratio = seconds / questionTimer;
+  if (ratio <= SPEED_BONUS_RATIO_FAST) {
     return SPEED_BONUS_FAST;
-  } else if (seconds <= SPEED_BONUS_THRESHOLD_MEDIUM) {
+  } else if (ratio <= SPEED_BONUS_RATIO_MEDIUM) {
     return SPEED_BONUS_MEDIUM;
   }
   return 0;
@@ -1028,10 +1071,10 @@ function revealAnswers(
   if (isTypeH) {
     // For Type H, speed bonus based on individual correctness (keep individual)
     if (individualPoints1 > 0 && answers.time1) {
-      speedBonus1 = Math.round(individualPoints1 * calculateSpeedBonus(answers.time1, gameState.questionStartTime));
+      speedBonus1 = Math.round(individualPoints1 * calculateSpeedBonus(answers.time1, gameState.questionStartTime, question.timer));
     }
     if (individualPoints2 > 0 && answers.time2) {
-      speedBonus2 = Math.round(individualPoints2 * calculateSpeedBonus(answers.time2, gameState.questionStartTime));
+      speedBonus2 = Math.round(individualPoints2 * calculateSpeedBonus(answers.time2, gameState.questionStartTime, question.timer));
     }
   } else if (correct && question.type !== 'C' && basePoints > 0) {
     // For matching questions, calculate shared speed bonus based on the SLOWER player's time
@@ -1039,7 +1082,7 @@ function revealAnswers(
     if (answers.time1 && answers.time2) {
       // Use the slower time (when both answered) for fair bonus calculation
       const slowerTime = Math.max(answers.time1, answers.time2);
-      const sharedSpeedBonus = Math.round(basePoints * calculateSpeedBonus(slowerTime, gameState.questionStartTime));
+      const sharedSpeedBonus = Math.round(basePoints * calculateSpeedBonus(slowerTime, gameState.questionStartTime, question.timer));
       speedBonus1 = sharedSpeedBonus;
       speedBonus2 = sharedSpeedBonus;
     }
@@ -1331,7 +1374,6 @@ function calculateBasePoints(
     case 'A':
     case 'B':
     case 'E':
-    case 'F':
     case 'G':
     case 'I':  // Image choice - same as binary
     case 'L':  // Avant/Après - binary choice
@@ -1346,28 +1388,47 @@ function calculateBasePoints(
       }
       break;
 
+    case 'F': {
+      // "Qui de nous deux" : accord total, accord partiel, ou desaccord.
+      // "Nous deux" face a une personne precise = les deux se rejoignent a moitie,
+      // c'est un desaccord de nuance et non une erreur franche.
+      if (answer1 === PLAYER_UNKNOWN || answer2 === PLAYER_UNKNOWN) {
+        break;  // "Je ne sais pas" ne rapporte rien
+      }
+      if (answer1 === answer2) {
+        basePoints = BASE_POINTS;
+        correct = true;
+      } else if (answer1 === PLAYER_BOTH || answer2 === PLAYER_BOTH) {
+        basePoints = PARTIAL_AGREEMENT_POINTS;
+        correct = true;
+      }
+      break;
+    }
+
     case 'C':
-      // Type C: Open-ended - handled specially in revealAnswers
+      // Question ouverte : aucune bonne reponse, mais repondre sincerement tous les
+      // deux merite mieux que zero. Sans ca, 17% des questions du jeu ne rapportaient
+      // jamais le moindre point et cassaient la dynamique de score.
+      basePoints = OPEN_ANSWER_POINTS;
       correct = true;
-      basePoints = 0;
       break;
 
     case 'D':
-    case 'Q':  // Humeur - scale comparison like type D
-      // Type D/Q: Scale comparison
+    case 'Q': {
+      // Echelle 1-10 : score degressif continu plutot qu'un palier brutal.
+      // Avant, un ecart de 3 donnait 0 point exactement comme un ecart de 9.
       const val1 = parseInt(answer1, 10);
       const val2 = parseInt(answer2, 10);
       if (!isNaN(val1) && !isNaN(val2)) {
         const diff = Math.abs(val1 - val2);
-        if (diff === 0) {
-          basePoints = BASE_POINTS;
-          correct = true;
-        } else if (diff <= 2) {
-          basePoints = 50;
-          correct = true;
+        const points = SCALE_POINTS_BY_DIFF[diff];
+        if (points !== undefined) {
+          basePoints = points;
+          correct = diff <= SCALE_CORRECT_MAX_DIFF;
         }
       }
       break;
+    }
 
     case 'J':
       // Type J: Date exacte - compare month/year format (YYYY-MM)

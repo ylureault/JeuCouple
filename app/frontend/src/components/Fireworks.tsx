@@ -17,8 +17,14 @@ export default function Fireworks({ show = true, onComplete }: FireworksProps) {
     velocity: number;
   }>>([]);
 
+  // Les appelants montent Fireworks avec show=true en permanence. Sans cet etat,
+  // seules les particules s'effacaient au bout de 2,5 s : le bandeau "PARFAIT !"
+  // restait affiche par-dessus toute la carte de resultat.
+  const [active, setActive] = useState(false);
+
   useEffect(() => {
     if (show) {
+      setActive(true);
       const colors = ['#ff0000', '#ffff00', '#00ff00', '#00ffff', '#ff00ff', '#ff8800', '#ffffff'];
       const newParticles: typeof particles = [];
 
@@ -46,6 +52,7 @@ export default function Fireworks({ show = true, onComplete }: FireworksProps) {
 
       const timer = setTimeout(() => {
         setParticles([]);
+        setActive(false);
         onComplete?.();
       }, 2500);
 
@@ -55,7 +62,7 @@ export default function Fireworks({ show = true, onComplete }: FireworksProps) {
 
   return (
     <AnimatePresence>
-      {show && (
+      {active && (
         <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
           {particles.map((particle) => (
             <motion.div
