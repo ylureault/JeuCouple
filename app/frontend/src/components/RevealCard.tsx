@@ -730,6 +730,7 @@ function AnswerBlock({
 
     // Special answers
     if (answer === 'joker') return '🃏 Joker';
+    if (answer === 'passer') return '🕊️ A préféré passer';
     if (answer === 'dontknow') return '🤷 Je ne sais pas';
 
     // Type E, I, L: Convert 'A' or 'B' to actual option text

@@ -370,6 +370,8 @@ export const GAME_MODES: {
   description: string;
   icon: string;
   endless: boolean;
+  /** Mode sans points : podium, joker et bonus n'y ont aucun sens. */
+  scoreless?: boolean;
 }[] = [
   {
     id: 'classic',
@@ -413,6 +415,7 @@ export const GAME_MODES: {
   },
   {
     id: 'envies',
+    scoreless: true,
     label: 'Envies express',
     tagline: 'Oui ou non, sans points',
     description: "Glissez : oui à droite, non à gauche. Aucun point, on compare juste vos envies.",
@@ -421,6 +424,7 @@ export const GAME_MODES: {
   },
   {
     id: 'petits_noms',
+    scoreless: true,
     label: 'Petits noms',
     tagline: 'Fous rires garantis',
     description: "Inventez le surnom le plus drôle pour l'autre. Révélation simultanée.",

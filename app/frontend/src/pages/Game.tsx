@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
+import { GAME_MODES } from '../../../shared/types';
 import { useAudio } from '../context/AudioContext';
 import { useTheme } from '../context/ThemeContext';
 import MuteButton from '../components/MuteButton';
@@ -43,6 +44,7 @@ export default function Game() {
     gamePaused,
     disconnectedPlayerName,
     requestPause,
+    gameSettings,
   } = useGame();
   const { playSound, playGameMusic, stopGameMusic, setMusicIntensity } = useAudio();
   // Doit rester avec les autres hooks, AVANT tout return conditionnel :
@@ -165,9 +167,9 @@ export default function Game() {
   }
 
   // Modes sans points : on ne montre ni score ni "qui gagne", l'enjeu est
-  // ailleurs (comparer ses envies, faire rire l'autre).
-  const scoreless = currentMode === 'envies' || currentMode === 'petits_noms';
-
+  // ailleurs (comparer ses envies, faire rire l'autre). La verite vient du
+  // catalogue partage (flag scoreless), plus d'une liste d'ids en dur.
+  const scoreless = !!GAME_MODES.find((m) => m.id === (gameSettings?.gameMode ?? currentMode))?.scoreless;
   const player1Name = room.player1_name || 'Joueur 1';
   const player2Name = room.player2_name || 'Joueur 2';
   const myScore = playerId === 1 ? scores.player1 : scores.player2;
@@ -480,6 +482,7 @@ export default function Game() {
                 player1Name={player1Name}
                 player2Name={player2Name}
                 playerId={playerId!}
+                scoreless={scoreless}
               />
 
               {/* Other player status */}

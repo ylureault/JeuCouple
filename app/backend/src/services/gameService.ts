@@ -1294,14 +1294,19 @@ function revealAnswers(
   // Check for joker, dontknow, and no answers
   const isJoker1 = answers.answer1 === 'joker';
   const isJoker2 = answers.answer2 === 'joker';
+  // 'passer' (P1-6, constat n.1 du coach) : refuser une question trop intime
+  // ne coute RIEN — ni points, ni penalite, ni serie brisee. Le joker payant
+  // reste pour esquiver en mode compete ; passer est la pose de limite gratuite.
+  const isPass1 = answers.answer1 === 'passer';
+  const isPass2 = answers.answer2 === 'passer';
   const isDontKnow1 = answers.answer1 === 'dontknow';
   const isDontKnow2 = answers.answer2 === 'dontknow';
   const noAnswer1 = answers.answer1 === undefined;
   const noAnswer2 = answers.answer2 === undefined;
 
   // For scoring purposes, joker and dontknow are treated as no valid answer
-  const effectiveAnswer1 = (isJoker1 || isDontKnow1) ? undefined : answers.answer1;
-  const effectiveAnswer2 = (isJoker2 || isDontKnow2) ? undefined : answers.answer2;
+  const effectiveAnswer1 = (isJoker1 || isDontKnow1 || isPass1) ? undefined : answers.answer1;
+  const effectiveAnswer2 = (isJoker2 || isDontKnow2 || isPass2) ? undefined : answers.answer2;
 
   // Calculate base points using effective answers
   const baseResult = calculateBasePoints(
@@ -1372,8 +1377,9 @@ function revealAnswers(
       gamification.perfectMatches++;
     }
   } else if (question.type !== 'C') {
-    gamification.streak1 = 0;
-    gamification.streak2 = 0;
+    // Passer ne brise pas la serie : ce serait punir la pose d'une limite.
+    if (!isPass1) gamification.streak1 = 0;
+    if (!isPass2) gamification.streak2 = 0;
   }
 
   // Update max streaks
@@ -1472,7 +1478,11 @@ function revealAnswers(
 
   // Anti-tie mechanism: Add micro-bonus (1-3 points) based on answer speed
   // Applies when both players would get the same score (positive or zero, but not negative)
-  if (points1 === points2 && points1 >= 0 && answerTime1 !== null && answerTime2 !== null) {
+  // Les sorties volontaires (passer/joker/je-ne-sais-pas) ne concourent pas
+  // au bonus de vitesse : on ne recompense pas "celui qui a esquive le plus vite".
+  const realAnswer1 = !isPass1 && !isJoker1 && !isDontKnow1 && !noAnswer1;
+  const realAnswer2 = !isPass2 && !isJoker2 && !isDontKnow2 && !noAnswer2;
+  if (points1 === points2 && points1 >= 0 && answerTime1 !== null && answerTime2 !== null && realAnswer1 && realAnswer2) {
     // Player who answered faster gets a small bonus (1-3 points based on time difference)
     const timeDiff = Math.abs(answerTime1 - answerTime2);
     const microBonus = Math.min(3, Math.max(1, Math.ceil(timeDiff)));

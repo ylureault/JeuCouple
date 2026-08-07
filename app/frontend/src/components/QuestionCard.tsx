@@ -10,6 +10,8 @@ interface QuestionCardProps {
   player1Name?: string;
   player2Name?: string;
   playerId?: 1 | 2;
+  /** Mode sans points : le joker (-50 pts) n'a aucun sens, on le masque. */
+  scoreless?: boolean;
 }
 
 // Quatuor de reponses. Les formes geometriques et le rouge/bleu/jaune/vert
@@ -48,7 +50,8 @@ export default function QuestionCard({
   selectedAnswer,
   player1Name = 'Joueur 1',
   player2Name = 'Joueur 2',
-  playerId = 1
+  playerId = 1,
+  scoreless = false
 }: QuestionCardProps) {
   const [scaleValue, setScaleValue] = useState(5);
   const [freeText, setFreeText] = useState('');
@@ -941,6 +944,31 @@ export default function QuestionCard({
     </div>
   );
 
+  // "Passer" : refuser une question trop intime est GRATUIT — pas de points
+  // perdus, pas de serie brisee, pas de justification (P1-6, coach constat n.1).
+  const renderPass = () => (
+    <motion.button
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.25 }}
+      onClick={() => !disabled && onAnswer('passer')}
+      disabled={disabled}
+      aria-label="Passer cette question, sans penalite"
+      className={`
+        w-full rounded-[14px] p-2.5 border border-white/25 bg-white/10
+        text-white/85 font-bold text-sm transition-all
+        ${disabled && selectedAnswer !== 'passer' ? 'opacity-40' : 'hover:bg-white/16'}
+        ${selectedAnswer === 'passer' ? 'ring-2 ring-white/70' : ''}
+      `}
+      whileTap={disabled ? {} : { scale: 0.97 }}
+    >
+      🕊️ Passer cette question
+      <span className="block text-[10px] font-semibold text-white/50 mt-0.5">
+        Gratuit — certaines questions ne se répondent pas, et c'est très bien
+      </span>
+    </motion.button>
+  );
+
   // Joker button - available for all question types
   const renderJoker = () => (
     <motion.button
@@ -964,7 +992,7 @@ export default function QuestionCard({
       <div className="flex items-center justify-center gap-2">
         <span className="text-lg">🃏</span>
         <span className="text-white font-bold text-sm">JOKER</span>
-        <span className="text-amber-200 text-xs">(-50 pts)</span>
+        <span className="text-amber-200 text-xs">esquive la question, −50 pts</span>
       </div>
       {selectedAnswer === 'joker' && (
         <motion.div
@@ -995,7 +1023,10 @@ export default function QuestionCard({
 
       {/* Joker button for all types */}
       <div className="pt-1 border-t border-white/20">
-        {renderJoker()}
+        {renderPass()}
+        {/* Le joker n'existe qu'en mode a points : "-50 pts" n'a aucun sens
+            dans envies/petits_noms (UX constat n.2). */}
+        {!scoreless && renderJoker()}
       </div>
     </div>
   );
