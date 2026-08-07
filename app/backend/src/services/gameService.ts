@@ -283,7 +283,7 @@ export function setupSocketHandlers(
         // If game is active, send current game state to reconnected player
         if (gameState) {
           // Send game:started so the frontend knows a game is in progress
-          socket.emit('game:started', { gameId: gameState.gameId });
+          socket.emit('game:started', { gameId: gameState.gameId, gameMode: (roomSettings.get(data.code)?.gameMode ?? 'classic') as never });
 
           // Send current scores
           socket.emit('game:score-update', {
@@ -494,7 +494,7 @@ export function setupSocketHandlers(
       activeGames.set(room.code, gameState);
 
       // Notify both players
-      io.to(room.code).emit('game:started', { gameId: game.id });
+      io.to(room.code).emit('game:started', { gameId: game.id, gameMode: (settings?.gameMode ?? 'classic') as never });
 
       callback({ success: true });
 

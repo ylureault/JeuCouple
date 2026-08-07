@@ -1,0 +1,24 @@
+{
+  "questions": [
+    {"type": "C", "category": "petits_noms", "text": "Invente-moi un petit nom pour quand je boude.", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom au réveil, cheveux en vrac ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom quand j'ai trop mangé ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom quand je rate un truc en cuisine ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom de super-héros complètement nul ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Si j'étais un animal, mon surnom mignon ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom quand je danse ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom quand je chante sous la douche ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom quand je suis grognon(ne) le matin ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom version nourriture ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom quand je fais semblant de t'écouter ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom quand je m'endors devant un film ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom de dictateur de la télécommande ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom quand je conduis ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom des jours de flemme absolue ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom quand j'essaie d'être sexy ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom quand je suis malade et dramatique ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom de personnage de dessin animé ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Mon surnom quand je fais les magasins ?", "timer": 20},
+    {"type": "C", "category": "petits_noms", "text": "Le surnom le plus mignon que tu puisses inventer, là, maintenant ?", "timer": 20}
+  ]
+}

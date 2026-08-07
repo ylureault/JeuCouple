@@ -29,6 +29,7 @@ export default function Game() {
   const {
     room,
     playerId,
+    currentMode,
     phase,
     currentQuestion,
     questionNumber,
@@ -163,6 +164,10 @@ export default function Game() {
     );
   }
 
+  // Modes sans points : on ne montre ni score ni "qui gagne", l'enjeu est
+  // ailleurs (comparer ses envies, faire rire l'autre).
+  const scoreless = currentMode === 'envies' || currentMode === 'petits_noms';
+
   const player1Name = room.player1_name || 'Joueur 1';
   const player2Name = room.player2_name || 'Joueur 2';
   const myScore = playerId === 1 ? scores.player1 : scores.player2;
@@ -289,11 +294,19 @@ export default function Game() {
             </span>
           </div>
 
-          {/* Center: Scores */}
+          {/* Centre : scores, ou coeur des modes sans points. Afficher un
+              "vs" dans Envies express transformerait la comparaison d'envies
+              en competition, exactement ce que le mode veut eviter. */}
+          {scoreless ? (
+            <div className="flex items-center gap-1.5">
+              <span className="text-lg" aria-hidden="true">💞</span>
+              <span className="text-white/70 text-xs font-bold">Sans points — juste vous deux</span>
+            </div>
+          ) : (
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
               <span className="text-white/60 text-xs">Toi</span>
-              <div className="bg-[#26890c] rounded px-2 py-0.5">
+              <div className="bg-[#3fae8f] rounded px-2 py-0.5">
                 <span className="font-bold text-white text-sm">{myScore}</span>
               </div>
             </div>
@@ -302,9 +315,10 @@ export default function Game() {
               <div className="bg-white/20 rounded px-2 py-0.5">
                 <span className="font-bold text-white text-sm">{theirScore}</span>
               </div>
-              <span className="text-white/60 text-xs truncate max-w-[60px]">{theirName}</span>
+              <span className="text-white/60 text-xs truncate max-w-[88px]">{theirName}</span>
             </div>
           </div>
+          )}
 
           {/* Right: Pause, voice, mute */}
           <div className="flex items-center gap-1 flex-shrink-0">

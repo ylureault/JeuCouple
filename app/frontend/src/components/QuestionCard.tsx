@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, useTransform } from 'framer-motion';
 import type { Question } from '../../../shared/types';
 
 interface QuestionCardProps {
@@ -834,8 +834,57 @@ export default function QuestionCard({
   );
 
   // Type S: Hot Take - d'accord ou pas d'accord
+  /**
+   * Geste de glissement du type S : la carte s'emporte a droite (oui) ou a
+   * gauche (non), comme demande pour le mode "Envies express". Les deux
+   * boutons restent en dessous : au clavier ou si le geste echoue, on peut
+   * toujours repondre.
+   */
+  const SwipeCard = () => {
+    const x = useMotionValue(0);
+    const rotate = useTransform(x, [-220, 220], [-14, 14]);
+    const yesOpacity = useTransform(x, [40, 130], [0, 1]);
+    const noOpacity = useTransform(x, [-130, -40], [1, 0]);
+    const THRESHOLD = 110;
+
+    return (
+      <motion.div
+        drag={disabled ? false : 'x'}
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.9}
+        style={{ x, rotate }}
+        onDragEnd={(_, info) => {
+          if (disabled) return;
+          if (info.offset.x > THRESHOLD) onAnswer('daccord');
+          else if (info.offset.x < -THRESHOLD) onAnswer('pasdaccord');
+        }}
+        className="relative surface rounded-[22px] px-5 py-7 mb-3 text-center cursor-grab
+                   active:cursor-grabbing touch-pan-y select-none"
+        aria-hidden="true"  /* doublon visuel des boutons, exclu des lecteurs d'ecran */
+      >
+        {/* Verdict qui se revele pendant le glissement */}
+        <motion.span style={{ opacity: yesOpacity }}
+          className="absolute top-3 left-4 text-2xl font-black text-[#3fae8f] rotate-[-8deg]">
+          OUI 💚
+        </motion.span>
+        <motion.span style={{ opacity: noOpacity }}
+          className="absolute top-3 right-4 text-2xl font-black text-[#e8557f] rotate-[8deg]">
+          NON
+        </motion.span>
+
+        <span className="text-4xl block mb-2">💫</span>
+        <p className="text-white/85 font-bold text-sm">
+          Glisse la carte : <span className="text-[#3fae8f]">droite = oui</span>
+          {' '}· <span className="text-[#e8557f]">gauche = non</span>
+        </p>
+      </motion.div>
+    );
+  };
+
   const renderTypeS = () => (
-    <div className="grid grid-cols-2 gap-2">
+    <div>
+      <SwipeCard />
+      <div className="grid grid-cols-2 gap-2">
       <motion.button
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -888,6 +937,7 @@ export default function QuestionCard({
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-1 left-1 text-xl">✓</motion.div>
         )}
       </motion.button>
+      </div>
     </div>
   );
 

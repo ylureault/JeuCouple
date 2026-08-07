@@ -79,7 +79,7 @@ type GameAction =
   | { type: 'JOIN_ROOM'; room: Room; playerId: 1 | 2; playerName: string }
   | { type: 'PLAYER_JOINED'; playerName: string; playerId: 1 | 2; gender: Gender }
   | { type: 'PLAYER_LEFT'; playerId: 1 | 2 }
-  | { type: 'GAME_STARTED'; gameId: number }
+  | { type: 'GAME_STARTED'; gameId: number; gameMode?: GameMode }
   | { type: 'SET_QUESTION'; question: Question; questionNumber: number; totalQuestions: number }
   | { type: 'SET_MY_ANSWER'; answer: string }
   | { type: 'OTHER_ANSWERED' }
@@ -197,6 +197,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         gameId: action.gameId,
+        currentMode: action.gameMode ?? state.currentMode,
         phase: 'question',
         scores: { player1: 0, player2: 0 }
       };
@@ -611,7 +612,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
 
     socket.on('game:started', (data) => {
-      dispatch({ type: 'GAME_STARTED', gameId: data.gameId });
+      dispatch({ type: 'GAME_STARTED', gameId: data.gameId, gameMode: data.gameMode });
     });
 
     socket.on('game:question', (data) => {

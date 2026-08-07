@@ -243,7 +243,7 @@ export interface ServerToClientEvents {
   'room:joined': (data: { room: Room; playerId: 1 | 2 }) => void;
   'room:player-joined': (data: { playerName: string; playerId: 1 | 2; gender: Gender }) => void;
   'room:player-left': (data: { playerId: 1 | 2 }) => void;
-  'game:started': (data: { gameId: number }) => void;
+  'game:started': (data: { gameId: number; gameMode?: GameMode }) => void;
   'game:question': (data: { question: Question; questionNumber: number; totalQuestions: number }) => void;
   'game:player-answered': (data: { playerId: 1 | 2 }) => void;
   'game:reveal': (data: GameRevealData) => void;
@@ -354,7 +354,7 @@ export interface ClientToServerEvents {
 // 'classic' : liste de questions fixee au demarrage, la partie se termine.
 // 'duel'    : boucle sans fin. A chaque manche, le gagnant (ou le plus rapide
 //             en cas d'egalite) choisit le theme de la question suivante.
-export type GameMode = 'classic' | 'duel' | 'escalade' | 'complices' | 'sudden_death' | 'inverse';
+export type GameMode = 'classic' | 'duel' | 'escalade' | 'complices' | 'sudden_death' | 'inverse' | 'envies' | 'petits_noms';
 
 // Catalogue affiche au joueur. Doit rester aligne avec le registre serveur
 // (backend/src/services/gameModes.ts), qui reste la source de verite des regles.
@@ -405,6 +405,22 @@ export const GAME_MODES: {
     description: "On vous montre une réponse : retrouvez de quelle question elle vient.",
     icon: '🔄',
     endless: true,
+  },
+  {
+    id: 'envies',
+    label: 'Envies express',
+    tagline: 'Oui ou non, sans points',
+    description: "Glissez : oui à droite, non à gauche. Aucun point, on compare juste vos envies.",
+    icon: '💫',
+    endless: false,
+  },
+  {
+    id: 'petits_noms',
+    label: 'Petits noms',
+    tagline: 'Fous rires garantis',
+    description: "Inventez le surnom le plus drôle pour l'autre. Révélation simultanée.",
+    icon: '🐻',
+    endless: false,
   },
   {
     id: 'sudden_death',

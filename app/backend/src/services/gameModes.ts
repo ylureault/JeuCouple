@@ -219,6 +219,50 @@ const inverse: GameModeDefinition = {
   afterRound: () => ({ action: 'next-inverted' }),
 };
 
+/**
+ * Mode envies : sans le moindre point. On glisse a droite (oui) ou a gauche
+ * (non) sur des affirmations directes, et on compare. 200 manches maximum,
+ * mais on peut s'arreter quand on veut : la partie n'a pas de perdant.
+ */
+const SWIPE_ROUNDS = 200;
+
+const envies: GameModeDefinition = {
+  id: 'envies',
+  label: 'Envies express',
+  description: "Glissez : oui a droite, non a gauche. Aucun point, on compare juste vos envies.",
+  icon: '💫',
+  endless: false,
+  initialQuestionCount: () => 1,
+  afterRound: (ctx) => {
+    if (ctx.questionIndex >= SWIPE_ROUNDS) {
+      return { action: 'finish', reason: 'Toutes les envies parcourues' };
+    }
+    return { action: 'next-from-category', category: 'swipe' };
+  },
+};
+
+/**
+ * Mode petits noms : chacun invente un surnom drole pour l'autre a partir
+ * d'un contexte impose ("au reveil", "quand il/elle boude"...), revelation
+ * simultanee. Sans points : le seul enjeu est de faire rire l'autre.
+ */
+const PETITS_NOMS_ROUNDS = 15;
+
+const petitsNoms: GameModeDefinition = {
+  id: 'petits_noms',
+  label: 'Petits noms',
+  description: "Inventez le surnom le plus drole pour l'autre. Revelation simultanee, fous rires garantis.",
+  icon: '🐻',
+  endless: false,
+  initialQuestionCount: () => 1,
+  afterRound: (ctx) => {
+    if (ctx.questionIndex >= PETITS_NOMS_ROUNDS) {
+      return { action: 'finish', reason: 'Album de surnoms complet' };
+    }
+    return { action: 'next-from-category', category: 'petits_noms' };
+  },
+};
+
 const MODES: Record<string, GameModeDefinition> = {
   [classic.id]: classic,
   [duel.id]: duel,
@@ -226,6 +270,8 @@ const MODES: Record<string, GameModeDefinition> = {
   [complices.id]: complices,
   [suddenDeath.id]: suddenDeath,
   [inverse.id]: inverse,
+  [envies.id]: envies,
+  [petitsNoms.id]: petitsNoms,
 };
 
 export function getGameMode(id: string | undefined): GameModeDefinition {

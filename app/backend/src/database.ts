@@ -285,6 +285,8 @@ function initDefaultCategories() {
     { code: 'culture', name: 'Culture G', icon: '🧠', color: '#673ab7', description: 'Culture generale', sort_order: 9 },
     // Categories thematiques - source unique de verite (import-thematic.ts les reutilise)
     { code: 'profond', name: 'Profond', icon: '🌌', color: '#6366f1', description: 'Philosophie, spiritualite et secrets', sort_order: 10 },
+    { code: 'swipe', name: 'Envies express', icon: '💫', color: '#e8557f', description: 'Glissez : oui a droite, non a gauche', sort_order: 13 },
+    { code: 'petits_noms', name: 'Petits noms', icon: '🐻', color: '#f0a642', description: 'Inventer des surnoms droles a l\'autre', sort_order: 14 },
     { code: 'oser_dire', name: 'Oser le dire', icon: '🕊️', color: '#5b9bd5', description: 'Dire ce que l\'on garde pour soi, sans se blesser', sort_order: 12 },
     { code: 'intime', name: 'Intimite', icon: '🕯️', color: '#c2415f', description: 'Desir, tendresse et complicite du couple', sort_order: 11 },
     { code: 'fellation', name: 'Fellation', icon: '👄', color: '#ec4899', description: 'Questions sur les plaisirs oraux masculins', sort_order: 100 },
