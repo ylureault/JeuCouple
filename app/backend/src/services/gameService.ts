@@ -924,6 +924,18 @@ export function setupSocketHandlers(
       socket.to(connection.roomCode).emit('voice:ice-candidate', data);
     });
 
+    // Talkie-walkie : on relaie l'appui / le relachement au partenaire.
+    // Le flux audio lui-meme passe par WebRTC en pair a pair ; le serveur ne
+    // transporte que l'indication "je parle", pour l'affichage et le bip.
+    socket.on('voice:ptt', (data: { speaking: boolean }) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+      socket.to(connection.roomCode).emit('voice:peer-ptt', {
+        playerId: connection.playerId,
+        speaking: !!data?.speaking
+      });
+    });
+
     socket.on('voice:toggle', (data) => {
       const connection = playerConnections.get(socket.id);
       if (!connection) return;

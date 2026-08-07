@@ -12,7 +12,6 @@ import TextReactionOverlay from '../components/TextReactionOverlay';
 // les affichait ni ne permettait d'en envoyer.
 import LobbyChat from '../components/LobbyChat';
 import SoundReactionHandler from '../components/SoundReactionHandler';
-import VoiceChat from '../components/VoiceChat';
 import type { Gender } from '../../../shared/types';
 
 export default function Lobby() {
@@ -24,12 +23,19 @@ export default function Lobby() {
     phase,
     error
   } = useGame();
-  const { playSound } = useAudio();
+  const { playSound, playLobbyMusic, stopLobbyMusic } = useAudio();
   const navigate = useNavigate();
   const { code } = useParams<{ code: string }>();
   const [copied, setCopied] = useState(false);
 
   // Navigate to game when it starts (with room code in URL)
+  // Ambiance d'attente : tout le systeme musical existait mais n'etait
+  // appele nulle part, le jeu se jouait en silence.
+  useEffect(() => {
+    playLobbyMusic();
+    return () => stopLobbyMusic();
+  }, [playLobbyMusic, stopLobbyMusic]);
+
   useEffect(() => {
     if (phase === 'question' && room?.code) {
       navigate(`/game/${room.code}`);
@@ -118,7 +124,6 @@ export default function Lobby() {
 
       {/* Voice chat - top right */}
       <div className="fixed top-4 right-16 z-50 flex items-center gap-2">
-        {bothPlayersReady && <VoiceChat />}
       </div>
 
       {/* Animated background */}

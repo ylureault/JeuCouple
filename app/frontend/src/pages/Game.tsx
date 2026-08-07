@@ -12,7 +12,6 @@ import CategoryBadge from '../components/CategoryBadge';
 import ReactionBar from '../components/ReactionBar';
 import ReactionOverlay from '../components/ReactionOverlay';
 import TextReactionOverlay from '../components/TextReactionOverlay';
-import VoiceChat from '../components/VoiceChat';
 import GameAlerts from '../components/GameAlerts';
 // Sans ce composant monte, les evenements game:sound-reaction arrivaient bien
 // dans le state mais aucun son n'etait joue : la fonctionnalite etait inerte.
@@ -22,6 +21,8 @@ import GameChat from '../components/GameChat';
 import DuelThemePicker from '../components/DuelThemePicker';
 // Changement de jeu en cours de partie, sur validation du partenaire.
 import ModeSwitcher from '../components/ModeSwitcher';
+// Talkie-walkie : micro ferme au repos, ouvert tant qu'on maintient le bouton.
+import PushToTalk from '../components/PushToTalk';
 import Lobby from './Lobby';
 
 export default function Game() {
@@ -42,7 +43,7 @@ export default function Game() {
     disconnectedPlayerName,
     requestPause,
   } = useGame();
-  const { playSound } = useAudio();
+  const { playSound, playGameMusic, stopGameMusic, setMusicIntensity } = useAudio();
   // Doit rester avec les autres hooks, AVANT tout return conditionnel :
   // appele plus bas, il changeait le nombre de hooks entre deux rendus
   // (React: "Rendered more hooks than during the previous render").
@@ -52,6 +53,20 @@ export default function Game() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [showIntro, setShowIntro] = useState(true);
   const [introStep, setIntroStep] = useState<'number' | 'category' | 'question'>('number');
+
+  // Ambiance de partie. Le generateur existait deja mais n'etait branche
+  // nulle part : les parties se deroulaient en silence complet.
+  useEffect(() => {
+    playGameMusic();
+    return () => stopGameMusic();
+  }, [playGameMusic, stopGameMusic]);
+
+  // L'intensite suit le temps restant : la tension monte a l'approche du zero.
+  useEffect(() => {
+    if (!currentQuestion) return;
+    const ratio = currentQuestion.timer > 0 ? timeLeft / currentQuestion.timer : 0;
+    setMusicIntensity(1 - ratio);
+  }, [timeLeft, currentQuestion, setMusicIntensity]);
 
   // If no room and no valid code in URL, go home
   useEffect(() => {
@@ -293,6 +308,7 @@ export default function Game() {
 
           {/* Right: Pause, voice, mute */}
           <div className="flex items-center gap-1 flex-shrink-0">
+            <PushToTalk />
             <ModeSwitcher />
             <motion.button
               onClick={requestPause}
@@ -303,7 +319,6 @@ export default function Game() {
             >
               <span aria-hidden="true">⏸</span>
             </motion.button>
-            <VoiceChat compact />
             <MuteButton compact />
           </div>
         </div>

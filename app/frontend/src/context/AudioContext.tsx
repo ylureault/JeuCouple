@@ -11,6 +11,9 @@ interface SoundContextType {
   isMuted: boolean;
   toggleMute: () => void;
   playSound: (sound: SoundType) => void;
+  /** Son signature d'un emoji : chacun sonne differemment pour qu'on
+      reconnaisse a l'oreille lequel le partenaire vient d'envoyer. */
+  playEmojiSound: (emoji: string) => void;
   playLobbyMusic: () => void;
   stopLobbyMusic: () => void;
   setMusicIntensity: (intensity: number) => void;
@@ -18,7 +21,7 @@ interface SoundContextType {
   stopGameMusic: () => void;
 }
 
-type SoundType = 'click' | 'correct' | 'wrong' | 'tick' | 'reveal' | 'fanfare' | 'countdown' | 'notification' | 'reaction' | 'reactionReceived' | 'klaxon' | 'applause' | 'ding' | 'kiss' | 'laugh';
+type SoundType = 'pttStart' | 'pttEnd' | 'pttIncoming' | 'click' | 'correct' | 'wrong' | 'tick' | 'reveal' | 'fanfare' | 'countdown' | 'notification' | 'reaction' | 'reactionReceived' | 'klaxon' | 'applause' | 'ding' | 'kiss' | 'laugh';
 
 // Web Audio API type
 type WebAudioContext = typeof window.AudioContext;
@@ -418,7 +421,80 @@ function createLaughSound(): () => void {
   };
 }
 
+/**
+ * Bips de talkie-walkie. Deux tons montants quand on prend la parole, deux
+ * tons descendants quand on la rend : c'est ce qui rend l'echange lisible sans
+ * regarder l'ecran, comme sur un vrai poste.
+ */
+function createPttSound(rising: boolean, volume = 0.16) {
+  return () => {
+    try {
+      const Ctx: WebAudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: WebAudioContext }).webkitAudioContext;
+      const ctx = new Ctx();
+      const notes = rising ? [660, 990] : [990, 660];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.value = freq;
+        const t0 = ctx.currentTime + i * 0.075;
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(volume, t0 + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.07);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(t0); osc.stop(t0 + 0.08);
+      });
+      setTimeout(() => ctx.close(), 400);
+    } catch { /* audio indisponible */ }
+  };
+}
+
+/**
+ * Chaque emoji a sa propre couleur sonore : une fondamentale distincte et une
+ * enveloppe adaptee (percussif pour les applaudissements, doux pour le coeur).
+ * Sans cela, les dix emojis declenchaient le meme "bip" et on ne savait pas
+ * lequel le partenaire avait envoye.
+ */
+const EMOJI_TONES: Record<string, { freqs: number[]; type: OscillatorType; dur: number }> = {
+  '❤️': { freqs: [523, 784],       type: 'sine',     dur: 0.34 },  // tendre, montant
+  '😂': { freqs: [880, 740, 880, 740], type: 'triangle', dur: 0.13 },  // saccade, comme un rire
+  '😮': { freqs: [392, 659],       type: 'sine',     dur: 0.30 },  // surprise, saut d'octave
+  '😢': { freqs: [523, 392],       type: 'sine',     dur: 0.42 },  // descendant, triste
+  '👏': { freqs: [1200, 900, 1200], type: 'square',  dur: 0.07 },  // sec, percussif
+  '🔥': { freqs: [300, 520, 760],  type: 'sawtooth', dur: 0.18 },  // rugueux, montant
+  '😍': { freqs: [659, 831, 988],  type: 'sine',     dur: 0.22 },  // arpege majeur
+  '🤔': { freqs: [440, 415],       type: 'triangle', dur: 0.30 },  // hesitant, demi-ton
+  '💋': { freqs: [988, 1319],      type: 'sine',     dur: 0.16 },  // claquant, aigu
+  '🤗': { freqs: [440, 554, 659],  type: 'sine',     dur: 0.26 },  // chaleureux, accord
+};
+
+function playEmojiTone(emoji: string, volume = 0.14) {
+  const spec = EMOJI_TONES[emoji];
+  try {
+    const Ctx: WebAudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: WebAudioContext }).webkitAudioContext;
+    const ctx = new Ctx();
+    // Emoji inconnu : on retombe sur une note neutre plutot que le silence.
+    const { freqs, type, dur } = spec ?? { freqs: [660], type: 'sine' as OscillatorType, dur: 0.2 };
+    freqs.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      const t0 = ctx.currentTime + i * (dur * 0.55);
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(volume, t0 + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(t0); osc.stop(t0 + dur + 0.02);
+    });
+    setTimeout(() => ctx.close(), (freqs.length * dur + 0.5) * 1000);
+  } catch { /* audio indisponible */ }
+}
+
 const sounds: Record<SoundType, () => void> = {
+  pttStart: createPttSound(true),
+  pttEnd: createPttSound(false),
+  pttIncoming: createPttSound(true, 0.11),
   click: createClickSound(),
   correct: createCorrectSound(),
   wrong: createWrongSound(),
@@ -656,6 +732,10 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     }
   }, [isMuted]);
 
+  const playEmojiSound = useCallback((emoji: string) => {
+    if (!isMuted) playEmojiTone(emoji);
+  }, [isMuted]);
+
   const playLobbyMusic = useCallback(() => {
     if (!isMuted) {
       startAmbientMusic(0.08);
@@ -688,6 +768,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
         isMuted,
         toggleMute,
         playSound,
+        playEmojiSound,
         playLobbyMusic,
         stopLobbyMusic,
         playGameMusic,

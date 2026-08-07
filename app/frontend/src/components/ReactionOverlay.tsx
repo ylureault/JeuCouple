@@ -45,7 +45,7 @@ function ParticleBurst({ x }: { x: number }) {
 
 export default function ReactionOverlay() {
   const { reactions, playerId, room } = useGame();
-  const { playSound } = useAudio();
+  const { playEmojiSound } = useAudio();
   const [floatingReactions, setFloatingReactions] = useState<FloatingReaction[]>([]);
   const [bursts, setBursts] = useState<{ id: string; emoji: string; x: number }[]>([]);
 
@@ -66,9 +66,11 @@ export default function ReactionOverlay() {
       const path = paths[Math.floor(Math.random() * 3)];
       const gender = getPlayerGender(lastReaction.playerId);
 
-      // Play sound when receiving reaction from OTHER player
+      // Son a la reception d'une reaction du partenaire.
+      // Chaque emoji a sa propre signature sonore : le bip unique d'avant ne
+      // permettait pas de savoir lequel avait ete envoye sans regarder l'ecran.
       if (lastReaction.playerId !== playerId) {
-        playSound('reactionReceived');
+        playEmojiSound(lastReaction.emoji);
       }
 
       setFloatingReactions((prev) => [
@@ -88,7 +90,7 @@ export default function ReactionOverlay() {
         setFloatingReactions((prev) => prev.filter((r) => r.id !== id));
       }, 3500);
     }
-  }, [reactions, playerId, playSound]);
+  }, [reactions, playerId, playEmojiSound]);
 
   const getPlayerName = (reactionPlayerId: 1 | 2) => {
     if (!room) return '';

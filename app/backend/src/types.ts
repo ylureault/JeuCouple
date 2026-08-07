@@ -276,6 +276,8 @@ export interface ServerToClientEvents {
   'voice:answer': (data: VoiceAnswer) => void;
   'voice:ice-candidate': (data: IceCandidate) => void;
   'voice:peer-toggle': (data: { playerId: 1 | 2; enabled: boolean }) => void;
+  // Talkie-walkie : le partenaire appuie pour parler / relache
+  'voice:peer-ptt': (data: { playerId: 1 | 2; speaking: boolean }) => void;
   'error': (data: { message: string }) => void;
 }
 
@@ -344,6 +346,8 @@ export interface ClientToServerEvents {
   'voice:answer': (data: VoiceAnswer) => void;
   'voice:ice-candidate': (data: IceCandidate) => void;
   'voice:toggle': (data: { enabled: boolean }) => void;
+  // Talkie-walkie : j'appuie pour parler / je relache
+  'voice:ptt': (data: { speaking: boolean }) => void;
 }
 
 // Modes de jeu.
@@ -365,24 +369,24 @@ export const GAME_MODES: {
   {
     id: 'classic',
     label: 'Classique',
-    tagline: 'La partie de reference',
-    description: 'Un nombre de questions fixe, puis votre score de compatibilite.',
+    tagline: 'La partie de référence',
+    description: 'Un nombre de questions fixe, puis votre score de compatibilité.',
     icon: '🎯',
     endless: false,
   },
   {
     id: 'duel',
     label: 'Duel sans fin',
-    tagline: 'Le gagnant impose le theme',
-    description: "Celui qui remporte la manche choisit le theme de la suivante. A egalite, c'est le plus rapide. Aucune limite.",
+    tagline: 'Le gagnant impose le thème',
+    description: "Celui qui remporte la manche choisit le thème de la suivante. À égalité, c'est le plus rapide. Aucune limite.",
     icon: '⚔️',
     endless: true,
   },
   {
     id: 'escalade',
     label: 'Escalade',
-    tagline: 'La temperature monte',
-    description: 'Le jeu impose les themes et grimpe palier par palier, du plus tendre au plus explicite.',
+    tagline: 'La température monte',
+    description: 'Le jeu impose les thèmes et grimpe palier par palier, du plus tendre au plus explicite.',
     icon: '🌡️',
     endless: false,
   },
@@ -390,15 +394,15 @@ export const GAME_MODES: {
     id: 'complices',
     label: 'Complices',
     tagline: 'Vous contre le jeu',
-    description: "Aucun adversaire : enchainez les accords. Un seul desaccord remet la serie a zero.",
+    description: "Aucun adversaire : enchaînez les accords. Un seul désaccord remet la série à zéro.",
     icon: '🤝',
     endless: true,
   },
   {
     id: 'inverse',
-    label: "A l'envers",
-    tagline: 'La reponse avant la question',
-    description: "On vous montre une reponse : retrouvez de quelle question elle vient.",
+    label: "À l'envers",
+    tagline: 'La réponse avant la question',
+    description: "On vous montre une réponse : retrouvez de quelle question elle vient.",
     icon: '🔄',
     endless: true,
   },
@@ -406,7 +410,7 @@ export const GAME_MODES: {
     id: 'sudden_death',
     label: 'Mort subite',
     tagline: 'Trois vies chacun',
-    description: "Chaque manche perdue coute une vie. Trois vies perdues et la partie s'arrete net.",
+    description: "Chaque manche perdue coûte une vie. Trois vies perdues et la partie s'arrête net.",
     icon: '💀',
     endless: true,
   },

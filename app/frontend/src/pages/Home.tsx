@@ -192,10 +192,10 @@ export default function Home() {
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: 'spring', damping: 15 }}
-          className="text-center mb-6"
+          className={`text-center transition-all ${mode === 'home' ? 'mb-6' : 'mb-3'}`}
         >
           <motion.div
-            className="text-6xl mb-2"
+            className={`${mode === 'home' ? 'text-6xl mb-2' : 'text-3xl mb-1'} transition-all`}
             animate={{
               scale: [1, 1.1, 1],
               rotate: [0, 5, -5, 0],
@@ -208,16 +208,18 @@ export default function Home() {
           >
             💑
           </motion.div>
-          <h1 className="text-4xl md:text-5xl font-black text-white text-shadow-strong mb-1">
+          <h1 className={`${mode === 'home' ? 'text-4xl md:text-5xl mb-1' : 'text-2xl mb-0'} font-black text-white drop-shadow-[0_2px_10px_rgba(0,0,0,.45)] transition-all`}>
             Jeu Couples
           </h1>
-          <p className="text-lg text-white/80 font-semibold">
-            Testez votre complicite !
-          </p>
+          {mode === 'home' && (
+            <p className="text-lg text-white/80 font-semibold">
+              Testez votre complicité !
+            </p>
+          )}
         </motion.div>
 
         {/* Connection status indicator */}
-        <motion.div
+        {mode === 'home' && <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className={`rounded-full px-4 py-2 mb-4 flex items-center gap-2 ${
@@ -232,7 +234,7 @@ export default function Home() {
           <p className="text-white text-sm font-medium">
             {connected ? 'Connecté' : 'Connexion...'}
           </p>
-        </motion.div>
+        </motion.div>}
 
         {/* Error message */}
         {error && (
@@ -305,14 +307,14 @@ export default function Home() {
               transition={{ type: 'spring', damping: 20 }}
               className="w-full max-w-md"
             >
-              <div className="bg-white rounded-2xl shadow-2xl max-h-[70dvh] flex flex-col">
+              <div className="bg-white rounded-2xl shadow-2xl max-h-[78dvh] flex flex-col">
                 <div className="p-4 border-b border-gray-100">
                   <h2 className="text-xl font-black text-gray-900 text-center">
                     Créer une partie
                   </h2>
                 </div>
 
-                <div className="p-4 space-y-3 overflow-y-auto flex-1">
+                <div className="p-4 space-y-3 overflow-y-auto flex-1 scroll-fade-y">
                   <div>
                     <label className="block text-gray-600 font-bold text-sm mb-1 uppercase tracking-wide">
                       Ton prénom
@@ -589,7 +591,7 @@ export default function Home() {
               transition={{ type: 'spring', damping: 20 }}
               className="w-full max-w-md"
             >
-              <div className="bg-white rounded-2xl shadow-2xl max-h-[80dvh] flex flex-col">
+              <div className="bg-white rounded-2xl shadow-2xl max-h-[82dvh] flex flex-col">
                 <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-pink-500 to-rose-600 rounded-t-2xl relative">
                   <motion.button
                     onClick={() => { setSelectedTheme(null); switchMode('home'); }}
@@ -604,7 +606,7 @@ export default function Home() {
                   <p className="text-white/80 text-sm text-center mt-1">Choisis ton thème osé</p>
                 </div>
 
-                <div className="p-4 space-y-3 overflow-y-auto flex-1">
+                <div className="p-4 space-y-3 overflow-y-auto flex-1 scroll-fade-y">
                   <div>
                     <label className="block text-gray-600 font-bold text-sm mb-1 uppercase tracking-wide">
                       Ton prénom

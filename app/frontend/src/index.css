@@ -104,6 +104,14 @@ input, textarea, [contenteditable], .selectable { -webkit-user-select: text; use
   box-shadow: 0 0 0 3px var(--c-night-900), 0 0 0 6px var(--c-rose-400);
   border-radius: 12px;
 }
+/* Les champs de saisie definissent deja leur propre etat de focus :
+   sans cette exception, les deux anneaux se superposaient. */
+.input-kahoot:focus-visible, input:focus-visible, textarea:focus-visible {
+  box-shadow: none;
+}
+.input-kahoot:focus {
+  box-shadow: 0 0 0 4px rgba(232, 85, 127, .18) !important;
+}
 
 /* Toute cible tactile respecte le minimum de 44px recommande */
 button, [role="button"], a[href] { min-height: 44px; min-width: 44px; }
@@ -229,26 +237,26 @@ button, [role="button"], a[href] { min-height: 44px; min-width: 44px; }
            text-center font-bold text-xl md:text-2xl;
   }
 
-  /* Champs de saisie : surface vitree sombre plutot qu'un bloc blanc opaque,
-     pour rester dans l'ambiance nocturne. font-size 16px minimum, sinon iOS
-     zoome automatiquement a la mise au point. */
+  /* Champs de saisie.
+     Tous les champs de l'application sont poses sur des cartes blanches
+     (Home, Join). La refonte les avait passes en texte blanc sur surface
+     vitree : le texte devenait invisible sur ces cartes.
+     On reste donc en texte sombre sur fond clair, avec l'accent rose au focus.
+     font-size 16px minimum, sinon iOS zoome a la mise au point. */
   .input-kahoot {
-    @apply w-full rounded-[16px] px-5 py-4 text-white font-semibold
-           placeholder-white/40 transition-all;
+    @apply w-full rounded-[16px] px-5 py-4 font-semibold transition-all;
     font-size: 16px;
     min-height: 56px;
-    background: rgba(255, 255, 255, .09);
-    border: 1.5px solid var(--s-border);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    transition: border-color .24s var(--ease-out), box-shadow .24s var(--ease-out), background .24s ease;
+    color: #1c1117;
+    background: #f4f1f3;
+    border: 1.5px solid #ddd4da;
   }
-  .input-kahoot::placeholder { color: rgba(255,255,255,.42); }
+  .input-kahoot::placeholder { color: #9b8d96; }
   .input-kahoot:focus {
     outline: none;
-    background: rgba(255, 255, 255, .13);
-    border-color: var(--c-rose-400);
-    box-shadow: 0 0 0 4px rgba(232, 85, 127, .22);
+    background: #ffffff;
+    border-color: var(--c-rose-500);
+    box-shadow: 0 0 0 4px rgba(232, 85, 127, .18);
   }
 
   /* Room code display */
@@ -975,4 +983,24 @@ input[type="range"]::-moz-range-thumb {
 
 .animate-glitch {
   animation: glitch 0.3s ease-in-out;
+}
+
+
+/* Degrade de bord sur les zones defilantes : signale qu'il reste du contenu.
+   Sans cela, le curseur "Questions" coupe au ras du bouton ressemblait a un
+   chevauchement rate. */
+.scroll-fade-y {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px,
+                       #000 calc(100% - 18px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 14px,
+               #000 calc(100% - 18px), transparent 100%);
+}
+.scroll-fade-x {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+}
+/* Barres de defilement discretes plutot qu'absentes : on doit voir qu'on peut faire defiler */
+.scroll-fade-y::-webkit-scrollbar, .scroll-fade-x::-webkit-scrollbar { height: 3px; width: 3px; }
+.scroll-fade-y::-webkit-scrollbar-thumb, .scroll-fade-x::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,.18); border-radius: 3px;
 }

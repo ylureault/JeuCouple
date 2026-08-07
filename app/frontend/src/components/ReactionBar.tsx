@@ -45,13 +45,13 @@ const EMOJI_ANIMATIONS: Record<string, { animation: object; transition: object }
 
 export default function ReactionBar() {
   const { sendReaction } = useGame();
-  const { playSound } = useAudio();
+  const { playEmojiSound } = useAudio();
   const [lastClicked, setLastClicked] = useState<string | null>(null);
   const [clickEffects, setClickEffects] = useState<{ id: string; emoji: string }[]>([]);
 
   const handleClick = (emoji: typeof REACTION_EMOJIS[number]) => {
     sendReaction(emoji);
-    playSound('reaction');
+    playEmojiSound(emoji);
     setLastClicked(emoji);
 
     // Add click effect
