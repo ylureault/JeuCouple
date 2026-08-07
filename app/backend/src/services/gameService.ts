@@ -96,6 +96,38 @@ interface PlayerConnection {
  * genereuses, drop silencieux, jamais de message punitif en pleine partie).
  * Fenetre glissante par cle ip|evenement.
  */
+/**
+ * Recap des reglages du salon, envoye aux DEUX joueurs (P0-5 du plan d'audit :
+ * le joueur 2 decouvrait le theme — parfois tres explicite — a la premiere
+ * question ; consentement asymetrique releve par le coach et l'UX).
+ */
+function buildRoomSettingsInfo(roomCode: string) {
+  const settings = roomSettings.get(roomCode);
+  if (!settings) return null;
+  const mode = getGameMode(settings.gameMode);
+  const allCats = categoryModel.getActiveCategories();
+  const categories = settings.categories.length === 0
+    ? []   // liste vide = tous les themes (mode auto)
+    : settings.categories
+        .map(code => allCats.find(c => c.code === code))
+        .filter((c): c is NonNullable<typeof c> => !!c)
+        .map(c => ({ code: c.code, name: c.name, icon: c.icon }));
+  return {
+    gameMode: mode.id,
+    modeLabel: mode.label,
+    modeIcon: mode.icon,
+    endless: mode.endless,
+    questionCount: settings.questionCount,
+    categories,
+    settingsAccepted: !!settings.settingsAccepted,
+  };
+}
+
+function emitRoomSettings(io: Server, roomCode: string) {
+  const info = buildRoomSettingsInfo(roomCode);
+  if (info) io.to(roomCode).emit('room:settings', info);
+}
+
 const rateBuckets = new Map<string, { count: number; resetAt: number }>();
 function rateAllow(key: string, limit: number, windowMs: number): boolean {
   const now = Date.now();
@@ -115,7 +147,7 @@ setInterval(() => {
 
 const activeGames = new Map<string, GameState>();
 const playerConnections = new Map<string, PlayerConnection>();
-const roomSettings = new Map<string, { questionCount: number; categories: string[]; questionTypes: string[]; gameMode: string }>();
+const roomSettings = new Map<string, { questionCount: number; categories: string[]; questionTypes: string[]; gameMode: string; settingsAccepted?: boolean }>();
 
 // Changement de mode en cours de partie : proposition en attente de validation.
 // Un seul echange a la fois par salon, avec expiration pour ne pas laisser
@@ -209,6 +241,8 @@ export function setupSocketHandlers(
         // Jeton secret : seule preuve d'appartenance acceptee au reconnect.
         const sessionToken = roomModel.issueSessionToken(room.id, 1);
         callback({ success: true, room, playerId: 1, sessionToken });
+        const info = buildRoomSettingsInfo(room.code);
+        if (info) socket.emit('room:settings', info);
       } catch (error) {
         callback({ success: false, error: 'Failed to create room' });
       }
@@ -248,6 +282,7 @@ export function setupSocketHandlers(
 
         const sessionToken = roomModel.issueSessionToken(room.id, 2);
         callback({ success: true, room, playerId: 2, sessionToken });
+        emitRoomSettings(io, room.code);
       } catch (error) {
         callback({ success: false, error: 'Failed to join room' });
       }
@@ -322,6 +357,8 @@ export function setupSocketHandlers(
         const gameState = activeGames.get(room.code);
 
         callback({ success: true, room, playerId: data.playerId });
+        const settingsInfo = buildRoomSettingsInfo(room.code);
+        if (settingsInfo) socket.emit('room:settings', settingsInfo);
 
         // Notify the other player
         socket.to(room.code).emit('room:player-joined', {
@@ -454,6 +491,16 @@ export function setupSocketHandlers(
     });
 
     // Start game
+    // P0-5 : le joueur qui a rejoint valide les reglages choisis par l'hote.
+    socket.on('room:accept-settings', () => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection || connection.playerId !== 2) return;
+      const settings = roomSettings.get(connection.roomCode);
+      if (!settings) return;
+      settings.settingsAccepted = true;
+      io.to(connection.roomCode).emit('room:settings-accepted', { playerId: 2 });
+    });
+
     socket.on('game:start', (callback) => {
       console.log('[GAME:START] Received game:start event');
       const connection = playerConnections.get(socket.id);
@@ -474,6 +521,14 @@ export function setupSocketHandlers(
       const room = roomModel.getRoomByCode(connection.roomCode);
       if (!room || !room.player1_name || !room.player2_name) {
         callback({ success: false, error: 'Room not ready' });
+        return;
+      }
+
+      // P0-5 : pas de lancement tant que le joueur 2 n'a pas accepte les
+      // reglages (mode, themes) choisis par l'hote — consentement explicite.
+      const startSettings = roomSettings.get(connection.roomCode);
+      if (startSettings && !startSettings.settingsAccepted) {
+        callback({ success: false, error: `${room.player2_name} n'a pas encore accepte les reglages` });
         return;
       }
 

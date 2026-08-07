@@ -2,7 +2,7 @@
   "name": "jeu-couples-backend",
   "version": "1.0.0",
   "type": "module",
-  "description": "Backend pour le jeu de couples en temps réel",
+  "description": "Backend pour le jeu de couples en temps r\u00e9el",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -11,7 +11,8 @@
     "migrate": "tsx src/migrate.ts",
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest --forceExit",
     "test:verbose": "NODE_OPTIONS='--experimental-vm-modules' jest --verbose --forceExit",
-    "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch"
+    "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
+    "verify:e2e": "tsx src/__tests__/p0.verify.mts"
   },
   "dependencies": {
     "better-sqlite3": "^11.5.0",

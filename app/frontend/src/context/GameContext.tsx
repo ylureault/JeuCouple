@@ -29,7 +29,8 @@ import type {
   GameMode,
   ThemeChoiceRequest,
   ThemeChoiceWaiting,
-  ModeProposal
+  ModeProposal,
+  RoomSettingsInfo
 } from '../../../shared/types';
 
 interface GameState {
@@ -71,6 +72,8 @@ interface GameState {
   modeProposal: ModeProposal | null;                       // on me propose un mode
   currentMode: GameMode;                                   // mode actif
   modeNotice: { text: string; kind: 'changed' | 'declined' } | null;
+  // P0-5 : recap des reglages montre au lobby + accord du joueur 2
+  gameSettings: RoomSettingsInfo | null;
 }
 
 type GameAction =
@@ -112,6 +115,8 @@ type GameAction =
   | { type: 'MODE_DECLINED'; byName: string }
   | { type: 'MODE_CLEAR_PROPOSAL' }
   | { type: 'MODE_CLEAR_NOTICE' }
+  | { type: 'SET_ROOM_SETTINGS'; settings: RoomSettingsInfo }
+  | { type: 'SETTINGS_ACCEPTED' }
   | { type: 'RESET' };
 
 const initialState: GameState = {
@@ -147,7 +152,8 @@ const initialState: GameState = {
   duelLastTheme: null,
   modeProposal: null,
   currentMode: 'classic',
-  modeNotice: null
+  modeNotice: null,
+  gameSettings: null
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -275,6 +281,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'CLEAR_ERROR':
       return { ...state, error: null };
+
+    case 'SET_ROOM_SETTINGS':
+      return { ...state, gameSettings: action.settings };
+
+    case 'SETTINGS_ACCEPTED':
+      return state.gameSettings
+        ? { ...state, gameSettings: { ...state.gameSettings, settingsAccepted: true } }
+        : state;
 
     case 'MODE_PROPOSED':
       return { ...state, modeProposal: action.proposal };
@@ -427,6 +441,7 @@ interface GameContextType extends GameState {
   proposeMode: (mode: GameMode) => void;
   respondToModeProposal: (accept: boolean) => void;
   dismissModeNotice: () => void;
+  acceptSettings: () => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -684,6 +699,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'ADD_KISS', kiss: data });
       // Auto-clear kiss display after 2 seconds
       setTimeout(() => dispatch({ type: 'CLEAR_KISS' }), 2000);
+    });
+
+    socket.on('room:settings', (data) => {
+      dispatch({ type: 'SET_ROOM_SETTINGS', settings: data });
+    });
+
+    socket.on('room:settings-accepted', () => {
+      dispatch({ type: 'SETTINGS_ACCEPTED' });
     });
 
     socket.on('mode:proposal', (data) => {
@@ -1014,6 +1037,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'MODE_CLEAR_NOTICE' });
   }, []);
 
+  const acceptSettings = useCallback(() => {
+    // La confirmation revient par room:settings-accepted, diffuse aux deux.
+    state.socket?.emit('room:accept-settings');
+  }, [state.socket]);
+
   const chooseDuelTheme = useCallback((category: string) => {
     if (!state.socket) return;
     state.socket.emit('duel:choose-theme', { category });
@@ -1031,6 +1059,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         proposeMode,
         respondToModeProposal,
         dismissModeNotice,
+        acceptSettings,
         createRoom,
         joinRoom,
         startGame,

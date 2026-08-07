@@ -243,6 +243,9 @@ export interface ServerToClientEvents {
   'room:joined': (data: { room: Room; playerId: 1 | 2 }) => void;
   'room:player-joined': (data: { playerName: string; playerId: 1 | 2; gender: Gender }) => void;
   'room:player-left': (data: { playerId: 1 | 2 }) => void;
+  // P0-5 : recap des reglages + accord explicite du joueur 2
+  'room:settings': (data: RoomSettingsInfo) => void;
+  'room:settings-accepted': (data: { playerId: 1 | 2 }) => void;
   'game:started': (data: { gameId: number; gameMode?: GameMode }) => void;
   'game:question': (data: { question: Question; questionNumber: number; totalQuestions: number }) => void;
   'game:player-answered': (data: { playerId: 1 | 2 }) => void;
@@ -322,6 +325,8 @@ export interface ClientToServerEvents {
   'room:create': (data: { playerName: string; gender: Gender; questionCount?: number; categories?: string[]; questionTypes?: string[]; gameMode?: GameMode }, callback: (response: RoomResponse) => void) => void;
   'room:join': (data: { code: string; playerName: string; gender: Gender }, callback: (response: RoomResponse) => void) => void;
   'room:leave': () => void;
+  // P0-5 : le joueur 2 accepte les reglages choisis par l'hote
+  'room:accept-settings': () => void;
   'game:start': (callback: (response: { success: boolean; error?: string }) => void) => void;
   'game:answer': (data: { answer: string }, callback?: (response: { accepted: boolean; error?: string }) => void) => void;
   'game:restart': (callback: (response: { success: boolean; error?: string }) => void) => void;
@@ -462,6 +467,19 @@ export interface ThemeChoiceWaiting {
   chooserName: string;
   reason: 'winner' | 'faster' | 'tiebreak';
   timeoutSeconds: number;
+}
+
+// Recap des reglages du salon, montre aux deux joueurs au lobby (P0-5 :
+// le joueur 2 doit savoir a quoi il va jouer AVANT le lancement).
+export interface RoomSettingsInfo {
+  gameMode: string;
+  modeLabel: string;
+  modeIcon: string;
+  endless: boolean;
+  questionCount: number;
+  /** Vide = tous les themes (mode auto). */
+  categories: { code: string; name: string; icon: string }[];
+  settingsAccepted: boolean;
 }
 
 export interface RoomResponse {

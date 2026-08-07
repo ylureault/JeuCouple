@@ -21,7 +21,9 @@ export default function Lobby() {
     startGame,
     leaveRoom,
     phase,
-    error
+    error,
+    gameSettings,
+    acceptSettings
   } = useGame();
   const { playSound, playLobbyMusic, stopLobbyMusic } = useAudio();
   const navigate = useNavigate();
@@ -252,6 +254,39 @@ export default function Lobby() {
 
         {/* Status / Actions */}
         <AnimatePresence mode="wait">
+          {gameSettings && (
+            <motion.div
+              key="recap"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full max-w-md surface rounded-[20px] p-4 mb-4"
+            >
+              <p className="text-white/55 text-[11px] font-bold uppercase tracking-wide mb-2">
+                Ce qui vous attend
+              </p>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-2xl" aria-hidden="true">{gameSettings.modeIcon}</span>
+                <span className="text-white font-bold">{gameSettings.modeLabel}</span>
+                <span className="ml-auto text-white/70 text-sm font-semibold">
+                  {gameSettings.endless ? 'Sans fin' : `${gameSettings.questionCount === 50 ? '∞' : gameSettings.questionCount} questions`}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {gameSettings.categories.length === 0 ? (
+                  <span className="text-[12px] px-2 py-0.5 rounded-full bg-white/12 text-white/80">
+                    🎲 Tous les thèmes
+                  </span>
+                ) : (
+                  gameSettings.categories.map((c) => (
+                    <span key={c.code} className="text-[12px] px-2 py-0.5 rounded-full bg-white/12 text-white/85">
+                      {c.icon} {c.name}
+                    </span>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          )}
+
           {!bothPlayersReady && (
             <motion.div
               key="waiting"
@@ -285,7 +320,8 @@ export default function Lobby() {
             >
               <motion.button
                 onClick={handleStart}
-                className="btn-start w-full"
+                disabled={!!gameSettings && !gameSettings.settingsAccepted}
+                className={`btn-start w-full ${gameSettings && !gameSettings.settingsAccepted ? 'opacity-50 cursor-not-allowed' : ''}`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 animate={{
@@ -302,10 +338,36 @@ export default function Lobby() {
                   Lancer la partie !
                 </span>
               </motion.button>
+              {gameSettings && !gameSettings.settingsAccepted && (
+                <p className="text-white/60 text-sm text-center mt-2">
+                  En attente que {room.player2_name} valide les réglages…
+                </p>
+              )}
             </motion.div>
           )}
 
-          {!isHost && bothPlayersReady && (
+          {!isHost && bothPlayersReady && gameSettings && !gameSettings.settingsAccepted && (
+            <motion.div
+              key="accept"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full max-w-md"
+            >
+              <motion.button
+                onClick={() => { playSound('click'); acceptSettings(); }}
+                className="btn-create w-full"
+                whileTap={{ scale: 0.97 }}
+              >
+                ✓ Ça me va, on joue !
+              </motion.button>
+              <p className="text-white/55 text-xs text-center mt-2">
+                {room.player1_name} a choisi ces réglages — la partie ne démarre qu'avec ton accord.
+              </p>
+            </motion.div>
+          )}
+
+          {!isHost && bothPlayersReady && (!gameSettings || gameSettings.settingsAccepted) && (
             <motion.div
               key="waiting-host"
               initial={{ opacity: 0 }}
