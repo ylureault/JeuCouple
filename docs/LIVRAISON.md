@@ -112,6 +112,12 @@ Elle doit exister dans `initDefaultCategories()` (`database.ts`). Sinon la
 question part en base mais reste **injouable** : le sélecteur de thèmes ne liste
 que la table `categories`. L'import refuse désormais une catégorie inconnue.
 
+Attention aux codes de catégorie cités **hors du serveur** : l'échelle du
+curseur d'intensité (`PALIERS_TORRIDES` dans `Home.tsx`) les nomme en dur.
+Renommer une catégorie sans toucher cette liste ouvrirait un cran du curseur
+sur un vivier vide. `contenu.intensite-torride.test.ts` lit la source du front
+et confronte chaque palier au catalogue — il casse si les deux divergent.
+
 ### Vérifier son lot
 ```bash
 cd app/backend && NODE_OPTIONS='--experimental-vm-modules' \

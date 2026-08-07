@@ -48,8 +48,38 @@ const THEMATIC_THEMES = [
   { id: 'bdsm', label: 'BDSM', emoji: '⛓️', description: 'Domination, soumission et plus', color: 'from-gray-700 to-gray-900' },
   { id: 'public', label: 'Sexe en public', emoji: '🏖️', description: 'Oser en dehors de la chambre', color: 'from-sky-500 to-blue-600' },
   { id: 'extreme', label: 'Ultra coquin', emoji: '🔞', description: 'Pour les couples très audacieux', color: 'from-red-600 to-rose-700' },
-  { id: 'mix_hot', label: 'Mix Torride', emoji: '🔥', description: 'Un mélange de tous les thèmes osés', color: 'from-orange-500 to-red-500' },
+  { id: 'mix_hot', label: 'Mix Torride', emoji: '🔥', description: 'Un mélange de tous les thèmes osés, à l\'intensité que vous choisissez', color: 'from-orange-500 to-red-500' },
 ] as const;
+
+/**
+ * Échelle d'intensité du Mix Torride, de 1 à 10.
+ *
+ * « Torride » ne veut pas dire la même chose pour tout le monde, et le mélange
+ * servait jusqu'ici les onze thèmes d'un bloc : un couple qui voulait chauffer
+ * doucement tombait sur le BDSM à la deuxième manche. Chaque cran ajoute un
+ * thème au précédent — le curseur ne remplace pas, il ouvre. Le niveau 1 reste
+ * jouable seul : « Préliminaires » compte une soixantaine de questions.
+ */
+const PALIERS_TORRIDES: { ajoute: string[]; titre: string }[] = [
+  { ajoute: ['preliminaires'], titre: 'Tout en douceur' },
+  { ajoute: ['fantasmes'], titre: 'On se confie' },
+  { ajoute: ['kamasutra'], titre: 'Ça chauffe' },
+  { ajoute: ['fellation', 'cunnilingus'], titre: 'Sans détour' },
+  { ajoute: ['69'], titre: 'À deux, à fond' },
+  { ajoute: ['jeux_role'], titre: 'On joue un rôle' },
+  { ajoute: ['public'], titre: 'Hors de la chambre' },
+  { ajoute: ['sodomie'], titre: 'Plus loin' },
+  { ajoute: ['bdsm'], titre: 'Jeux de pouvoir' },
+  { ajoute: ['extreme'], titre: 'Sans limites' },
+];
+
+const TORRIDE_MIN = 1;
+const TORRIDE_MAX = PALIERS_TORRIDES.length;
+
+/** Tous les thèmes ouverts jusqu'au niveau demandé, le plus doux en premier. */
+function themesTorrides(niveau: number): string[] {
+  return PALIERS_TORRIDES.slice(0, niveau).flatMap(p => p.ajoute);
+}
 
 // Category configuration with display info
 const CATEGORY_CONFIG = [
@@ -99,6 +129,8 @@ export default function Home() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(TOUTES_CATEGORIES);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedTheme, setSelectedTheme] = useState<string | null>('mix_all');
+  // Intensite du Mix Torride. Milieu d'echelle par defaut : ni tiede, ni brutal.
+  const [niveauTorride, setNiveauTorride] = useState(5);
   // Partie rapide : un geste, zero reglage — mix de tout le catalogue.
   // C'est le chemin par defaut du jeu : il ne tourne PAS autour du sexe.
   const [quickStart, setQuickStart] = useState(false);
@@ -187,14 +219,13 @@ export default function Home() {
     setLoading(true);
     playSound('click');
     try {
-      // For thematic games, use the theme as the only category
-      // mix_hot uses all explicit themes together
       // mix_all = aucune restriction (tout le catalogue) ;
-      // mix_hot = tous les themes oses de cette liste.
+      // mix_hot = les themes oses ouverts jusqu'au niveau du curseur ;
+      // sinon, le theme choisi et lui seul.
       const themeCategories = selectedTheme === 'mix_all'
         ? []
         : selectedTheme === 'mix_hot'
-          ? THEMATIC_THEMES.filter(t => t.id !== 'mix_hot' && t.id !== 'mix_all').map(t => t.id)
+          ? themesTorrides(niveauTorride)
           : [selectedTheme];
       const code = await createRoom(playerName.trim(), gender, questionCount, themeCategories, [], gameMode);
       navigate(`/salon/${code}`);
@@ -912,6 +943,9 @@ export default function Home() {
                         );
                       })}
                     </div>
+                    {selectedTheme === 'mix_hot' && (
+                      <CurseurTorride value={niveauTorride} onChange={setNiveauTorride} />
+                    )}
                   </div>
                 </div>
 
@@ -967,6 +1001,49 @@ export default function Home() {
  */
 const QUESTIONS_MIN = 5;
 const QUESTIONS_MAX = 50;
+
+/**
+ * Curseur d'intensite du Mix Torride, de 1 a 10.
+ *
+ * Il annonce ce qu'il fait avant qu'on y touche : le cran porte un titre
+ * ("Tout en douceur", "Sans limites") et la liste des themes ouverts est
+ * ecrite dessous. Personne ne decouvre en pleine partie ce que le curseur a
+ * decide a sa place.
+ */
+function CurseurTorride({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  const pourcentage = ((value - TORRIDE_MIN) / (TORRIDE_MAX - TORRIDE_MIN)) * 100;
+  const palier = PALIERS_TORRIDES[value - 1];
+  const ouverts = themesTorrides(value)
+    .map((id) => THEMATIC_THEMES.find((t) => t.id === id)?.label ?? id);
+
+  return (
+    <div className="mt-3 p-3 rounded-xl bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-200">
+      <div className="flex items-baseline justify-between mb-1">
+        <label htmlFor="curseur-torride" className="text-gray-600 font-bold text-sm uppercase tracking-wide">
+          Intensité 🔥
+        </label>
+        <span className="text-[#c2410c] font-black text-base tabular-nums">
+          {value}/{TORRIDE_MAX} — {palier.titre}
+        </span>
+      </div>
+      <input
+        id="curseur-torride"
+        type="range"
+        min={TORRIDE_MIN}
+        max={TORRIDE_MAX}
+        step={1}
+        value={value}
+        onChange={(e) => onChange(parseInt(e.target.value))}
+        aria-valuetext={`niveau ${value} sur ${TORRIDE_MAX}, ${palier.titre}`}
+        className="curseur-chaleur w-full h-2 rounded-full cursor-pointer"
+        style={{ ['--range-fill' as string]: `${pourcentage}%` }}
+      />
+      <p className="text-[11px] font-semibold text-gray-500 mt-1 leading-snug">
+        {ouverts.join(' · ')}
+      </p>
+    </div>
+  );
+}
 
 function CurseurQuestions({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   const pourcentage = ((value - QUESTIONS_MIN) / (QUESTIONS_MAX - QUESTIONS_MIN)) * 100;
