@@ -25,7 +25,10 @@ import type {
   QuickMessageId,
   QuickMessageData,
   BuzzData,
-  KissData
+  KissData,
+  GameMode,
+  ThemeChoiceRequest,
+  ThemeChoiceWaiting
 } from '../../../shared/types';
 
 interface GameState {
@@ -59,6 +62,10 @@ interface GameState {
   partnerHesitating: boolean;
   kissCount: number;
   lastKiss: KissData | null;
+  // Mode duel : choix du theme de la manche suivante
+  duelChoice: ThemeChoiceRequest | null;      // je dois choisir
+  duelWaiting: ThemeChoiceWaiting | null;     // j'attends que l'autre choisisse
+  duelLastTheme: { name: string; icon: string; autoPicked: boolean } | null;
 }
 
 type GameAction =
@@ -92,6 +99,9 @@ type GameAction =
   | { type: 'SET_PARTNER_HESITATING'; isHesitating: boolean }
   | { type: 'ADD_KISS'; kiss: KissData }
   | { type: 'CLEAR_KISS' }
+  | { type: 'DUEL_CHOOSE'; request: ThemeChoiceRequest }
+  | { type: 'DUEL_AWAIT'; waiting: ThemeChoiceWaiting }
+  | { type: 'DUEL_RESOLVED'; name: string; icon: string; autoPicked: boolean }
   | { type: 'RESET' };
 
 const initialState: GameState = {
@@ -121,7 +131,10 @@ const initialState: GameState = {
   lastBuzz: null,
   partnerHesitating: false,
   kissCount: 0,
-  lastKiss: null
+  lastKiss: null,
+  duelChoice: null,
+  duelWaiting: null,
+  duelLastTheme: null
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -249,6 +262,21 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'CLEAR_ERROR':
       return { ...state, error: null };
 
+    case 'DUEL_CHOOSE':
+      return { ...state, duelChoice: action.request, duelWaiting: null };
+
+    case 'DUEL_AWAIT':
+      return { ...state, duelWaiting: action.waiting, duelChoice: null };
+
+    case 'DUEL_RESOLVED':
+      // Le theme est tranche : on referme les deux ecrans d'attente.
+      return {
+        ...state,
+        duelChoice: null,
+        duelWaiting: null,
+        duelLastTheme: { name: action.name, icon: action.icon, autoPicked: action.autoPicked }
+      };
+
     case 'ADD_REACTION':
       // Keep only recent reactions (last 10, auto-cleanup old ones)
       const newReactions = [...state.reactions, action.reaction]
@@ -340,7 +368,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 }
 
 interface GameContextType extends GameState {
-  createRoom: (playerName: string, gender: Gender, questionCount?: number, categories?: string[], questionTypes?: string[]) => Promise<string>;
+  createRoom: (playerName: string, gender: Gender, questionCount?: number, categories?: string[], questionTypes?: string[], gameMode?: GameMode) => Promise<string>;
   joinRoom: (code: string, playerName: string, gender: Gender) => Promise<string>;
   startGame: () => Promise<void>;
   submitAnswer: (answer: string) => void;
@@ -357,6 +385,7 @@ interface GameContextType extends GameState {
   sendKiss: () => void;
   requestPause: () => void;
   clearError: () => void;
+  chooseDuelTheme: (category: string) => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -612,6 +641,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setTimeout(() => dispatch({ type: 'CLEAR_KISS' }), 2000);
     });
 
+    socket.on('duel:choose-theme', (data) => {
+      dispatch({ type: 'DUEL_CHOOSE', request: data });
+    });
+
+    socket.on('duel:awaiting-theme', (data) => {
+      dispatch({ type: 'DUEL_AWAIT', waiting: data });
+    });
+
+    socket.on('duel:theme-selected', (data) => {
+      dispatch({ type: 'DUEL_RESOLVED', name: data.name, icon: data.icon, autoPicked: data.autoPicked });
+    });
+
     socket.on('game:paused', (data) => {
       console.log('Game paused, waiting for:', data.playerName);
       dispatch({ type: 'GAME_PAUSED', playerName: data.playerName });
@@ -726,11 +767,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [state.phase]);
 
-  const createRoom = useCallback(async (playerName: string, gender: Gender, questionCount?: number, categories?: string[], questionTypes?: string[]): Promise<string> => {
+  const createRoom = useCallback(async (playerName: string, gender: Gender, questionCount?: number, categories?: string[], questionTypes?: string[], gameMode?: GameMode): Promise<string> => {
     if (!state.socket) throw new Error('No socket connection');
 
     return new Promise<string>((resolve, reject) => {
-      state.socket!.emit('room:create', { playerName, gender, questionCount, categories, questionTypes }, (response) => {
+      state.socket!.emit('room:create', { playerName, gender, questionCount, categories, questionTypes, gameMode }, (response) => {
         if (response.success && response.room && response.playerId) {
           dispatch({
             type: 'JOIN_ROOM',
@@ -879,11 +920,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'CLEAR_ERROR' });
   }, []);
 
+  const chooseDuelTheme = useCallback((category: string) => {
+    if (!state.socket) return;
+    state.socket.emit('duel:choose-theme', { category });
+    // On referme immediatement l'ecran de choix : le serveur ignore les envois
+    // en double, mais laisser le bouton actif inviterait au double-clic.
+    dispatch({ type: 'DUEL_RESOLVED', name: '', icon: '', autoPicked: false });
+  }, [state.socket]);
+
   return (
     <GameContext.Provider
       value={{
         ...state,
         clearError,
+        chooseDuelTheme,
         createRoom,
         joinRoom,
         startGame,

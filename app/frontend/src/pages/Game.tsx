@@ -11,13 +11,15 @@ import RevealCard from '../components/RevealCard';
 import CategoryBadge from '../components/CategoryBadge';
 import ReactionBar from '../components/ReactionBar';
 import ReactionOverlay from '../components/ReactionOverlay';
-import TextReactionBar from '../components/TextReactionBar';
 import TextReactionOverlay from '../components/TextReactionOverlay';
 import VoiceChat from '../components/VoiceChat';
 import GameAlerts from '../components/GameAlerts';
 // Sans ce composant monte, les evenements game:sound-reaction arrivaient bien
 // dans le state mais aucun son n'etait joue : la fonctionnalite etait inerte.
 import SoundReactionHandler from '../components/SoundReactionHandler';
+// Le chat remplace les reactions toutes faites : il reste visible en permanence.
+import GameChat from '../components/GameChat';
+import DuelThemePicker from '../components/DuelThemePicker';
 import Lobby from './Lobby';
 
 export default function Game() {
@@ -155,6 +157,7 @@ export default function Game() {
       <ReactionOverlay />
       <TextReactionOverlay />
       <SoundReactionHandler />
+      <DuelThemePicker />
       <GameAlerts
         otherAnswered={otherAnswered}
         myAnswer={myAnswer}
@@ -564,9 +567,9 @@ export default function Game() {
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-sm py-2 px-2 border-t border-white/10 z-40 space-y-1.5"
+        className="fixed bottom-0 left-0 right-0 bg-black/45 backdrop-blur-xl pt-2 px-2 border-t border-white/10 z-40 space-y-1.5 safe-bottom"
       >
-        <TextReactionBar />
+        <GameChat />
         <ReactionBar />
       </motion.div>
     </div>

@@ -129,19 +129,17 @@ export const REACTION_EMOJIS = ['❤️', '😂', '😮', '😢', '👏', '🔥'
 export type ReactionEmoji = typeof REACTION_EMOJIS[number];
 
 // Text quick reactions
+// Remplacees par un vrai chat (GameChat) : les formules toutes faites du type
+// "P'tit con" / "Vieille peau" partaient vite en pique entre partenaires.
+// Le catalogue est conserve, reduit a des encouragements, car le serveur
+// valide encore ces identifiants pour les anciens clients connectes.
 export const TEXT_REACTIONS = [
-  { id: 'ptitcon', text: "P'tit con", emoji: '😏' },
-  { id: 'viellepeau', text: 'Vieille peau', emoji: '👵' },
   { id: 'jattends', text: "J'attends", emoji: '⏳' },
-  { id: 'comprends', text: 'Je comprends pas', emoji: '🤷' },
   { id: 'allez', text: 'Allez !', emoji: '💪' },
-  { id: 'habon', text: 'Ah bon ?', emoji: '🤨' },
   { id: 'jetaime', text: "Je t'aime", emoji: '❤️' },
   { id: 'bisou', text: 'Bisou !', emoji: '💋' },
   { id: 'bravo', text: 'Bravo !', emoji: '👏' },
-  { id: 'mechant', text: "T'es méchant(e)", emoji: '😤' },
   { id: 'parfait', text: 'Parfait !', emoji: '✨' },
-  { id: 'nul', text: "T'es nul(le)", emoji: '😜' },
 ] as const;
 export type TextReactionId = typeof TEXT_REACTIONS[number]['id'];
 
@@ -345,7 +343,59 @@ export interface ClientToServerEvents {
 // 'classic' : liste de questions fixee au demarrage, la partie se termine.
 // 'duel'    : boucle sans fin. A chaque manche, le gagnant (ou le plus rapide
 //             en cas d'egalite) choisit le theme de la question suivante.
-export type GameMode = 'classic' | 'duel';
+export type GameMode = 'classic' | 'duel' | 'escalade' | 'complices' | 'sudden_death';
+
+// Catalogue affiche au joueur. Doit rester aligne avec le registre serveur
+// (backend/src/services/gameModes.ts), qui reste la source de verite des regles.
+export const GAME_MODES: {
+  id: GameMode;
+  label: string;
+  tagline: string;
+  description: string;
+  icon: string;
+  endless: boolean;
+}[] = [
+  {
+    id: 'classic',
+    label: 'Classique',
+    tagline: 'La partie de reference',
+    description: 'Un nombre de questions fixe, puis votre score de compatibilite.',
+    icon: '🎯',
+    endless: false,
+  },
+  {
+    id: 'duel',
+    label: 'Duel sans fin',
+    tagline: 'Le gagnant impose le theme',
+    description: "Celui qui remporte la manche choisit le theme de la suivante. A egalite, c'est le plus rapide. Aucune limite.",
+    icon: '⚔️',
+    endless: true,
+  },
+  {
+    id: 'escalade',
+    label: 'Escalade',
+    tagline: 'La temperature monte',
+    description: 'Le jeu impose les themes et grimpe palier par palier, du plus tendre au plus explicite.',
+    icon: '🌡️',
+    endless: false,
+  },
+  {
+    id: 'complices',
+    label: 'Complices',
+    tagline: 'Vous contre le jeu',
+    description: "Aucun adversaire : enchainez les accords. Un seul desaccord remet la serie a zero.",
+    icon: '🤝',
+    endless: true,
+  },
+  {
+    id: 'sudden_death',
+    label: 'Mort subite',
+    tagline: 'Trois vies chacun',
+    description: "Chaque manche perdue coute une vie. Trois vies perdues et la partie s'arrete net.",
+    icon: '💀',
+    endless: true,
+  },
+];
 
 // Theme propose au gagnant d'une manche en mode duel.
 export interface ThemeChoiceOption {

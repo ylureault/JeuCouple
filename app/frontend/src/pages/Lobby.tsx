@@ -7,7 +7,6 @@ import { useTheme } from '../context/ThemeContext';
 import MuteButton from '../components/MuteButton';
 import ReactionBar from '../components/ReactionBar';
 import ReactionOverlay from '../components/ReactionOverlay';
-import TextReactionBar from '../components/TextReactionBar';
 import TextReactionOverlay from '../components/TextReactionOverlay';
 // Les messages lobby:chat etaient recus et stockes, mais aucune interface ne
 // les affichait ni ne permettait d'en envoyer.
@@ -350,7 +349,6 @@ export default function Lobby() {
         animate={{ opacity: 1, y: 0 }}
         className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-sm py-2 px-2 border-t border-white/10 z-40 space-y-1.5"
       >
-        <TextReactionBar />
         <ReactionBar />
       </motion.div>
     </div>

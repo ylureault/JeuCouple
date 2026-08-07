@@ -6,7 +6,8 @@ import { useAudio } from '../context/AudioContext';
 import { useTheme } from '../context/ThemeContext';
 import MuteButton from '../components/MuteButton';
 import ThemeSelector from '../components/ThemeSelector';
-import type { Gender } from '../../../shared/types';
+import GameModeSelector from '../components/GameModeSelector';
+import type { Gender, GameMode } from '../../../shared/types';
 
 type Mode = 'home' | 'create' | 'join' | 'thematic';
 
@@ -67,6 +68,7 @@ export default function Home() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
+  const [gameMode, setGameMode] = useState<GameMode>('classic');
   const { createRoom, joinRoom, error, connected } = useGame();
   const { playSound } = useAudio();
   const navigate = useNavigate();
@@ -89,7 +91,7 @@ export default function Home() {
     playSound('click');
     try {
       // Pass selected categories and types (empty array = all / auto mode)
-      const code = await createRoom(playerName.trim(), gender, questionCount, selectedCategories, selectedTypes);
+      const code = await createRoom(playerName.trim(), gender, questionCount, selectedCategories, selectedTypes, gameMode);
       // Navigate to lobby with the actual room code
       navigate(`/salon/${code}`);
     } catch {
@@ -109,7 +111,7 @@ export default function Home() {
       const themeCategories = selectedTheme === 'mix_hot'
         ? THEMATIC_THEMES.filter(t => t.id !== 'mix_hot').map(t => t.id)
         : [selectedTheme];
-      const code = await createRoom(playerName.trim(), gender, questionCount, themeCategories, []);
+      const code = await createRoom(playerName.trim(), gender, questionCount, themeCategories, [], gameMode);
       navigate(`/salon/${code}`);
     } catch {
       // Error handled in context
@@ -360,6 +362,8 @@ export default function Home() {
                       </motion.button>
                     </div>
                   </div>
+
+                  <GameModeSelector value={gameMode} onChange={setGameMode} disabled={loading} />
 
                   <div>
                     <label className="block text-gray-600 font-bold text-sm mb-1 uppercase tracking-wide">
@@ -647,6 +651,8 @@ export default function Home() {
                       </motion.button>
                     </div>
                   </div>
+
+                  <GameModeSelector value={gameMode} onChange={setGameMode} disabled={loading} />
 
                   <div>
                     <label className="block text-gray-600 font-bold text-sm mb-1 uppercase tracking-wide">

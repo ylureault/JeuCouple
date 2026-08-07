@@ -9,7 +9,7 @@ import Confetti from '../components/Confetti';
 import Fireworks from '../components/Fireworks';
 import ReactionBar from '../components/ReactionBar';
 import ReactionOverlay from '../components/ReactionOverlay';
-import TextReactionBar from '../components/TextReactionBar';
+import GameChat from '../components/GameChat';
 import TextReactionOverlay from '../components/TextReactionOverlay';
 import type { CategoryScore, Gender, QuestionHistory } from '../../../shared/types';
 
@@ -631,7 +631,7 @@ export default function Results() {
         transition={{ delay: 1.8 }}
         className="fixed bottom-0 left-0 right-0 bg-black/50 backdrop-blur-md py-3 px-4 border-t border-white/20 z-50 space-y-2"
       >
-        <TextReactionBar />
+        <GameChat />
         <ReactionBar />
       </motion.div>
     </div>
