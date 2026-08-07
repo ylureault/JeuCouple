@@ -72,3 +72,12 @@ export function getGameStats(gameId: number): { player1Correct: number; player2C
   // For now, return placeholder
   return { player1Correct: 0, player2Correct: 0 };
 }
+
+/**
+ * Efface les reponses d'une partie terminee. Les reponses de type C sont des
+ * confessions intimes : on ne les conserve pas en clair au-dela de la partie
+ * (decision de l'audit croise coach en relations + cybersecurite).
+ */
+export function deleteAnswersForGame(gameId: number): number {
+  return db.prepare('DELETE FROM answers WHERE game_id = ?').run(gameId).changes;
+}

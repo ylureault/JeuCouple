@@ -1993,6 +1993,16 @@ function finishGame(
 
   io.to(roomCode).emit('game:finished', finishedData);
 
+  // P0 du plan d'audit (coach + securite) : les reponses libres contiennent
+  // des confessions intimes. Une fois les resultats envoyes (l'historique de
+  // la partie vit dans finishedData, deja emis), rien ne justifie de garder
+  // ces textes en clair dans SQLite : on purge les reponses de la partie.
+  try {
+    gameModel.deleteAnswersForGame(gameState.gameId);
+  } catch (e) {
+    console.error('Purge des reponses impossible pour la partie', gameState.gameId, e);
+  }
+
   // Clean up game state
   activeGames.delete(roomCode);
 }
