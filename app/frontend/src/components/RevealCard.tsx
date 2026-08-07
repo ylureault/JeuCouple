@@ -4,7 +4,7 @@ import type { Question, GameRevealData } from '../../../shared/types';
 import Confetti from './Confetti';
 import Fireworks from './Fireworks';
 
-const NEXT_QUESTION_DELAY_S = 10;  // delai serveur avant la question suivante
+const NEXT_QUESTION_DELAY_S = 10;  // repli si un vieux serveur n'envoie pas la duree
 
 interface RevealCardProps {
   /** Genres reellement choisis au lobby — les avatars etaient codes en dur. */
@@ -186,15 +186,16 @@ export default function RevealCard({
     streak1, streak2, answerTime1, answerTime2, correctAnswer
   } = revealData;
   const [showFlash, setShowFlash] = useState(false);
-  const [nextIn, setNextIn] = useState(NEXT_QUESTION_DELAY_S);
+  const revealDelay = revealData.nextInSeconds ?? NEXT_QUESTION_DELAY_S;
+  const [nextIn, setNextIn] = useState(revealDelay);
 
   // Decompte visible (UX 6, arbitre : un decompte, pas de double-ack) —
   // sans lui, on ne sait pas combien de temps il reste pour comparer.
   useEffect(() => {
-    setNextIn(NEXT_QUESTION_DELAY_S);
+    setNextIn(revealDelay);
     const id = setInterval(() => setNextIn((t) => (t <= 1 ? 0 : t - 1)), 1000);
     return () => clearInterval(id);
-  }, [question.id]);
+  }, [question.id, revealDelay]);
   const [countedPoints, setCountedPoints] = useState(0);
 
   const myPoints = playerId === 1 ? points1 : points2;

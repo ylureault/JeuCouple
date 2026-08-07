@@ -529,6 +529,9 @@ export interface GameRevealData {
   category: string;
   // For Type H (culture générale) - show correct answer
   correctAnswer?: string;
+  /** Cadence : duree exacte avant la question suivante (7 s en binaire/QCM,
+      14 s pour lire deux reponses libres). Le decompte client s'y cale. */
+  nextInSeconds?: number;
 }
 
 export interface QuestionHistory {

@@ -622,7 +622,7 @@ export function setupSocketHandlers(
         answers: new Map(),
         scores: { player1: 0, player2: 0 },
         timer: null,
-        phase: 'question',
+        phase: 'waiting',
         questionStartTime: Date.now(),
         gamification: {
           streak1: 0,
@@ -662,10 +662,10 @@ export function setupSocketHandlers(
 
       callback({ success: true });
 
-      // Start first question after a short delay
+      // Premiere question apres un court delai de montage des clients.
       setTimeout(() => {
         sendQuestion(io, room.code, gameState);
-      }, 2000);
+      }, 800);
     });
 
     // Answer question
@@ -1630,6 +1630,7 @@ function revealAnswers(
     correctAnswer: isTypeH ? question.correct_answer : undefined
   };
 
+  revealData.nextInSeconds = revealSeconds(question.type);
   io.to(roomCode).emit('game:reveal', revealData);
 
   // Send score update
@@ -1708,7 +1709,7 @@ function scheduleNextQuestion(
     });
 
     applyModeDecision(io, roomCode, gameState, decision);
-  }, 10000); // 10 seconds to view results
+  }, revealSeconds(gameState.questions[gameState.currentQuestionIndex]?.type ?? 'A') * 1000);
 }
 
 const PALIER_CONSENT_TIMEOUT_SECONDS = 25;
@@ -1757,6 +1758,15 @@ function resolvePalierConsent(
     action: 'next-from-category',
     category: accepted ? consent.nextCategory : consent.stayCategory,
   });
+}
+
+// Cadence (demande utilisateur : "faut que ca cadence bien").
+// 10 s figees apres CHAQUE revelation trainaient sur les questions binaires
+// et manquaient sur les reponses libres a comparer.
+const REVEAL_SECONDS_DEFAULT = 7;   // binaires, QCM, echelles : vite lu
+const REVEAL_SECONDS_TEXT = 14;     // type C : deux textes a lire et commenter
+function revealSeconds(type: QuestionType): number {
+  return type === 'C' ? REVEAL_SECONDS_TEXT : REVEAL_SECONDS_DEFAULT;
 }
 
 const THEME_CHOICE_TIMEOUT_SECONDS = 20;

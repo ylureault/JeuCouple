@@ -93,10 +93,12 @@ export default function Game() {
       setTimeLeft(currentQuestion.timer);
       playSound('reveal');
 
-      // Intro sequence
-      const step1 = setTimeout(() => setIntroStep('category'), 800);
-      const step2 = setTimeout(() => setIntroStep('question'), 1600);
-      const step3 = setTimeout(() => setShowIntro(false), 3000);
+      // Cadence : la ceremonie complete (3 s) n'a de sens qu'a la premiere
+      // question ; ensuite elle hachait le rythme a chaque manche.
+      const fast = questionNumber > 1;
+      const step1 = setTimeout(() => setIntroStep('category'), fast ? 450 : 800);
+      const step2 = setTimeout(() => setIntroStep('question'), fast ? 900 : 1600);
+      const step3 = setTimeout(() => setShowIntro(false), fast ? 1700 : 3000);
 
       return () => {
         clearTimeout(step1);
