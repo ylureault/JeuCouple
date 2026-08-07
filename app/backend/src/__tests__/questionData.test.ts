@@ -147,6 +147,30 @@ describe('Contenu des questions', () => {
     expect(broken).toEqual([]);
   });
 
+  it('garde des codes de categorie sans accent dans le seed', () => {
+    // Les codes de categorie sont des identifiants techniques compares a
+    // l'octet pres. Une passe de correction orthographique avait accentue
+    // `category: 'preferences'` en 'préférences' : 118 questions se
+    // retrouvaient rattachees a une categorie inexistante, donc injouables.
+    // Les tests precedents ne lisaient que data/, pas le seed de database.ts.
+    const accented = [...databaseSrc.matchAll(/category:\s*'([^']*[À-ÿ][^']*)'/g)].map(m => m[1]);
+    expect([...new Set(accented)]).toEqual([]);
+  });
+
+  it('n\'utilise dans le seed que des categories jouables', () => {
+    // Une categorie du seed est acceptable si elle est enregistree, ou si
+    // mergeLegacyCategories() la rattache au demarrage a une categorie qui
+    // l'est (cas des codes historiques amour, quotidien, connaissance...).
+    const merged = new Set(
+      [...databaseSrc.matchAll(/^\s*(\w+):\s*'(\w+)',\s*\/\//gm)]
+        .filter(m => known.has(m[2]))
+        .map(m => m[1])
+    );
+    const used = [...databaseSrc.matchAll(/category:\s*'([^']+)'/g)].map(m => m[1]);
+    const unplayable = [...new Set(used)].filter(c => !known.has(c) && !merged.has(c));
+    expect(unplayable).toEqual([]);
+  });
+
   it('donne un minuteur exploitable a chaque question', () => {
     const broken = questions
       .filter(({ q }) => typeof q.timer !== 'number' || q.timer < 5 || q.timer > 120)
