@@ -74,7 +74,7 @@ export default function ModeSwitcher() {
               transition={{ type: 'spring', damping: 26, stiffness: 260 }}
               onClick={(e) => e.stopPropagation()}
               role="dialog" aria-modal="true" aria-label="Proposer un autre jeu"
-              className="surface w-full sm:max-w-md rounded-t-[28px] sm:rounded-[28px] p-5 pb-7"
+              className="sheet w-full sm:max-w-md rounded-t-[28px] sm:rounded-[28px] p-5 pb-7"
             >
               <div className="sm:hidden w-10 h-1 rounded-full bg-white/25 mx-auto mb-4" aria-hidden="true" />
               <h2 className="text-white font-black text-lg mb-1">Proposer un autre jeu</h2>
@@ -120,7 +120,7 @@ export default function ModeSwitcher() {
               transition={{ type: 'spring', damping: 26, stiffness: 260 }}
               role="alertdialog" aria-modal="true"
               aria-label={`${modeProposal.fromName} propose de jouer a ${modeProposal.label}`}
-              className="surface w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[28px] p-6 pb-7 text-center"
+              className="sheet w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[28px] p-6 pb-7 text-center"
             >
               <span className="text-5xl block mb-3" aria-hidden="true">{modeProposal.icon}</span>
               <h2 className="text-white font-black text-xl mb-1">

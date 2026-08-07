@@ -33,7 +33,7 @@ export default function EscaladePalierSheet() {
             transition={{ type: 'spring', damping: 26, stiffness: 260 }}
             role="alertdialog" aria-modal="true"
             aria-label="Proposition de monter d'un palier"
-            className="surface w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[28px] p-6 pb-7 text-center"
+            className="sheet w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[28px] p-6 pb-7 text-center"
           >
             <div className="sm:hidden w-10 h-1 rounded-full bg-white/25 mx-auto mb-4" aria-hidden="true" />
             <motion.span

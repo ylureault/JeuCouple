@@ -122,6 +122,18 @@ button, [role="button"], a[href] { min-height: 44px; min-width: 44px; }
 .safe-bottom { padding-bottom: var(--safe-b); }
 .safe-x      { padding-left: var(--safe-l); padding-right: var(--safe-r); }
 
+/* Feuille modale : fond PLEIN. La surface vitree (7% de blanc) laissait la
+   popin a moitie transparente au-dessus d'un ecran de jeu charge, et pire
+   encore sans support du backdrop-filter. Le flou reste en bonus, le fond
+   n'en depend plus. */
+.sheet {
+  background: rgba(30, 8, 24, .97);
+  border: 1px solid rgba(255, 255, 255, .16);
+  box-shadow: var(--e-3);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+}
+
 /* Surface vitree standard */
 .surface {
   background: var(--s-glass);

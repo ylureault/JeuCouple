@@ -39,7 +39,7 @@ export default function DuelThemePicker() {
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 40, opacity: 0 }}
             transition={{ type: 'spring', damping: 26, stiffness: 260 }}
-            className="surface w-full sm:max-w-md rounded-t-[28px] sm:rounded-[28px]
+            className="sheet w-full sm:max-w-md rounded-t-[28px] sm:rounded-[28px]
                        p-5 pb-7 m-0 sm:m-4"
             role="dialog"
             aria-modal="true"
