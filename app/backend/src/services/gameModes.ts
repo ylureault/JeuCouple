@@ -281,6 +281,34 @@ const petitsNoms: GameModeDefinition = {
   },
 };
 
+/**
+ * Mode mix : toutes les questions de tous les themes, melangees.
+ * Et pour melanger aussi les MECANIQUES sans casser celles qui portent un
+ * etat (vies de mort subite, series de complices), il emprunte la signature
+ * du duel : une manche sur MIX_DUEL_PERIOD, le gagnant choisit le theme
+ * des manches suivantes — jusqu'a la prochaine main.
+ */
+const MIX_DUEL_PERIOD = Number(process.env.MIX_DUEL_PERIOD) || 4;
+
+const mix: GameModeDefinition = {
+  id: 'mix',
+  label: 'Mix total',
+  description: "Toutes les questions de tous les themes. Une manche sur quatre, le gagnant choisit le theme suivant.",
+  icon: '🎲',
+  endless: true,
+  initialQuestionCount: () => 1,
+  afterRound: (ctx) => {
+    if (ctx.questionIndex > 0 && ctx.questionIndex % MIX_DUEL_PERIOD === 0) {
+      const chooser = ctx.roundWinner ?? (((ctx.questionIndex % 2) === 0) ? 1 : 2);
+      return { action: 'await-theme-choice', chooser };
+    }
+    if (ctx.questionIndex >= ctx.loadedQuestions) {
+      return { action: 'load-more', count: 6 };
+    }
+    return { action: 'next-question' };
+  },
+};
+
 const MODES: Record<string, GameModeDefinition> = {
   [classic.id]: classic,
   [duel.id]: duel,
@@ -290,6 +318,7 @@ const MODES: Record<string, GameModeDefinition> = {
   [inverse.id]: inverse,
   [envies.id]: envies,
   [petitsNoms.id]: petitsNoms,
+  [mix.id]: mix,
 };
 
 export function getGameMode(id: string | undefined): GameModeDefinition {

@@ -13,6 +13,7 @@ type Mode = 'home' | 'create' | 'join' | 'thematic';
 
 // Thematic game configuration - explicit themes
 const THEMATIC_THEMES = [
+  { id: 'mix_all', label: 'Mix de TOUT', emoji: '🎲', description: 'Tous les thèmes du jeu mélangés — tendre, culture G, coquin, profond', color: 'from-indigo-500 to-purple-600' },
   { id: 'fantasmes', label: 'Fantasmes', emoji: '💭', description: 'Vos désirs secrets et inavoués', color: 'from-violet-500 to-purple-600' },
   { id: 'preliminaires', label: 'Préliminaires', emoji: '💋', description: "L'art de faire monter le désir", color: 'from-red-400 to-pink-600' },
   { id: 'kamasutra', label: 'Kamasutra', emoji: '🧘', description: 'Positions et techniques', color: 'from-amber-500 to-orange-600' },
@@ -22,11 +23,7 @@ const THEMATIC_THEMES = [
   { id: 'sodomie', label: 'Sodomie', emoji: '🍑', description: 'Le plaisir anal', color: 'from-orange-500 to-red-600' },
   { id: 'jeux_role', label: 'Jeux de rôle', emoji: '🎭', description: 'Scénarios et personnages coquins', color: 'from-emerald-500 to-teal-600' },
   { id: 'bdsm', label: 'BDSM', emoji: '⛓️', description: 'Domination, soumission et plus', color: 'from-gray-700 to-gray-900' },
-  { id: 'sextoys', label: 'Sextoys', emoji: '🎀', description: 'Jouets et accessoires coquins', color: 'from-fuchsia-500 to-pink-600' },
-  { id: 'confessions', label: 'Confessions', emoji: '🤫', description: 'Aveux intimes et secrets', color: 'from-rose-400 to-red-500' },
   { id: 'public', label: 'Sexe en public', emoji: '🏖️', description: 'Oser en dehors de la chambre', color: 'from-sky-500 to-blue-600' },
-  { id: 'seduction', label: 'Séduction', emoji: '😏', description: 'Drague et attirance', color: 'from-rose-500 to-pink-500' },
-  { id: 'massage', label: 'Massage', emoji: '💆', description: 'Toucher sensuel et détente', color: 'from-teal-400 to-cyan-600' },
   { id: 'extreme', label: 'Ultra coquin', emoji: '🔞', description: 'Pour les couples très audacieux', color: 'from-red-600 to-rose-700' },
   { id: 'mix_hot', label: 'Mix Torride', emoji: '🔥', description: 'Un mélange de tous les thèmes osés', color: 'from-orange-500 to-red-500' },
 ] as const;
@@ -43,7 +40,8 @@ const CATEGORY_CONFIG = [
   { id: 'preferences', label: 'Goûts', emoji: '⭐' },
   { id: 'profond', label: 'Profond', emoji: '💭' },
   { id: 'culture', label: 'Culture G', emoji: '🧠' },
-  { id: 'comportement', label: 'Comportement', emoji: '🎭' },
+  { id: 'intime', label: 'Intimité', emoji: '🕯️' },
+  { id: 'oser_dire', label: 'Oser le dire', emoji: '🕊️' },
 ] as const;
 
 // Question type configuration
@@ -67,7 +65,10 @@ export default function Home() {
   const [gender, setGender] = useState<Gender | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
+  const [selectedTheme, setSelectedTheme] = useState<string | null>('mix_all');
+  // Partie rapide : un geste, zero reglage — mix de tout le catalogue.
+  // C'est le chemin par defaut du jeu : il ne tourne PAS autour du sexe.
+  const [quickStart, setQuickStart] = useState(false);
   const [gameMode, setGameMode] = useState<GameMode>('classic');
   const { createRoom, joinRoom, error, connected } = useGame();
   const { playSound } = useAudio();
@@ -91,7 +92,13 @@ export default function Home() {
     playSound('click');
     try {
       // Pass selected categories and types (empty array = all / auto mode)
-      const code = await createRoom(playerName.trim(), gender, questionCount, selectedCategories, selectedTypes, gameMode);
+      const code = await createRoom(
+        playerName.trim(), gender,
+        quickStart ? 10 : questionCount,
+        quickStart ? [] : selectedCategories,
+        quickStart ? [] : selectedTypes,
+        quickStart ? 'mix' : gameMode
+      );
       // Navigate to lobby with the actual room code
       navigate(`/salon/${code}`);
     } catch {
@@ -108,9 +115,13 @@ export default function Home() {
     try {
       // For thematic games, use the theme as the only category
       // mix_hot uses all explicit themes together
-      const themeCategories = selectedTheme === 'mix_hot'
-        ? THEMATIC_THEMES.filter(t => t.id !== 'mix_hot').map(t => t.id)
-        : [selectedTheme];
+      // mix_all = aucune restriction (tout le catalogue) ;
+      // mix_hot = tous les themes oses de cette liste.
+      const themeCategories = selectedTheme === 'mix_all'
+        ? []
+        : selectedTheme === 'mix_hot'
+          ? THEMATIC_THEMES.filter(t => t.id !== 'mix_hot' && t.id !== 'mix_all').map(t => t.id)
+          : [selectedTheme];
       const code = await createRoom(playerName.trim(), gender, questionCount, themeCategories, [], gameMode);
       navigate(`/salon/${code}`);
     } catch {
@@ -259,7 +270,22 @@ export default function Home() {
               className="w-full max-w-md space-y-3"
             >
               <motion.button
-                onClick={() => connected && switchMode('create')}
+                onClick={() => { if (connected) { setQuickStart(true); switchMode('create'); } }}
+                className={`btn-start w-full ${!connected ? 'opacity-70 cursor-wait' : ''}`}
+                whileHover={connected ? { scale: 1.02 } : {}}
+                whileTap={connected ? { scale: 0.98 } : {}}
+              >
+                <span className="flex items-center justify-center gap-3">
+                  <span className="text-2xl">⚡</span>
+                  Partie rapide
+                </span>
+                <span className="block text-[11px] font-semibold text-white/80 mt-0.5">
+                  Tous les thèmes mélangés, on joue tout de suite
+                </span>
+              </motion.button>
+
+              <motion.button
+                onClick={() => { if (connected) { setQuickStart(false); switchMode('create'); } }}
                 className={`btn-create w-full ${!connected ? 'opacity-70 cursor-wait' : ''}`}
                 whileHover={connected ? { scale: 1.02 } : {}}
                 whileTap={connected ? { scale: 0.98 } : {}}
@@ -310,8 +336,13 @@ export default function Home() {
               <div className="bg-white rounded-2xl shadow-2xl max-h-[78dvh] flex flex-col">
                 <div className="p-4 border-b border-gray-100">
                   <h2 className="text-xl font-black text-gray-900 text-center">
-                    Créer une partie
+                    {quickStart ? '⚡ Partie rapide' : 'Créer une partie'}
                   </h2>
+                  {quickStart && (
+                    <p className="text-gray-500 text-xs text-center mt-1">
+                      🎲 Mix de tous les thèmes — ton prénom, et c'est parti
+                    </p>
+                  )}
                 </div>
 
                 <div className="p-4 space-y-3 overflow-y-auto flex-1 scroll-fade-y">
@@ -365,8 +396,9 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <GameModeSelector value={gameMode} onChange={setGameMode} disabled={loading} />
+                  {!quickStart && <GameModeSelector value={gameMode} onChange={setGameMode} disabled={loading} />}
 
+                  {!quickStart && <>
                   <div>
                     <label className="block text-gray-600 font-bold text-sm mb-1 uppercase tracking-wide">
                       Questions: {questionCount === 50 ? '∞' : questionCount}
@@ -437,6 +469,7 @@ export default function Home() {
                       })}
                     </div>
                   </details>
+                  </>}
                 </div>
 
                 <div className="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
@@ -545,7 +578,7 @@ export default function Home() {
                       onChange={(e) => setRoomCode(e.target.value.replace(/\D/g, ''))}
                       placeholder="1234"
                       className="input-kahoot text-center text-4xl tracking-[0.5em] font-black"
-                      maxLength={4}
+                      maxLength={6}
                       inputMode="numeric"
                       pattern="[0-9]*"
                       autoComplete="off"
@@ -555,7 +588,7 @@ export default function Home() {
 
                   <motion.button
                     onClick={handleJoin}
-                    disabled={!playerName.trim() || !gender || roomCode.length !== 4 || loading}
+                    disabled={!playerName.trim() || !gender || roomCode.length < 4 || loading}
                     className="btn-join w-full disabled:opacity-50 disabled:cursor-not-allowed mt-6"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}

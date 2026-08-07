@@ -363,7 +363,7 @@ export interface ClientToServerEvents {
 // 'classic' : liste de questions fixee au demarrage, la partie se termine.
 // 'duel'    : boucle sans fin. A chaque manche, le gagnant (ou le plus rapide
 //             en cas d'egalite) choisit le theme de la question suivante.
-export type GameMode = 'classic' | 'duel' | 'escalade' | 'complices' | 'sudden_death' | 'inverse' | 'envies' | 'petits_noms';
+export type GameMode = 'mix' | 'classic' | 'duel' | 'escalade' | 'complices' | 'sudden_death' | 'inverse' | 'envies' | 'petits_noms';
 
 // Catalogue affiche au joueur. Doit rester aligne avec le registre serveur
 // (backend/src/services/gameModes.ts), qui reste la source de verite des regles.
@@ -377,6 +377,14 @@ export const GAME_MODES: {
   /** Mode sans points : podium, joker et bonus n'y ont aucun sens. */
   scoreless?: boolean;
 }[] = [
+  {
+    id: 'mix',
+    label: 'Mix total',
+    tagline: 'Tout peut arriver',
+    description: "Toutes les questions de tous les thèmes, mélangées. Une manche sur quatre, le gagnant de la manche choisit le thème suivant.",
+    icon: '🎲',
+    endless: true,
+  },
   {
     id: 'classic',
     label: 'Classique',

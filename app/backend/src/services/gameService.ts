@@ -281,7 +281,10 @@ export function setupSocketHandlers(
         const gameMode = listGameModes().some(m => m.id === data.gameMode)
           ? (data.gameMode as string)
           : 'classic';
-        roomSettings.set(room.code, { questionCount, categories, questionTypes, gameMode });
+        // Le mix melange TOUT : une restriction de themes n'y a pas de sens,
+        // on l'efface plutot que d'afficher "Mix" sur un sous-ensemble.
+        const effectiveCategories = gameMode === 'mix' ? [] : categories;
+        roomSettings.set(room.code, { questionCount, categories: effectiveCategories, questionTypes, gameMode });
 
         // Jeton secret : seule preuve d'appartenance acceptee au reconnect.
         const sessionToken = roomModel.issueSessionToken(room.id, 1);
@@ -853,6 +856,8 @@ export function setupSocketHandlers(
       const settings = roomSettings.get(roomCode);
       if (!settings) return;
       settings.gameMode = pending.mode;
+      // Bascule vers le mix en cours de partie : on ouvre a tous les themes.
+      if (pending.mode === 'mix') settings.categories = [];
       roomSettings.set(roomCode, settings);
 
       const def = listGameModes().find(m => m.id === pending.mode)!;
