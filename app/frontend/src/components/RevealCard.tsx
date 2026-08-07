@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState, useMemo } from 'react';
-import type { Question, GameRevealData } from '../../../shared/types';
+import type { Question, GameRevealData, RevealOutcome, RevealQuote } from '../../../shared/types';
 import Confetti from './Confetti';
 import Fireworks from './Fireworks';
 
@@ -19,49 +19,94 @@ interface RevealCardProps {
   currentScore2: number;
 }
 
-// Animator messages - funny quotes and motivating text
-const MATCH_MESSAGES = [
-  "Vous êtes sur la même longueur d'onde ! 🌊",
-  "Télépathie de couple activée ! 🔮",
-  "C'est beau l'amour ! 💕",
-  "Incroyable synchronisation ! ⚡",
-  "Vous vous connaissez par cœur ! 💖",
-  "Match parfait ! Comme au premier jour ! 🎯",
-  "Les esprits se rencontrent ! 🧠💕🧠",
-];
+/* -------------------------------------------------------------------------
+ * E1 / E2 / E3 — UN SEUL ETAT DE RESULTAT
+ *
+ * Cet ecran affichait quatre elements tires INDEPENDAMMENT : l'emoji suivait
+ * `correct`, la couleur du bandeau aussi, le titre suivait `answersMatch`
+ * (`answer1 === answer2`) et le commentaire refaisait un tirage aleatoire.
+ * Deux reponses absentes valent `null === null`, donc "Vous pensez pareil !"
+ * et deux coches vertes... sur un fond rouge avec un coeur brise et un
+ * commentaire de desaccord. C'est le cas exact remonte en recette.
+ *
+ * Desormais : un seul `outcome` (match / no-match / no-answer) pilote emoji,
+ * couleur, titre, commentaire, coches et celebrations. Il vient du serveur,
+ * donc les deux joueurs voient le meme — et le commentaire et la citation
+ * aussi (E3 : un joueur lisait Napoleon, l'autre Einstein).
+ * ------------------------------------------------------------------------- */
 
-const MISMATCH_MESSAGES = [
-  "Oups... Faut qu'on parle ! 😅",
-  "C'est l'occasion de mieux se découvrir ! 💬",
-  "Pas grave, l'important c'est de communiquer ! 🗣️",
-  "Au moins vous apprenez quelque chose ! 📚",
-  "La vie serait ennuyeuse si on pensait pareil ! 🤷",
-  "C'est ça qui rend le couple intéressant ! ✨",
-];
+/** Sorties qui ne repondent pas a la question posee. */
+const NON_REPONSES = new Set(['passer', 'joker', 'dontknow']);
+const aRepondu = (a: string | null) => a !== null && !NON_REPONSES.has(a);
 
-const FAKE_QUOTES = [
-  { author: "Albert Einstein", quote: "L'amour, c'est comme les maths... Ça ne s'explique pas." },
-  { author: "Confucius", quote: "Celui qui ne connaît pas son partenaire finit par dormir sur le canapé." },
-  { author: "Socrate", quote: "Je sais que je ne sais rien... surtout sur ma femme." },
-  { author: "Napoléon", quote: "En amour comme à la guerre, il faut savoir battre en retraite." },
-  { author: "Cléopâtre", quote: "Un couple qui joue ensemble reste ensemble." },
-  { author: "Shakespeare", quote: "Être ou ne pas être d'accord, telle est la question du couple." },
-  { author: "Marie Curie", quote: "La radioactivité dans un couple, c'est la passion !" },
-  { author: "De Vinci", quote: "L'art de l'amour se pratique à deux pinceaux." },
-];
+/** Repli si le serveur ne fournit pas encore le verdict (ancien serveur).
+    Doit rester la copie exacte de computeOutcome() cote serveur. */
+function deriveOutcome(
+  answer1: string | null,
+  answer2: string | null,
+  correct: boolean
+): RevealOutcome {
+  // L'absence de reponse se teste AVANT l'accord, sinon deux "rien" (ou deux
+  // "passer") passent pour un accord parfait (E2).
+  if (!aRepondu(answer1) && !aRepondu(answer2)) return 'no-answer';
+  return correct || (answer1 !== null && answer1 === answer2) ? 'match' : 'no-match';
+}
 
-const getAnimatorMessage = (correct: boolean, streak: number, player1: string, player2: string) => {
-  if (correct && streak >= 3) {
-    return `🔥 ${player1} et ${player2} sont EN FEU ! Série de ${streak} !`;
+interface Verdict {
+  emoji: string;
+  title: string;
+  /** Classes du bandeau : la couleur decoule du meme etat que le titre. */
+  banner: string;
+  /** Confettis, feux d'artifice, flash : reserves a un vrai accord. */
+  celebrate: boolean;
+}
+
+function buildVerdict(outcome: RevealOutcome, exactMatch: boolean): Verdict {
+  if (outcome === 'no-answer') {
+    // Ni verdict, ni celebration : il ne s'est rien passe, on le dit calmement.
+    return {
+      emoji: '⏳',
+      title: "Personne n'a répondu",
+      banner: 'bg-gradient-to-br from-[#4a4458] to-[#2e2a38]',
+      celebrate: false,
+    };
   }
-  if (correct) {
-    return MATCH_MESSAGES[Math.floor(Math.random() * MATCH_MESSAGES.length)];
+  if (outcome === 'match') {
+    return {
+      emoji: '🎉',
+      // "Tout proches !" quand le serveur valide sans que les reponses soient
+      // identiques (echelle 1-10 : 6 et 7 rapportent des points).
+      title: exactMatch ? 'Vous pensez pareil !' : 'Tout proches !',
+      banner: 'bg-gradient-to-br from-[#26890c] to-[#1a5e08] glow-green',
+      celebrate: true,
+    };
   }
-  return MISMATCH_MESSAGES[Math.floor(Math.random() * MISMATCH_MESSAGES.length)];
-};
+  return {
+    emoji: '💔',
+    title: 'Pas cette fois...',
+    banner: 'bg-gradient-to-br from-[#e21b3c] to-[#9c1229] glow-red',
+    celebrate: false,
+  };
+}
 
-const getFakeQuote = () => {
-  return FAKE_QUOTES[Math.floor(Math.random() * FAKE_QUOTES.length)];
+/** Repli deterministe : sans valeur serveur, les deux clients doivent quand
+    meme afficher LA MEME citation. On indexe donc sur l'identifiant de la
+    question, jamais sur Math.random(). */
+const FALLBACK_QUOTES: RevealQuote[] = [
+  { author: 'Albert Einstein', text: "L'amour, c'est comme les maths... Ça ne s'explique pas." },
+  { author: 'Confucius', text: 'Celui qui ne connaît pas son partenaire finit par dormir sur le canapé.' },
+  { author: 'Socrate', text: 'Je sais que je ne sais rien... surtout sur ma femme.' },
+  { author: 'Napoléon', text: 'En amour comme à la guerre, il faut savoir battre en retraite.' },
+  { author: 'Cléopâtre', text: 'Un couple qui joue ensemble reste ensemble.' },
+  { author: 'Shakespeare', text: "Être ou ne pas être d'accord, telle est la question du couple." },
+  { author: 'Marie Curie', text: "La radioactivité dans un couple, c'est la passion !" },
+  { author: 'De Vinci', text: "L'art de l'amour se pratique à deux pinceaux." },
+];
+
+const FALLBACK_COMMENTS: Record<RevealOutcome, string> = {
+  match: "Vous êtes sur la même longueur d'onde ! 🌊",
+  'no-match': "C'est l'occasion de mieux se découvrir ! 💬",
+  'no-answer': 'Manche blanche : le temps est passé trop vite.',
 };
 
 // Reference stable : passer un litteral de tableau relancait l'effet de
@@ -205,26 +250,34 @@ export default function RevealCard({
   const myAnswerTime = playerId === 1 ? answerTime1 : answerTime2;
 
   const showPoints = questionType !== 'C' || basePoints > 0;
-  const answersMatch = answer1 === answer2;
   const hasBonus = mySpeedBonus > 0 || myStreakBonus > 0;
 
-  // Memoized animator message and fake quote (so they don't change on re-render)
-  const animatorMessage = useMemo(
-    () => getAnimatorMessage(correct, myStreak, player1Name, player2Name),
-    [correct, myStreak, player1Name, player2Name]
+  // --- E1/E2 : LE verdict, calcule une fois, utilise partout ---------------
+  const outcome: RevealOutcome = revealData.outcome ?? deriveOutcome(answer1, answer2, correct);
+  // Reponses reellement identiques (et pas juste "assez proches pour marquer").
+  const exactMatch = answer1 !== null && answer1 === answer2;
+  const verdict = useMemo(() => buildVerdict(outcome, exactMatch), [outcome, exactMatch]);
+  // La coche verte sur la carte d'un joueur ne s'allume que sur un vrai accord :
+  // deux "Pas de réponse" en affichaient deux, en pleine manche perdue.
+  const highlightAnswers = outcome === 'match' && exactMatch && questionType !== 'C';
+
+  // --- E3 : commentaire et citation viennent du SERVEUR ---------------------
+  const animatorMessage = revealData.comment ?? FALLBACK_COMMENTS[outcome];
+  const fakeQuote = useMemo(
+    () => revealData.quote ?? FALLBACK_QUOTES[Math.abs(revealData.questionId) % FALLBACK_QUOTES.length],
+    [revealData.quote, revealData.questionId]
   );
-  const fakeQuote = useMemo(() => getFakeQuote(), []);
 
   // Lightning flash on reveal
   useEffect(() => {
-    if (showPoints && correct) {
+    if (showPoints && verdict.celebrate) {
       setShowFlash(true);
       // Sans nettoyage, ce timer s'executait apres demontage (fuite au
       // changement de question) et declenchait un setState sur un composant mort.
       const id = setTimeout(() => setShowFlash(false), 200);
       return () => clearTimeout(id);
     }
-  }, [showPoints, correct]);
+  }, [showPoints, verdict.celebrate]);
 
   // Animated point counter
   useEffect(() => {
@@ -267,8 +320,9 @@ export default function RevealCard({
         )}
       </AnimatePresence>
 
-      {/* Flying emojis and fireworks for correct answers */}
-      {correct && showPoints && myPoints > 0 && (
+      {/* Celebrations : uniquement sur un accord avere (jamais sur une manche
+          blanche, ou l'on felicitait deux joueurs qui n'avaient rien joue) */}
+      {verdict.celebrate && showPoints && myPoints > 0 && (
         <>
           <Fireworks />
           <Confetti count={50} />
@@ -379,7 +433,7 @@ export default function RevealCard({
       </motion.div>
 
       {/* Streak badge */}
-      {myStreak >= 2 && correct && (
+      {myStreak >= 2 && outcome === 'match' && (
         <div className="flex justify-center mb-2">
           <StreakBadge streak={myStreak} />
         </div>
@@ -392,14 +446,15 @@ export default function RevealCard({
         transition={{ delay: 0.2 }}
         className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg p-3 text-center"
       >
-        <p className="text-white font-bold text-sm sm:text-base">
+        <p className="text-white font-bold text-sm sm:text-base" data-test="commentaire">
           {animatorMessage}
         </p>
       </motion.div>
 
-      {/* Wrong answer shake effect - applies to container */}
+      {/* Secousse du desaccord. Une manche blanche ne secoue rien : personne
+          n'a rate quoi que ce soit. */}
       <motion.div
-        animate={!correct && questionType !== 'C' ? {
+        animate={outcome === 'no-match' && questionType !== 'C' ? {
           x: [0, -15, 15, -10, 10, -5, 5, 0],
           transition: { duration: 0.5 }
         } : {}}
@@ -411,8 +466,7 @@ export default function RevealCard({
           transition={{ type: 'spring', damping: 12, stiffness: 100 }}
           className={`
             rounded-xl p-3 sm:p-4 text-center shadow-xl relative overflow-hidden
-            ${correct && showPoints && myPoints > 0 && questionType !== 'H' ? 'bg-gradient-to-br from-[#26890c] to-[#1a5e08] glow-green' : ''}
-            ${!correct && questionType !== 'C' && questionType !== 'H' ? 'bg-gradient-to-br from-[#e21b3c] to-[#9c1229] glow-red' : ''}
+            ${questionType !== 'C' && questionType !== 'H' ? verdict.banner : ''}
             ${questionType === 'C' ? 'bg-gradient-to-br from-[#9c27b0] to-[#6a1b7a]' : ''}
             ${questionType === 'H' ? 'bg-gradient-to-br from-[#673ab7] to-[#512da8]' : ''}
           `}
@@ -440,15 +494,16 @@ export default function RevealCard({
                   damping: 10
                 }}
                 className="text-4xl mb-1"
+                data-test="verdict-emoji"
               >
                 <motion.span
-                  animate={correct ? {
+                  animate={verdict.celebrate ? {
                     scale: [1, 1.15, 1],
                     rotate: [0, 8, -8, 0]
                   } : {}}
-                  transition={{ duration: 0.5, repeat: correct ? Infinity : 0, repeatDelay: 1 }}
+                  transition={{ duration: 0.5, repeat: verdict.celebrate ? Infinity : 0, repeatDelay: 1 }}
                 >
-                  {correct ? '🎉' : '💔'}
+                  {verdict.emoji}
                 </motion.span>
               </motion.div>
 
@@ -458,17 +513,24 @@ export default function RevealCard({
                 animate={{ y: 0, opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3, type: 'spring', damping: 15 }}
                 className="text-xl sm:text-2xl font-black text-white mb-2 text-shadow-strong"
+                data-test="verdict-titre"
               >
-                {/* Trois etats et non deux : le bandeau se colore selon `correct`
-                    (renvoye par le serveur), qui vaut true pour les reponses
-                    proches sur une echelle. Se fier au seul `answersMatch`
-                    affichait "Pas cette fois..." sur un bandeau vert de reussite. */}
-                {answersMatch
-                  ? 'Vous pensez pareil !'
-                  : correct
-                    ? 'Tout proches !'
-                    : 'Pas cette fois...'}
+                {/* Meme source que l'emoji et que la couleur du bandeau : ils
+                    ne peuvent plus se contredire. */}
+                {verdict.title}
               </motion.h2>
+
+              {/* Manche blanche : on explique, sans reproche ni celebration. */}
+              {outcome === 'no-answer' && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-white/75 text-sm"
+                >
+                  Aucune réponse des deux côtés — pas de verdict pour cette manche.
+                </motion.p>
+              )}
 
               {/* Points counter with dramatic animation */}
               {myPoints > 0 && (
@@ -642,7 +704,7 @@ export default function RevealCard({
           name={player1Name}
           answer={answer1}
           isYou={playerId === 1}
-          highlighted={answersMatch && questionType !== 'C'}
+          highlighted={highlightAnswers}
           questionType={questionType}
           delay={0.4}
           emoji={player1Gender === 'M' ? '👨' : '👩'}
@@ -656,7 +718,7 @@ export default function RevealCard({
           name={player2Name}
           answer={answer2}
           isYou={playerId === 2}
-          highlighted={answersMatch && questionType !== 'C'}
+          highlighted={highlightAnswers}
           questionType={questionType}
           delay={0.5}
           emoji={player2Gender === 'F' ? '👩' : '👨'}
@@ -685,10 +747,10 @@ export default function RevealCard({
         transition={{ delay: 1.5 }}
         className="bg-white/5 rounded-lg p-3 text-center"
       >
-        <p className="text-white/70 text-sm italic">
-          "{fakeQuote.quote}"
+        <p className="text-white/70 text-sm italic" data-test="citation">
+          "{fakeQuote.text}"
         </p>
-        <p className="text-white/50 text-xs mt-1">
+        <p className="text-white/50 text-xs mt-1" data-test="citation-auteur">
           — {fakeQuote.author} (probablement)
         </p>
       </motion.div>

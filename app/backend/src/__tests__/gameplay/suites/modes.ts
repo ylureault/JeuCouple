@@ -5,6 +5,8 @@
  * soit deterministe (meme bareme, meme cadence) et pour tenir la duree totale :
  * le type E (choix binaire) revele en 7 s, le type C (reponse libre) en 14 s.
  */
+import { GAME_MODES } from '../../../types.js';
+
 export interface ModeCfg {
   id: string;
   /** Libelle attendu cote serveur (registre gameModes.ts). */
@@ -33,6 +35,17 @@ export const MODES: ModeCfg[] = [
   // raccourcit la revelation a 4 s : c'est son identite.
   { id: 'quiz_express', label: 'Quiz Express', questionTypes: ['H'], categories: ['culture'], questionCount: 8, revealSeconds: 4 },
 ];
+
+/**
+ * Le mode joue-t-il sans points ?
+ *
+ * Lu dans le catalogue partage plutot que recopie ici : le bareme, le joker et
+ * le podium n'ont aucun sens dans « envies » ou « petits noms », et les
+ * scenarios doivent attendre 0 la ou les autres modes attendent 100.
+ */
+export function estSansPoints(id: string): boolean {
+  return GAME_MODES.some((m) => m.id === id && m.scoreless === true);
+}
 
 export function cfg(id: string): ModeCfg {
   const m = MODES.find((x) => x.id === id);

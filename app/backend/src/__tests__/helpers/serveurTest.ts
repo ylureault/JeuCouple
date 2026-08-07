@@ -69,12 +69,28 @@ export async function demarrerServeur(port: number): Promise<HarnaisServeur> {
     port: portEffectif,
     url: `http://127.0.0.1:${portEffectif}`,
     async fermer() {
+      // 1. Les parties d'abord. Une partie en cours garde des minuteurs qui
+      //    survivent a la fermeture du serveur : ils se reveillaient apres la
+      //    fin de la suite et journalisaient dans le vide, ce que Jest refuse
+      //    (« Cannot log after tests are done ») et compte comme un echec.
+      const { arreterToutesLesParties } = await import('../../services/gameService.js');
+      arreterToutesLesParties();
+
+      // 2. Les clients : on coupe les ecouteurs AVANT de deconnecter, sinon un
+      //    evenement en vol reveille encore du code de test.
       for (const c of clientsOuverts.splice(0)) {
         c.removeAllListeners();
         c.disconnect();
       }
-      io.close();
-      await new Promise<void>(resolve => http.close(() => resolve()));
+
+      // 3. Le serveur, en ATTENDANT sa fermeture. `io.close()` sans rappel
+      //    rendait la main avant que les sockets soient reellement soldes.
+      //    io.close() ferme aussi le serveur http sous-jacent : on ne repasse
+      //    par http.close() que s'il ecoute encore.
+      await new Promise<void>(resolve => io.close(() => resolve()));
+      if (http.listening) {
+        await new Promise<void>(resolve => http.close(() => resolve()));
+      }
     },
   };
 }

@@ -13,6 +13,7 @@ interface QuestionRow {
   emoji_b: string | null;
   target_player: number | null;
   correct_answer: string | null;
+  reference_value: number | null;
   timer: number;
   active: number;
 }
@@ -32,6 +33,10 @@ function rowToQuestion(row: QuestionRow): Question {
     emoji_b: row.emoji_b || undefined,
     target_player: row.target_player as (1 | 2) || undefined,
     correct_answer: row.correct_answer || undefined,
+    // Type N : sans cette ligne la colonne existe mais n'arrive jamais au
+    // moteur, et isPlayable() ecarte la question comme si elle etait vide.
+    // `?? undefined` et non `|| undefined` : une reference a 0 est valide.
+    reference_value: row.reference_value ?? undefined,
     timer: row.timer,
     active: Boolean(row.active)
   };
@@ -192,14 +197,29 @@ export function getMixedQuestions(count: number, categories: string[] = [], ques
     [selectedQuestions[i], selectedQuestions[j]] = [selectedQuestions[j], selectedQuestions[i]];
   }
 
-  // Filet final : aucune question injouable ne sort d'ici.
-  return selectedQuestions.filter(isPlayable).slice(0, count);
+  // Filet final : aucune question injouable ne sort d'ici, et jamais deux fois
+  // le meme enonce. Une trentaine de questions vivent legitimement dans deux
+  // themes (« Qui a les fantasmes les plus fous ? » est dans coquin, sexy et
+  // fantasmes) : sans ce filtre, une partie multi-themes ou le mode Mix les
+  // reposait mot pour mot, avec un identifiant different a chaque fois.
+  const enonces = new Set<string>();
+  return selectedQuestions
+    .filter(isPlayable)
+    .filter(q => {
+      const cle = q.text.trim().toLowerCase();
+      if (enonces.has(cle)) return false;
+      enonces.add(cle);
+      return true;
+    })
+    .slice(0, count);
 }
 
 export function createQuestion(question: Omit<Question, 'id' | 'active'>): Question {
+  // reference_value fait partie de l'ecriture : une question N creee sans son
+  // nombre serait rejetee par isPlayable() et ne sortirait jamais au tirage.
   const result = db.prepare(`
-    INSERT INTO questions (type, category, text, options, option_a, option_b, timer, active)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+    INSERT INTO questions (type, category, text, options, option_a, option_b, reference_value, timer, active)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
   `).run(
     question.type,
     question.category,
@@ -207,6 +227,7 @@ export function createQuestion(question: Omit<Question, 'id' | 'active'>): Quest
     question.options ? JSON.stringify(question.options) : null,
     question.option_a || null,
     question.option_b || null,
+    typeof question.reference_value === 'number' ? question.reference_value : null,
     question.timer || 20
   );
 
@@ -270,6 +291,10 @@ export function updateQuestion(id: number, question: Partial<Omit<Question, 'id'
     updates.push('option_b = ?');
     values.push(question.option_b);
   }
+  if (question.reference_value !== undefined) {
+    updates.push('reference_value = ?');
+    values.push(question.reference_value);
+  }
   if (question.timer !== undefined) {
     updates.push('timer = ?');
     values.push(question.timer);
@@ -294,8 +319,8 @@ export function deleteQuestion(id: number): boolean {
 
 export function importQuestions(data: QuestionImport): number {
   const insert = db.prepare(`
-    INSERT INTO questions (type, category, text, options, option_a, option_b, timer, active)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+    INSERT INTO questions (type, category, text, options, option_a, option_b, reference_value, timer, active)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
   `);
 
   let imported = 0;
@@ -308,6 +333,7 @@ export function importQuestions(data: QuestionImport): number {
         q.options ? JSON.stringify(q.options) : null,
         q.option_a || null,
         q.option_b || null,
+        typeof q.reference_value === 'number' ? q.reference_value : null,
         q.timer || 20
       );
       imported++;

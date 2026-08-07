@@ -1,0 +1,8 @@
+{"questions": [
+{"type": "N", "category": "couple", "text": "Vous vous connaissez depuis plus ou moins de 5 ans ?", "reference_value": 5, "timer": 10},
+{"type": "N", "category": "habitudes", "text": "Tu bois plus ou moins de 3 cafés par jour ?", "reference_value": 3, "timer": 10},
+{"type": "N", "category": "habitudes", "text": "Tu passes plus ou moins de 2 heures par jour sur ton téléphone ?", "reference_value": 2, "timer": 10},
+{"type": "N", "category": "fun", "text": "Tu as regardé plus ou moins de 4 films ce mois-ci ?", "reference_value": 4, "timer": 10},
+{"type": "N", "category": "souvenirs", "text": "Vous avez voyagé ensemble plus ou moins de 3 fois ?", "reference_value": 3, "timer": 10},
+{"type": "N", "category": "sexy", "text": "Vous vous embrassez plus ou moins de 10 fois par jour ?", "reference_value": 10, "timer": 12}
+]}

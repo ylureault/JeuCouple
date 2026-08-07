@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Transition } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
 import { useTheme } from '../context/ThemeContext';
@@ -24,6 +24,17 @@ type VerdictSalon =
   | { etape: 'rejoignable' }                                // le salon existe et attend un 2e joueur
   | { etape: 'indisponible'; titre: string; detail: string };
 
+/**
+ * U2 — le salon mettait plusieurs secondes a se composer : chaque bloc entrait
+ * avec un ressort framer-motion par defaut, et les boutons de partage puis les
+ * cartes joueurs etaient decales de 200 a 300 ms chacun. Pendant ce temps
+ * l'ecran reste quasi vide et les clics tombent dans le vide.
+ * Duree fixe et courte, decalages divises par cinq : tout est en place en
+ * moins de 250 ms, et cliquable des le premier frame.
+ */
+const ENTREE: Transition = { duration: 0.16, ease: [0.16, 1, 0.3, 1] };
+const decalage = (secondes: number): Transition => ({ ...ENTREE, delay: secondes });
+
 export default function Lobby() {
   const {
     room,
@@ -41,6 +52,11 @@ export default function Lobby() {
   const { code } = useParams<{ code: string }>();
   const [copied, setCopied] = useState(false);
   const [verdict, setVerdict] = useState<VerdictSalon>({ etape: 'attente' });
+  // E10 : accord du partenaire sur les reglages. Jusqu'ici la ligne "en attente
+  // que X valide" disparaissait et le bouton s'activait, sans le moindre signal :
+  // l'hote pouvait fixer l'ecran sans voir que c'etait bon.
+  const [accordToast, setAccordToast] = useState(false);
+  const accepteRef = useRef(false);
 
   // Navigate to game when it starts (with room code in URL)
   // Ambiance d'attente : tout le systeme musical existait mais n'etait
@@ -55,6 +71,21 @@ export default function Lobby() {
       navigate(`/game/${room.code}`);
     }
   }, [phase, navigate, room?.code]);
+
+  // E10 — l'accord du partenaire se voit ET s'entend. On ne declenche que sur
+  // la BASCULE false -> true : une simple rediffusion des reglages ne doit pas
+  // resonner une seconde fois.
+  useEffect(() => {
+    const accepte = !!gameSettings?.settingsAccepted;
+    if (accepte && !accepteRef.current) {
+      playSound('notification');
+      setAccordToast(true);
+      const id = setTimeout(() => setAccordToast(false), 4000);
+      accepteRef.current = accepte;
+      return () => clearTimeout(id);
+    }
+    accepteRef.current = accepte;
+  }, [gameSettings?.settingsAccepted, playSound]);
 
   // If no room and no valid code in URL, go home
   useEffect(() => {
@@ -189,6 +220,29 @@ export default function Lobby() {
       <SoundReactionHandler />
       <LobbyChat />
 
+      {/* E10 : petit bandeau d'accord, en haut, non bloquant. */}
+      <AnimatePresence>
+        {accordToast && (
+          <motion.div
+            key="accord"
+            initial={{ opacity: 0, y: -24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -24 }}
+            role="status"
+            data-test="toast-accord"
+            className="fixed top-3 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2
+                       rounded-full bg-[#26890c] px-5 py-2.5 shadow-xl"
+          >
+            <span aria-hidden="true" className="text-lg">✅</span>
+            <span className="text-white font-bold text-sm">
+              {playerId === 1
+                ? `${room?.player2_name || 'Ton partenaire'} a validé les réglages !`
+                : 'Réglages validés — la partie peut démarrer'}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Voice chat - top right */}
       <div className="fixed top-4 right-16 z-50 flex items-center gap-2">
       </div>
@@ -212,8 +266,9 @@ export default function Lobby() {
       <div className="flex-1 flex flex-col items-center justify-center p-4 relative z-10">
         {/* Header */}
         <motion.div
-          initial={{ y: -30, opacity: 0 }}
+          initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
+          transition={ENTREE}
           className="text-center mb-4"
         >
           <p className="text-white/60 font-semibold uppercase tracking-wider mb-2">
@@ -246,9 +301,9 @@ export default function Lobby() {
           <div className="flex gap-2 mt-3 flex-wrap justify-center">
             <motion.button
               onClick={shareLink}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
+              transition={decalage(0.03)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white font-bold px-4 py-2 rounded-full transition-colors text-sm"
@@ -259,9 +314,9 @@ export default function Lobby() {
 
             <motion.button
               onClick={shareWhatsApp}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={decalage(0.06)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold px-4 py-2 rounded-full transition-colors text-sm"
@@ -275,11 +330,11 @@ export default function Lobby() {
         </motion.div>
 
         {/* Players */}
-        <div className="w-full max-w-lg space-y-3 mb-4">
+        <div className="w-full max-w-lg md:max-w-2xl space-y-3 mb-4">
           <motion.div
-            initial={{ x: -50, opacity: 0 }}
+            initial={{ x: -14, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.1 }}
+            transition={decalage(0.02)}
           >
             <PlayerCard
               name={room.player1_name}
@@ -292,9 +347,9 @@ export default function Lobby() {
 
           {/* VS separator */}
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: 'spring' }}
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={decalage(0.05)}
             className="flex items-center justify-center"
           >
             <div className="w-16 h-16 rounded-full bg-[#e21b3c] flex items-center justify-center shadow-lg">
@@ -303,9 +358,9 @@ export default function Lobby() {
           </motion.div>
 
           <motion.div
-            initial={{ x: 50, opacity: 0 }}
+            initial={{ x: 14, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
+            transition={decalage(0.08)}
           >
             <PlayerCard
               name={room.player2_name}
@@ -327,9 +382,10 @@ export default function Lobby() {
           {gameSettings && (
             <motion.div
               key="recap"
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="w-full max-w-md surface rounded-[20px] p-4 mb-4"
+              transition={ENTREE}
+              className="w-full max-w-md md:max-w-lg surface rounded-[20px] p-4 mb-4"
             >
               <p className="text-white/55 text-[11px] font-bold uppercase tracking-wide mb-2">
                 Ce qui vous attend
@@ -360,9 +416,10 @@ export default function Lobby() {
           {!bothPlayersReady && (
             <motion.div
               key="waiting"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={ENTREE}
               className="text-center"
             >
               <div className="flex items-center justify-center gap-2 mb-4">
@@ -383,10 +440,11 @@ export default function Lobby() {
           {isHost && bothPlayersReady && (
             <motion.div
               key="start"
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="w-full max-w-md"
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={ENTREE}
+              className="w-full max-w-md md:max-w-lg"
             >
               <motion.button
                 onClick={handleStart}
@@ -419,10 +477,11 @@ export default function Lobby() {
           {!isHost && bothPlayersReady && gameSettings && !gameSettings.settingsAccepted && (
             <motion.div
               key="accept"
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
-              className="w-full max-w-md"
+              transition={ENTREE}
+              className="w-full max-w-md md:max-w-lg"
             >
               <motion.button
                 onClick={() => { playSound('click'); acceptSettings(); }}
@@ -443,6 +502,7 @@ export default function Lobby() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={ENTREE}
               className="flex items-center gap-3 bg-white/10 rounded-xl px-6 py-4"
             >
               <motion.div
@@ -483,8 +543,9 @@ export default function Lobby() {
 
       {/* Fixed Reaction Bar at bottom */}
       <motion.div
-        initial={{ opacity: 0, y: 50 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={ENTREE}
         className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-sm py-2 px-2 border-t border-white/10 z-40 space-y-1.5"
       >
         <ReactionBar />

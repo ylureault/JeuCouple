@@ -133,40 +133,16 @@ export function initDatabase() {
   purgeSyntheticQuestions();
   fixQuestionInputTypes();
   fixMissingAccents();
+  fixDegatsAccents();
   fixTypeNReferenceValues();
+  // En dernier : les passes precedentes (accents, fusion de categories) peuvent
+  // faire converger deux enonces qui differaient jusque-la.
+  deactivateDuplicateQuestions();
 
   console.log('Database initialized successfully');
 }
 
 /**
- * Certaines questions historiques portent un code de categorie qui n'a jamais
- * ete enregistre dans la table categories. Le selecteur de themes ne listant que
- * cette table, ces questions n'etaient jamais jouables. On les rattache a la
- * categorie equivalente (les orphelines les plus petites tenaient sur 3 questions,
- * trop peu pour constituer un theme viable).
- * Idempotent : peut tourner a chaque demarrage.
- */
-/**
- * Le mode "A l'envers" insere une question synthetique (inactive) a chaque
- * manche, et c'est un mode sans fin : sans purge, la table questions grossit
- * indefiniment (constat de l'audit d'architecture). On nettoie au demarrage ;
- * la cle etrangere answers.question_id est en ON DELETE CASCADE, l'historique
- * de ces manches synthetiques part avec, ce qui est voulu.
- */
-/**
- * Repare le type de saisie des questions DEJA EN BASE.
- *
- * Les fichiers data/ ont ete corriges, mais import-thematic saute toute
- * question dont (texte, categorie) existe deja : une base peuplee avant la
- * correction gardait donc l'ancien type pour toujours. Resultat vu en prod :
- * "Decris la position qui te fait le plus jouir." servie avec un curseur 1-10.
- *
- * Regles, alignees sur database.ts et sur les tests de contenu :
- *  - enonce descriptif ("Decris...", "Quel mot...", "Comment...") => C (texte)
- *  - enonce "sur 10 / a quel point / quel pourcentage"            => D (echelle)
- * Idempotent : peut tourner a chaque demarrage.
- */
-export /**
  * Restaure les accents des enonces DEJA EN BASE.
  *
  * Meme piege que fixQuestionInputTypes : corriger les fichiers data/ ne touche
@@ -175,37 +151,55 @@ export /**
  * gardait donc "Mon moment prefere de la journee c'est..." pour toujours.
  * Idempotent : les mots deja accentues ne correspondent pas aux motifs.
  */
+/**
+ * Frontiere de mot consciente des accents.
+ *
+ * `\b` raisonne sur [A-Za-z0-9_] : pour lui, "è" n'est pas une lettre. Il voit
+ * donc une frontiere au milieu de "mètres", et `/\btres\b/` y a ecrit "mètrès".
+ * Meme piege dans "rencontrés il" -> "rencontrés'il", et apres une parenthese :
+ * "ami(e)s en" -> "ami(e)s'en". Trois corruptions constatees en base.
+ * Toute regle appliquee au corpus passe desormais par ces deux gardes.
+ */
+const DEBUT_MOT = '(?<![\\p{L}\\p{N}_])';
+const FIN_MOT = '(?![\\p{L}\\p{N}_])';
+
+/** Un mot entier, sans accent, remplace par sa forme accentuee. */
+const mot = (sans: string, avec: string): [RegExp, string] =>
+  [new RegExp(DEBUT_MOT + sans + FIN_MOT, 'gu'), avec];
+
 const ACCENTS_MANQUANTS: [RegExp, string][] = [
-  // "prefere" est ambigu : verbe ("tu preferes" -> preferes) ou adjectif
-  // ("moment prefere" -> prefere). On tranche sur le mot qui precede.
-  [/(\b(?:je|tu|il|elle|on|qui)\s+)preferes?\b/gi, '$1préfère'],
-  [/\bpreferees\b/g, 'préférées'], [/\bpreferee\b/g, 'préférée'],
-  [/\bpreferes\b/g, 'préférés'], [/\bprefere\b/g, 'préféré'],
-  [/\bactivite\b/g, 'activité'], [/\berogene\b/g, 'érogène'],
-  [/\bfidelite\b/g, 'fidélité'], [/\bcomplicite\b/g, 'complicité'],
-  [/\bintimite\b/g, 'intimité'], [/\bliberte\b/g, 'liberté'],
-  [/\brealite\b/g, 'réalité'], [/\bbeaute\b/g, 'beauté'],
-  [/\bsante\b/g, 'santé'], [/\bcote\b/g, 'côté'],
-  [/\bjournee\b/g, 'journée'], [/\bsoiree\b/g, 'soirée'],
-  [/\bmatinee\b/g, 'matinée'], [/\bannee\b/g, 'année'],
-  [/\bideal\b/g, 'idéal'], [/\bideale\b/g, 'idéale'],
-  [/\bapres\b/g, 'après'], [/\breve\b/g, 'rêve'], [/\breves\b/g, 'rêves'],
-  [/\bpremiere\b/g, 'première'], [/\bderniere\b/g, 'dernière'],
-  [/\bexperience\b/g, 'expérience'], [/\bexperiences\b/g, 'expériences'],
-  [/\bserieux\b/g, 'sérieux'], [/\bserieuse\b/g, 'sérieuse'],
-  [/\bdecris\b/g, 'décris'], [/\bdeja\b/g, 'déjà'], [/\btres\b/g, 'très'],
-  [/\bplutot\b/g, 'plutôt'], [/\bmeme\b/g, 'même'], [/\betre\b/g, 'être'],
-  [/\bdesir\b/g, 'désir'], [/\bdesirs\b/g, 'désirs'],
-  [/\bqualite\b/g, 'qualité'], [/\bverite\b/g, 'vérité'],
-  [/\bfierte\b/g, 'fierté'], [/\bsociete\b/g, 'société'],
-  [/\bserie\b/g, 'série'], [/\bidee\b/g, 'idée'], [/\bidees\b/g, 'idées'],
-  [/\bgout\b/g, 'goût'], [/\bgouts\b/g, 'goûts'], [/\bdiner\b/g, 'dîner'],
-  [/\bfrere\b/g, 'frère'], [/\bmere\b/g, 'mère'], [/\bpere\b/g, 'père'],
-  [/\brole\b/g, 'rôle'], [/\bmaniere\b/g, 'manière'],
-  [/\bl amour\b/gi, "l'amour"], [/\bL amour\b/g, "L'amour"],
-  [/\b([ldscjmnt]) ([aeiouéèêh])/g, "$1'$2"],  // elision generique : "l amour", "d abord", "s il"... [/\battentionne\b/g, 'attentionné'],
-  [/\battentionne\(e\)/g, 'attentionné(e)'], [/\bcelibataire\b/g, 'célibataire'],
+  // "prefere" est ambigu : verbe ("tu preferes" -> préfère) ou adjectif
+  // ("moment prefere" -> préféré). On tranche sur le mot qui precede.
+  [new RegExp(`(${DEBUT_MOT}(?:je|tu|il|elle|on|qui)\\s+)preferes?${FIN_MOT}`, 'giu'), '$1préfère'],
+  mot('preferees', 'préférées'), mot('preferee', 'préférée'),
+  mot('preferes', 'préférés'), mot('prefere', 'préféré'),
+  mot('activite', 'activité'), mot('erogene', 'érogène'),
+  mot('fidelite', 'fidélité'), mot('complicite', 'complicité'),
+  mot('intimite', 'intimité'), mot('liberte', 'liberté'),
+  mot('realite', 'réalité'), mot('beaute', 'beauté'),
+  mot('sante', 'santé'), mot('cote', 'côté'),
+  mot('journee', 'journée'), mot('soiree', 'soirée'),
+  mot('matinee', 'matinée'), mot('annee', 'année'),
+  mot('ideal', 'idéal'), mot('ideale', 'idéale'),
+  mot('apres', 'après'), mot('reve', 'rêve'), mot('reves', 'rêves'),
+  mot('premiere', 'première'), mot('derniere', 'dernière'),
+  mot('experience', 'expérience'), mot('experiences', 'expériences'),
+  mot('serieux', 'sérieux'), mot('serieuse', 'sérieuse'),
+  mot('decris', 'décris'), mot('deja', 'déjà'), mot('tres', 'très'),
+  mot('plutot', 'plutôt'), mot('meme', 'même'), mot('etre', 'être'),
+  mot('desir', 'désir'), mot('desirs', 'désirs'),
+  mot('qualite', 'qualité'), mot('verite', 'vérité'),
+  mot('fierte', 'fierté'), mot('societe', 'société'),
+  mot('serie', 'série'), mot('idee', 'idée'), mot('idees', 'idées'),
+  mot('gout', 'goût'), mot('gouts', 'goûts'), mot('diner', 'dîner'),
+  mot('frere', 'frère'), mot('mere', 'mère'), mot('pere', 'père'),
+  mot('role', 'rôle'), mot('maniere', 'manière'),
+  mot('attentionne', 'attentionné'), mot('celibataire', 'célibataire'),
+  [/\battentionne\(e\)/g, 'attentionné(e)'],
   [/\bfatigue\(e\)/g, 'fatigué(e)'], [/\benerve\(e\)/g, 'énervé(e)'],
+  // Elision : la lettre elidee doit etre un mot a elle seule, donc precedee
+  // d'un blanc ou d'un debut de champ — rien d'autre.
+  [/(^|\s)([ldscjmnt]) ([aeiouéèêîôûh])/gu, "$1$2'$3"],
 ];
 
 export function fixMissingAccents() {
@@ -230,6 +224,49 @@ export function fixMissingAccents() {
     }
   }
   if (corrigees > 0) console.log(`Accents restaures en base : ${corrigees} question(s)`);
+}
+
+/**
+ * Repare ce que la premiere version de fixMissingAccents a abime en base.
+ *
+ * Ses regles s'appuyaient sur `\b`, qui ne connait pas les lettres accentuees
+ * ni les parentheses. Trois degats constates sur le corpus livre :
+ *   "rencontrés il" -> "rencontrés'il"   (elision apres une lettre accentuee)
+ *   "ami(e)s en"    -> "ami(e)s'en"      (elision apres une parenthese)
+ *   "mètres"        -> "mètrès"          (le mot "tres" trouve au milieu d'un mot)
+ *
+ * Chaque motif repare est sans ambiguite : aucun mot francais correct ne
+ * presente une consonne elidee collee a une lettre accentuee ou a une
+ * parenthese, ni "trè" soude a la lettre qui precede.
+ * Idempotent : apres reparation, plus aucune occurrence ne correspond.
+ */
+const DEGATS_ACCENTS: [RegExp, string][] = [
+  [/(?<=[àâäçéèêëîïôöùûüÀÂÄÇÉÈÊËÎÏÔÖÙÛÜ)])([ldscjmnt])'([aeiouéèêîôûh])/gu, '$1 $2'],
+  [/(?<=\p{L})trè(?=s)/gu, 'tre'],
+];
+
+export function fixDegatsAccents() {
+  const rows = db.prepare('SELECT id, text, options, option_a, option_b FROM questions')
+    .all() as { id: number; text: string; options: string | null; option_a: string | null; option_b: string | null }[];
+
+  const repare = (v: string | null): string | null => {
+    if (!v) return v;
+    let out = v;
+    for (const [motif, remplacement] of DEGATS_ACCENTS) out = out.replace(motif, remplacement);
+    return out;
+  };
+
+  const update = db.prepare('UPDATE questions SET text = ?, options = ?, option_a = ?, option_b = ? WHERE id = ?');
+  let corrigees = 0;
+  for (const r of rows) {
+    const t = repare(r.text), o = repare(r.options);
+    const a = repare(r.option_a), b = repare(r.option_b);
+    if (t !== r.text || o !== r.options || a !== r.option_a || b !== r.option_b) {
+      update.run(t, o, a, b, r.id);
+      corrigees++;
+    }
+  }
+  if (corrigees > 0) console.log(`Degats d'accents repares en base : ${corrigees} question(s)`);
 }
 
 export function fixQuestionInputTypes() {
@@ -259,6 +296,30 @@ export function purgeSyntheticQuestions() {
     "DELETE FROM questions WHERE active = 0 AND text LIKE '%De quelle question cette réponse vient-elle%'"
   ).run().changes;
   if (purged > 0) console.log(`Purge: ${purged} questions synthetiques du mode inverse supprimees`);
+}
+
+/**
+ * Retire les enonces livres plusieurs fois dans le meme theme.
+ *
+ * L'import verifie les doublons, mais pas le seed : `initDefaultQuestions()` et
+ * `addNewQuestionsV2()` inserent sans rien controler, et se recouvrent. Le
+ * corpus livre portait 50 enonces en double ou triple ("Dessus ou dessous ?"
+ * trois fois dans « coquin »), qui ressortaient donc jusqu'a trois fois plus
+ * souvent au tirage — ce que les joueurs ressentent comme « toujours les memes
+ * questions ».
+ *
+ * On desactive les copies au lieu de les supprimer : answers.question_id
+ * pointe dessus en ON DELETE CASCADE, une suppression effacerait des parties
+ * deja jouees. On garde le plus petit identifiant, celui deja reference.
+ * Idempotent : au second passage il ne reste plus de copie active.
+ */
+export function deactivateDuplicateQuestions() {
+  const retirees = db.prepare(`
+    UPDATE questions SET active = 0
+    WHERE active = 1
+      AND id NOT IN (SELECT MIN(id) FROM questions WHERE active = 1 GROUP BY category, text)
+  `).run().changes;
+  if (retirees > 0) console.log(`Doublons desactives : ${retirees} question(s)`);
 }
 
 export function mergeLegacyCategories() {
@@ -3036,21 +3097,22 @@ function addNewQuestionsV2() {
     ["L","couple","Dire je t aime dans votre couple ?",12,null,"En premier","En deuxième",null,null,null],
     ["L","projets","Acheter une maison ?",12,null,"Avant les enfants","Après les enfants",null,null,null],
     ["L","projets","Le mariage ?",12,null,"Avant 30 ans","Après 30 ans",null,null,null],
-    // TYPE N: Plus ou Moins
-    ["N","couple","Votre couple a plus ou moins de 2 ans ?",10,null,null,null,null,null,null],
-    ["N","fun","Tu as mangé plus ou moins de 5 pizzas ce mois-ci ?",10,null,null,null,null,null,null],
-    ["N","habitudes","Tu dors plus ou moins de 7 heures par nuit ?",10,null,null,null,null,null,null],
-    ["N","sexy","Vous faites l amour plus ou moins de 2 fois par semaine ?",12,null,null,null,null,null,null],
+    // TYPE N: Plus ou Moins. Le nombre de reference est aussi dans l'enonce
+    // (c'est lui que le joueur lit) : les deux doivent rester identiques.
+    ["N","couple","Votre couple a plus ou moins de 2 ans ?",10,null,null,null,null,null,null,2],
+    ["N","fun","Tu as mangé plus ou moins de 5 pizzas ce mois-ci ?",10,null,null,null,null,null,null,5],
+    ["N","habitudes","Tu dors plus ou moins de 7 heures par nuit ?",10,null,null,null,null,null,null,7],
+    ["N","sexy","Vous faites l amour plus ou moins de 2 fois par semaine ?",12,null,null,null,null,null,null,2],
   ];
 
   const insert = db.prepare(`
-    INSERT INTO questions (type, category, text, options, option_a, option_b, emoji_a, emoji_b, correct_answer, timer, active)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+    INSERT INTO questions (type, category, text, options, option_a, option_b, emoji_a, emoji_b, correct_answer, reference_value, timer, active)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
   `);
 
   const transaction = db.transaction(() => {
     for (const r of rows) {
-      insert.run(r[0], r[1], r[2], r[4], r[5], r[6], r[7], r[8], r[9], r[3]);
+      insert.run(r[0], r[1], r[2], r[4], r[5], r[6], r[7], r[8], r[9], r[10] ?? null, r[3]);
     }
   });
 

@@ -9,6 +9,7 @@
  * plafonnerait toute la suite si tous les joueurs partageaient 127.0.0.1.
  */
 import { io as ClientIO, type Socket } from 'socket.io-client';
+import { bonneReponse } from './oracle.js';
 
 export interface Entry {
   ev: string;
@@ -264,7 +265,7 @@ const LONG_TEXT_2 = 'Moi je garde surtout le fou rire du retour, impossible a ou
 export function accord(q: any): string {
   switch (q.type) {
     case 'A': case 'B': return q.options?.[0] ?? 'oui';
-    case 'H': return q.correct_answer ?? q.options?.[0] ?? 'oui';
+    case 'H': return bonneReponse(q) ?? q.options?.[0] ?? 'oui';
     case 'C': return LONG_TEXT_1;
     case 'D': case 'Q': return '7';
     case 'E': case 'I': case 'L': return 'A';
@@ -284,7 +285,8 @@ export function desaccord(q: any): string {
   switch (q.type) {
     case 'A': case 'B': return q.options?.[1] ?? 'non';
     case 'H': {
-      const wrong = (q.options ?? []).find((o: string) => o !== q.correct_answer);
+      const bonne = bonneReponse(q);
+      const wrong = (q.options ?? []).find((o: string) => o !== bonne);
       return wrong ?? 'non';
     }
     case 'C': return LONG_TEXT_2;

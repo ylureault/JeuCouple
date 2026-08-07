@@ -6,7 +6,14 @@ interface QuestionCardProps {
   question: Question;
   onAnswer: (answer: string) => void;
   disabled: boolean;
+  /**
+   * E4 — reponse actuellement selectionnee. Elle vaut d'abord la reponse EN VOL
+   * (cliquee, pas encore acquittee) : le bouton se marque donc des le clic,
+   * sans attendre l'aller-retour reseau.
+   */
   selectedAnswer: string | null;
+  /** false tant que le serveur n'a pas acquitte : la selection reste palpitante. */
+  confirmed?: boolean;
   player1Name?: string;
   player2Name?: string;
   playerId?: 1 | 2;
@@ -43,11 +50,67 @@ function Shape({ type, className = '' }: { type: string; className?: string }) {
   );
 }
 
+/**
+ * Carte a glisser du type S (et du mode "Envies express") : droite = oui,
+ * gauche = non. Les deux boutons restent en dessous, pour le clavier et pour
+ * les gestes rates.
+ *
+ * ELLE EST DEFINIE ICI, AU NIVEAU DU MODULE, ET PAS DANS LE CORPS DE
+ * QuestionCard. Definie a l'interieur, elle etait recreee a chaque rendu :
+ * React y voyait un composant d'un TYPE DIFFERENT et demontait/remontait tout
+ * le sous-arbre. Combine a l'`AnimatePresence mode="wait"` de l'ecran de jeu,
+ * ce demontage en pleine animation de sortie laissait la transition en plan :
+ * l'ecran restait fige sur la question — reponse envoyee, ecran de resultat
+ * jamais affiche — jusqu'a la manche suivante. C'est exactement le "reponse
+ * non prise en compte" remonte en recette sur les questions a glisser.
+ */
+function SwipeCard({ disabled, onAnswer }: { disabled: boolean; onAnswer: (a: string) => void }) {
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-220, 220], [-14, 14]);
+  const yesOpacity = useTransform(x, [40, 130], [0, 1]);
+  const noOpacity = useTransform(x, [-130, -40], [1, 0]);
+  const THRESHOLD = 110;
+
+  return (
+    <motion.div
+      drag={disabled ? false : 'x'}
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.9}
+      style={{ x, rotate }}
+      onDragEnd={(_, info) => {
+        if (disabled) return;
+        if (info.offset.x > THRESHOLD) onAnswer('daccord');
+        else if (info.offset.x < -THRESHOLD) onAnswer('pasdaccord');
+      }}
+      className="relative surface rounded-[22px] px-5 py-7 mb-3 text-center cursor-grab
+                 active:cursor-grabbing touch-pan-y select-none"
+      aria-hidden="true"  /* doublon visuel des boutons, exclu des lecteurs d'ecran */
+    >
+      {/* Verdict qui se revele pendant le glissement */}
+      <motion.span style={{ opacity: yesOpacity }}
+        className="absolute top-3 left-4 text-2xl font-black text-[#3fae8f] rotate-[-8deg]">
+        OUI 💚
+      </motion.span>
+      <motion.span style={{ opacity: noOpacity }}
+        className="absolute top-3 right-4 text-2xl font-black text-[#e8557f] rotate-[8deg]">
+        NON
+      </motion.span>
+
+      <span className="text-4xl block mb-2">💫</span>
+      <p className="text-white/85 font-bold text-sm">
+        Glisse la carte : <span className="text-[#3fae8f]">droite = oui</span>
+        {' '}· <span className="text-[#e8557f]">gauche = non</span>
+      </p>
+    </motion.div>
+  );
+}
+
 export default function QuestionCard({
   question,
   onAnswer,
   disabled,
   selectedAnswer,
+  confirmed = true,
   player1Name = 'Joueur 1',
   player2Name = 'Joueur 2',
   playerId = 1,
@@ -836,57 +899,9 @@ export default function QuestionCard({
     </div>
   );
 
-  // Type S: Hot Take - d'accord ou pas d'accord
-  /**
-   * Geste de glissement du type S : la carte s'emporte a droite (oui) ou a
-   * gauche (non), comme demande pour le mode "Envies express". Les deux
-   * boutons restent en dessous : au clavier ou si le geste echoue, on peut
-   * toujours repondre.
-   */
-  const SwipeCard = () => {
-    const x = useMotionValue(0);
-    const rotate = useTransform(x, [-220, 220], [-14, 14]);
-    const yesOpacity = useTransform(x, [40, 130], [0, 1]);
-    const noOpacity = useTransform(x, [-130, -40], [1, 0]);
-    const THRESHOLD = 110;
-
-    return (
-      <motion.div
-        drag={disabled ? false : 'x'}
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.9}
-        style={{ x, rotate }}
-        onDragEnd={(_, info) => {
-          if (disabled) return;
-          if (info.offset.x > THRESHOLD) onAnswer('daccord');
-          else if (info.offset.x < -THRESHOLD) onAnswer('pasdaccord');
-        }}
-        className="relative surface rounded-[22px] px-5 py-7 mb-3 text-center cursor-grab
-                   active:cursor-grabbing touch-pan-y select-none"
-        aria-hidden="true"  /* doublon visuel des boutons, exclu des lecteurs d'ecran */
-      >
-        {/* Verdict qui se revele pendant le glissement */}
-        <motion.span style={{ opacity: yesOpacity }}
-          className="absolute top-3 left-4 text-2xl font-black text-[#3fae8f] rotate-[-8deg]">
-          OUI 💚
-        </motion.span>
-        <motion.span style={{ opacity: noOpacity }}
-          className="absolute top-3 right-4 text-2xl font-black text-[#e8557f] rotate-[8deg]">
-          NON
-        </motion.span>
-
-        <span className="text-4xl block mb-2">💫</span>
-        <p className="text-white/85 font-bold text-sm">
-          Glisse la carte : <span className="text-[#3fae8f]">droite = oui</span>
-          {' '}· <span className="text-[#e8557f]">gauche = non</span>
-        </p>
-      </motion.div>
-    );
-  };
-
   const renderTypeS = () => (
     <div>
-      <SwipeCard />
+      <SwipeCard disabled={disabled} onAnswer={onAnswer} />
       <div className="grid grid-cols-2 gap-2">
       <motion.button
         initial={{ opacity: 0, scale: 0.9 }}
@@ -1006,8 +1021,17 @@ export default function QuestionCard({
     </motion.button>
   );
 
+  // Selection posee mais pas encore acquittee : elle palpite doucement, ce qui
+  // distingue "c'est parti" de "c'est enregistre" sans changer la mise en page.
+  const enAttenteDAck = !!selectedAnswer && !confirmed;
+
   return (
-    <div className="space-y-2 w-full max-w-2xl mx-auto">
+    <div
+      className={`space-y-2 w-full max-w-2xl mx-auto ${enAttenteDAck ? 'animate-pulse' : ''}`}
+      data-test="grille-reponses"
+      data-selection={selectedAnswer ?? ''}
+      data-confirme={confirmed ? '1' : '0'}
+    >
       {(question.type === 'A' || question.type === 'B') && renderTypeAB()}
       {question.type === 'C' && renderTypeC()}
       {(question.type === 'D' || question.type === 'Q' || question.type === 'K') && renderTypeD()}

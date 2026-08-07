@@ -6,7 +6,7 @@
  */
 import type { Session } from '../harness/runner.js';
 import { accord, playRound } from '../harness/client.js';
-import { MODES, P, type ModeCfg } from './modes.js';
+import { MODES, P, estSansPoints, type ModeCfg } from './modes.js';
 
 function session(m: ModeCfg): Session {
   return {
@@ -64,11 +64,14 @@ function session(m: ModeCfg): Session {
       );
 
       // Manche 3 : joker — esquive payante, 50 points de penalite.
+      // Dans un mode sans points, il n'y a rien a payer : le client n'y propose
+      // meme pas le joker, le serveur ne doit donc rien retirer.
       const r3 = await playRound(party, { a1: 'joker', a2: accord });
+      const coutJoker = estSansPoints(m.id) ? 0 : -50;
       t.ok(
-        `${P(m)} le joker coute 50 points`,
-        r3.reveal.points1 === -50,
-        `points du joueur qui joke : ${r3.reveal.points1} (attendu -50, type ${r3.question.type})`
+        `${P(m)} le joker coute ${coutJoker === 0 ? 'zero point (mode sans score)' : '50 points'}`,
+        r3.reveal.points1 === coutJoker,
+        `points du joueur qui joke : ${r3.reveal.points1} (attendu ${coutJoker}, type ${r3.question.type})`
       );
     },
   };

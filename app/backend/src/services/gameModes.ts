@@ -53,6 +53,16 @@ export interface GameModeDefinition {
   icon: string;
   /** Si vrai, l'interface n'affiche pas de "question X sur Y". */
   endless: boolean;
+  /**
+   * Mode sans points : le moteur n'attribue RIEN (ni base, ni bonus de
+   * rapidite, ni serie) et les scores restent a 0.
+   * Le drapeau vit ici parce que c'est une regle du mode, comme `endless` :
+   * le moteur n'a donc aucune liste d'identifiants en dur a maintenir.
+   * Le catalogue client (GAME_MODES) porte le meme drapeau ; un test croise
+   * les deux pour qu'ils ne puissent pas diverger — un mode annonce « sans
+   * points » a l'ecran mais marquant des points au serveur, c'etait le bug.
+   */
+  scoreless?: boolean;
   /** Nombre de questions chargees au demarrage. */
   initialQuestionCount(settings: ModeContext['settings']): number;
   /** Decide de la suite apres chaque manche. */
@@ -250,6 +260,8 @@ const envies: GameModeDefinition = {
   description: "Glissez : oui a droite, non a gauche. Aucun point, on compare juste vos envies.",
   icon: '💫',
   endless: false,
+  // Aucun point : on compare des envies, on ne les note pas.
+  scoreless: true,
   initialQuestionCount: () => 1,
   afterRound: (ctx) => {
     if (ctx.questionIndex >= SWIPE_ROUNDS) {
@@ -272,6 +284,8 @@ const petitsNoms: GameModeDefinition = {
   description: "Inventez le surnom le plus drole pour l'autre. Revelation simultanee, fous rires garantis.",
   icon: '🐻',
   endless: false,
+  // Aucun point : le seul enjeu est de faire rire l'autre.
+  scoreless: true,
   initialQuestionCount: () => 1,
   afterRound: (ctx) => {
     if (ctx.questionIndex >= PETITS_NOMS_ROUNDS) {
@@ -358,6 +372,16 @@ const MODES: Record<string, GameModeDefinition> = {
 
 export function getGameMode(id: string | undefined): GameModeDefinition {
   return (id && MODES[id]) || classic;
+}
+
+/**
+ * Le mode joue-t-il sans points ?
+ *
+ * Passe par le registre : un identifiant inconnu retombe sur le classique,
+ * donc sur un mode AVEC points. Le moteur ne teste ainsi jamais un id en dur.
+ */
+export function isScorelessMode(id: string | undefined): boolean {
+  return getGameMode(id).scoreless === true;
 }
 
 export function listGameModes(): GameModeDefinition[] {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Transition } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { useAudio } from '../context/AudioContext';
 import { useTheme } from '../context/ThemeContext';
@@ -11,6 +11,28 @@ import { consulterSalon, traduireErreur } from '../lib/salon';
 import type { Gender, GameMode } from '../../../shared/types';
 
 type Mode = 'home' | 'create' | 'join' | 'thematic';
+
+/**
+ * U2 — LES TRANSITIONS D'ECRAN DURAIENT 3 A 4 SECONDES.
+ *
+ * Deux causes cumulees :
+ *  1. `transition={{ type: 'spring', damping: 20 }}` sans raideur : le ressort
+ *     par defaut est sous-amorti, il oscille et met plus d'une seconde a se
+ *     poser — sur CHAQUE bloc, et les blocs s'enchainent.
+ *  2. `<AnimatePresence mode="wait">` : l'ecran suivant n'est monte qu'une fois
+ *     la sortie du precedent TERMINEE. Deux ressorts d'affilee, donc.
+ * L'utilisateur voyait une page vide et cliquait deux fois.
+ *
+ * On passe a des durees fixes et courtes : sortie 100 ms, entree 160 ms, soit
+ * 260 ms bout en bout. Les boutons du nouvel ecran sont dans le DOM des le
+ * premier frame de l'entree (l'opacite n'empeche pas le clic), donc cliquables
+ * immediatement.
+ */
+const ENTREE_ECRAN: Transition = { duration: 0.16, ease: [0.16, 1, 0.3, 1] };
+const SORTIE_ECRAN: Transition = { duration: 0.1, ease: 'easeIn' };
+/** Deplacement d'entree volontairement minuscule : au-dela, ca "vole". */
+const ENTREE_DEPUIS = { opacity: 0, y: 10 };
+const SORTIE_VERS = { opacity: 0, y: -8 };
 
 // Thematic game configuration - explicit themes
 const THEMATIC_THEMES = [
@@ -45,6 +67,16 @@ const CATEGORY_CONFIG = [
   { id: 'oser_dire', label: 'Oser le dire', emoji: '🕊️' },
 ] as const;
 
+/**
+ * U9 — aucune categorie n'etait cochee au depart : douze pastilles grises, et
+ * personne pour dire si "rien de coche" voulait dire "tout" ou "rien".
+ * L'etat par defaut est donc TOUT COCHE, visible a l'oeil nu.
+ * Au moment de creer la partie, une selection complete est renvoyee au serveur
+ * sous forme de liste VIDE : cote serveur, vide = tout le catalogue, y compris
+ * les categories thematiques qui n'ont pas de pastille ici.
+ */
+const TOUTES_CATEGORIES: string[] = CATEGORY_CONFIG.map((c) => c.id);
+
 // Question type configuration
 const TYPE_CONFIG = [
   { id: 'A', label: 'QCM', emoji: '🎯', desc: 'Devine ton partenaire' },
@@ -64,7 +96,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [questionCount, setQuestionCount] = useState(10);
   const [gender, setGender] = useState<Gender | null>(null);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(TOUTES_CATEGORIES);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedTheme, setSelectedTheme] = useState<string | null>('mix_all');
   // Partie rapide : un geste, zero reglage — mix de tout le catalogue.
@@ -90,8 +122,46 @@ export default function Home() {
     }
   }, [location.state]);
 
+  /**
+   * Tout coche == aucune restriction. On envoie donc une liste vide plutot que
+   * les douze codes : le serveur sert alors AUSSI les categories thematiques,
+   * absentes de cette liste (voir TOUTES_CATEGORIES).
+   */
+  const categoriesPourServeur = (): string[] =>
+    selectedCategories.length === TOUTES_CATEGORIES.length ? [] : selectedCategories;
+
+  /**
+   * U7 — un bouton grise sans un mot d'explication se lit comme une panne.
+   * Cette fonction dit, en une phrase, ce qui manque encore. `null` = tout va
+   * bien, le bouton est actif.
+   */
+  const raisonCreationBloquee = (): string | null => {
+    if (!connected) return 'Connexion au serveur en cours…';
+    if (!playerName.trim()) return 'Entre ton prénom pour continuer';
+    if (!gender) return 'Indique si tu es une femme ou un homme';
+    if (!quickStart && selectedCategories.length === 0) return 'Choisis au moins une catégorie';
+    return null;
+  };
+
+  const raisonThematiqueBloquee = (): string | null => {
+    if (!connected) return 'Connexion au serveur en cours…';
+    if (!playerName.trim()) return 'Entre ton prénom pour continuer';
+    if (!gender) return 'Indique si tu es une femme ou un homme';
+    if (!selectedTheme) return 'Choisis un thème pour lancer la partie';
+    return null;
+  };
+
+  const raisonRejoindreBloquee = (): string | null => {
+    if (!connected) return 'Connexion au serveur en cours…';
+    if (!playerName.trim()) return 'Entre ton prénom pour continuer';
+    if (!gender) return 'Indique si tu es une femme ou un homme';
+    if (roomCode.trim().length < 6) return 'Saisis les 6 chiffres du code du salon';
+    return null;
+  };
+
   const handleCreate = async () => {
-    if (!playerName.trim() || !gender || !connected) return;
+    if (raisonCreationBloquee()) return;
+    if (!gender) return;   // redondant, mais c'est lui qui convainc TypeScript
     setLoading(true);
     playSound('click');
     try {
@@ -99,7 +169,7 @@ export default function Home() {
       const code = await createRoom(
         playerName.trim(), gender,
         quickStart ? 10 : questionCount,
-        quickStart ? [] : selectedCategories,
+        quickStart ? [] : categoriesPourServeur(),
         quickStart ? [] : selectedTypes,
         quickStart ? 'mix' : gameMode
       );
@@ -232,17 +302,40 @@ export default function Home() {
         ))}
       </div>
 
+      {/* U1 — bandeau d'erreur sorti du flux.
+          POURQUOI : pose entre le titre et les boutons, il decalait tout le
+          bas de la page a chaque apparition. En surcouche fixe, il informe
+          sans jamais deplacer une cible sous le doigt. */}
+      <AnimatePresence>
+        {messageErreur && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={ENTREE_ECRAN}
+            className="fixed top-[68px] left-1/2 -translate-x-1/2 z-50 w-[min(28rem,calc(100vw-2rem))]
+                       bg-[#e21b3c] rounded-xl px-5 py-3 shadow-2xl"
+            role="alert"
+          >
+            <p className="text-white font-bold text-center">{messageErreur}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4 relative z-10">
+      {/* U4 — sur desktop tout etait tasse en haut et 60 % de la page restait
+          vide : on centre verticalement (justify-center + my-auto) et on
+          elargit les cartes au-dela de 768 px. */}
+      <div className="flex-1 flex flex-col items-center justify-center p-4 py-6 md:py-8 relative z-10">
         {/* Logo and title */}
         <motion.div
-          initial={{ y: -50, opacity: 0 }}
+          initial={{ y: -12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ type: 'spring', damping: 15 }}
-          className={`text-center transition-all ${mode === 'home' ? 'mb-6' : 'mb-3'}`}
+          transition={ENTREE_ECRAN}
+          className={`text-center transition-all ${mode === 'home' ? 'mb-4' : 'mb-3'}`}
         >
           <motion.div
-            className={`${mode === 'home' ? 'text-6xl mb-2' : 'text-3xl mb-1'} transition-all`}
+            className={`${mode === 'home' ? 'text-6xl md:text-7xl mb-2' : 'text-3xl mb-1'} transition-all`}
             animate={{
               scale: [1, 1.1, 1],
               rotate: [0, 5, -5, 0],
@@ -258,6 +351,8 @@ export default function Home() {
           <h1 className={`${mode === 'home' ? 'text-4xl md:text-5xl mb-1' : 'text-2xl mb-0'} font-black text-white drop-shadow-[0_2px_10px_rgba(0,0,0,.45)] transition-all`}>
             Jeu Couples
           </h1>
+          {/* Le sous-titre est toujours rendu sur l'accueil : c'est le badge
+              au-dessous qui bougeait, pas lui. */}
           {mode === 'home' && (
             <p className="text-lg text-white/80 font-semibold">
               Testez votre complicité !
@@ -265,51 +360,53 @@ export default function Home() {
           )}
         </motion.div>
 
-        {/* Connection status indicator */}
-        {mode === 'home' && <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className={`rounded-full px-4 py-2 mb-4 flex items-center gap-2 ${
-            connected
-              ? 'bg-green-500/20 border border-green-400/50'
-              : reconnecting
-                ? 'bg-red-500/20 border border-red-400/60'
-                : 'bg-yellow-500/20 border border-yellow-400/50'
-          }`}
-        >
-          <div className={`w-3 h-3 rounded-full animate-pulse ${
-            connected ? 'bg-green-400' : reconnecting ? 'bg-red-400' : 'bg-yellow-400'
-          }`} />
-          <p className="text-white text-sm font-medium">
-            {/* Distinguer "je me connecte" de "j'ai perdu la connexion" : le
-                joueur doit savoir si les boutons sont grises pour une seconde
-                ou parce que le serveur ne repond plus. */}
-            {connected ? 'Connecté' : reconnecting ? 'Connexion perdue : reconnexion...' : 'Connexion...'}
-          </p>
-        </motion.div>}
-
-        {/* Error message — toujours en francais, jamais le brut du serveur */}
-        {messageErreur && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-[#e21b3c] rounded-xl px-6 py-3 mb-6 shadow-lg max-w-md"
-            role="alert"
-          >
-            <p className="text-white font-bold">{messageErreur}</p>
-          </motion.div>
-        )}
+        {/* U1 — LE BADGE DE CONNEXION FAISAIT SAUTER TOUTE LA PAGE.
+            POURQUOI : il etait dans le flux et apparaissait/disparaissait au
+            gre de l'etat du socket ; le sous-titre et les quatre boutons
+            descendaient puis remontaient d'une soixantaine de pixels, et le
+            clic partait sur le mauvais bouton — sur mobile, c'est la mauvaise
+            partie qui se lance.
+            CORRECTIF : une piste de hauteur FIXE (44 px) reservee en
+            permanence. Le badge vit dedans, s'affiche ou non, change de texte
+            et de couleur : la piste, elle, ne bouge jamais d'un pixel. */}
+        <div className="h-11 flex items-center justify-center mb-3 shrink-0"
+             aria-live="polite" data-test="badge-connexion">
+          {mode === 'home' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={ENTREE_ECRAN}
+              className={`rounded-full px-4 py-2 flex items-center gap-2 ${
+                connected
+                  ? 'bg-green-500/20 border border-green-400/50'
+                  : reconnecting
+                    ? 'bg-red-500/20 border border-red-400/60'
+                    : 'bg-yellow-500/20 border border-yellow-400/50'
+              }`}
+            >
+              <div className={`w-3 h-3 rounded-full animate-pulse ${
+                connected ? 'bg-green-400' : reconnecting ? 'bg-red-400' : 'bg-yellow-400'
+              }`} />
+              <p className="text-white text-sm font-medium whitespace-nowrap">
+                {/* Distinguer "je me connecte" de "j'ai perdu la connexion" : le
+                    joueur doit savoir si les boutons sont grises pour une seconde
+                    ou parce que le serveur ne repond plus. */}
+                {connected ? 'Connecté' : reconnecting ? 'Connexion perdue : reconnexion…' : 'Connexion…'}
+              </p>
+            </motion.div>
+          )}
+        </div>
 
         {/* Main buttons / forms */}
         <AnimatePresence mode="wait">
           {mode === 'home' && (
             <motion.div
               key="home"
-              initial={{ opacity: 0, y: 30 }}
+              initial={ENTREE_DEPUIS}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30, scale: 0.95 }}
-              transition={{ type: 'spring', damping: 20 }}
-              className="w-full max-w-md space-y-3"
+              exit={{ ...SORTIE_VERS, transition: SORTIE_ECRAN }}
+              transition={ENTREE_ECRAN}
+              className="w-full max-w-md md:max-w-lg space-y-3 md:space-y-4"
             >
               {/* B5 : `disabled` et non un simple style. Un bouton qui a l'air
                   cliquable mais ne fait rien est le pire des deux mondes : le
@@ -319,7 +416,7 @@ export default function Home() {
                 onClick={() => { if (connected) { setQuickStart(true); switchMode('create'); } }}
                 disabled={!connected}
                 aria-disabled={!connected}
-                className={`btn-start w-full ${!connected ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
+                className={`btn-start w-full md:py-5 md:text-2xl ${!connected ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
                 whileHover={connected ? { scale: 1.02 } : {}}
                 whileTap={connected ? { scale: 0.98 } : {}}
               >
@@ -336,14 +433,13 @@ export default function Home() {
                 onClick={() => { if (connected) { setQuickStart(false); switchMode('create'); } }}
                 disabled={!connected}
                 aria-disabled={!connected}
-                className={`btn-create w-full ${!connected ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
+                className={`btn-create w-full md:py-5 md:text-xl ${!connected ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
                 whileHover={connected ? { scale: 1.02 } : {}}
                 whileTap={connected ? { scale: 0.98 } : {}}
               >
                 <span className="flex items-center justify-center gap-3">
                   <span className="text-2xl">🎮</span>
                   Créer une partie
-                  {!connected && <span className="text-sm opacity-70">(connexion...)</span>}
                 </span>
               </motion.button>
 
@@ -351,7 +447,7 @@ export default function Home() {
                 onClick={() => connected && switchMode('thematic')}
                 disabled={!connected}
                 aria-disabled={!connected}
-                className={`w-full py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-pink-500 to-rose-600 shadow-lg ${!connected ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
+                className={`w-full py-3 md:py-4 px-6 rounded-xl font-bold md:text-lg text-white bg-gradient-to-r from-pink-500 to-rose-600 shadow-lg ${!connected ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
                 whileHover={connected ? { scale: 1.02 } : {}}
                 whileTap={connected ? { scale: 0.98 } : {}}
               >
@@ -365,14 +461,13 @@ export default function Home() {
                 onClick={() => connected && switchMode('join')}
                 disabled={!connected}
                 aria-disabled={!connected}
-                className={`btn-join w-full ${!connected ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
+                className={`btn-join w-full md:py-5 md:text-xl ${!connected ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
                 whileHover={connected ? { scale: 1.02 } : {}}
                 whileTap={connected ? { scale: 0.98 } : {}}
               >
                 <span className="flex items-center justify-center gap-3">
                   <span className="text-2xl">🔗</span>
                   Rejoindre avec un code
-                  {!connected && <span className="text-sm opacity-70">(connexion...)</span>}
                 </span>
               </motion.button>
             </motion.div>
@@ -381,13 +476,13 @@ export default function Home() {
           {mode === 'create' && (
             <motion.div
               key="create"
-              initial={{ opacity: 0, y: 30 }}
+              initial={ENTREE_DEPUIS}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30, scale: 0.95 }}
-              transition={{ type: 'spring', damping: 20 }}
-              className="w-full max-w-md"
+              exit={{ ...SORTIE_VERS, transition: SORTIE_ECRAN }}
+              transition={ENTREE_ECRAN}
+              className="w-full max-w-md md:max-w-xl"
             >
-              <div className="bg-white rounded-2xl shadow-2xl max-h-[78dvh] flex flex-col">
+              <div className="bg-white rounded-2xl shadow-2xl max-h-[78dvh] md:max-h-[88dvh] flex flex-col">
                 <div className="p-4 border-b border-gray-100">
                   <h2 className="text-xl font-black text-gray-900 text-center">
                     {quickStart ? '⚡ Partie rapide' : 'Créer une partie'}
@@ -453,26 +548,48 @@ export default function Home() {
                   {!quickStart && <GameModeSelector value={gameMode} onChange={setGameMode} disabled={loading} />}
 
                   {!quickStart && <>
-                  <div>
-                    <label className="block text-gray-600 font-bold text-sm mb-1 uppercase tracking-wide">
-                      Questions: {questionCount === 50 ? '∞' : questionCount}
-                    </label>
-                    <input
-                      type="range"
-                      min="5"
-                      max="50"
-                      step="5"
-                      value={questionCount}
-                      onChange={(e) => setQuestionCount(parseInt(e.target.value))}
-                      className="w-full h-2 rounded-full cursor-pointer accent-[#864cbf]"
-                    />
-                  </div>
+                  <CurseurQuestions value={questionCount} onChange={setQuestionCount} />
 
-                  <details className="group">
+                  {/* U9 — douze pastilles grises et rien pour dire si "rien de
+                      coche" valait "tout" ou "rien". Etat par defaut : TOUT
+                      coche, et le compte est affiche en clair. */}
+                  <details className="group" open>
                     <summary className="text-gray-600 font-bold text-sm uppercase tracking-wide cursor-pointer list-none flex items-center justify-between">
-                      <span>Catégories {selectedCategories.length > 0 && `(${selectedCategories.length})`}</span>
+                      <span>
+                        Catégories{' '}
+                        <span className={selectedCategories.length === 0 ? 'text-[#e21b3c]' : 'text-[#a3235e]'}>
+                          ({selectedCategories.length === TOUTES_CATEGORIES.length
+                            ? 'toutes'
+                            : `${selectedCategories.length}/${TOUTES_CATEGORIES.length}`})
+                        </span>
+                      </span>
                       <span className="text-lg group-open:rotate-180 transition-transform">▼</span>
                     </summary>
+
+                    <div className="flex items-center gap-2 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCategories(TOUTES_CATEGORIES)}
+                        className="px-3 py-1 rounded-full text-xs font-bold min-h-0 min-w-0
+                                   bg-[#a3235e]/10 text-[#a3235e] hover:bg-[#a3235e]/20 transition-colors"
+                      >
+                        Tout
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCategories([])}
+                        className="px-3 py-1 rounded-full text-xs font-bold min-h-0 min-w-0
+                                   bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                      >
+                        Rien
+                      </button>
+                      <span className="text-[11px] text-gray-400 leading-tight">
+                        {selectedCategories.length === 0
+                          ? 'Aucune catégorie : impossible de lancer'
+                          : 'Les questions seront tirées dans ces thèmes'}
+                      </span>
+                    </div>
+
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {CATEGORY_CONFIG.map((cat) => {
                         const isSelected = selectedCategories.includes(cat.id);
@@ -480,14 +597,17 @@ export default function Home() {
                           <motion.button
                             key={cat.id}
                             type="button"
+                            role="checkbox"
+                            aria-checked={isSelected}
                             onClick={() => toggleCategory(cat.id)}
-                            className={`px-2 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1 ${
+                            className={`px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1 min-h-0 min-w-0 border ${
                               isSelected
-                                ? 'bg-[#864cbf] text-white'
-                                : 'bg-gray-100 text-gray-600'
+                                ? 'bg-[#864cbf] text-white border-[#864cbf]'
+                                : 'bg-white text-gray-500 border-gray-300'
                             }`}
                             whileTap={{ scale: 0.95 }}
                           >
+                            <span aria-hidden="true">{isSelected ? '✓' : '+'}</span>
                             <span>{cat.emoji}</span>
                             <span>{cat.label}</span>
                           </motion.button>
@@ -498,9 +618,12 @@ export default function Home() {
 
                   <details className="group">
                     <summary className="text-gray-600 font-bold text-sm uppercase tracking-wide cursor-pointer list-none flex items-center justify-between">
-                      <span>Types {selectedTypes.length > 0 && `(${selectedTypes.length})`}</span>
+                      <span>Types {selectedTypes.length > 0 ? `(${selectedTypes.length})` : '(tous)'}</span>
                       <span className="text-lg group-open:rotate-180 transition-transform">▼</span>
                     </summary>
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      Rien de coché ici = tous les types de questions.
+                    </p>
                     <div className="grid grid-cols-4 gap-1 mt-2">
                       {TYPE_CONFIG.map((type) => {
                         const isSelected = selectedTypes.includes(type.id);
@@ -529,7 +652,8 @@ export default function Home() {
                 <div className="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
                   <motion.button
                     onClick={handleCreate}
-                    disabled={!playerName.trim() || !gender || loading || !connected}
+                    disabled={!!raisonCreationBloquee() || loading}
+                    aria-describedby="aide-creation"
                     className="btn-create w-full disabled:opacity-50 disabled:cursor-not-allowed text-lg py-4"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -537,12 +661,17 @@ export default function Home() {
                     {loading ? (
                       <span className="flex items-center justify-center gap-3">
                         <div className="spinner w-5 h-5 border-white/30 border-t-white" />
-                        Creation...
+                        Création…
                       </span>
                     ) : (
                       "🚀 C'est parti !"
                     )}
                   </motion.button>
+                  {/* U7 : hauteur reservee meme quand il n'y a rien a dire,
+                      sinon le bouton remonte des que le prenom est saisi. */}
+                  <p id="aide-creation" className="field-hint min-h-[1.2em]">
+                    {raisonCreationBloquee() ?? ''}
+                  </p>
                 </div>
               </div>
 
@@ -559,13 +688,13 @@ export default function Home() {
           {mode === 'join' && (
             <motion.div
               key="join"
-              initial={{ opacity: 0, y: 30 }}
+              initial={ENTREE_DEPUIS}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30, scale: 0.95 }}
-              transition={{ type: 'spring', damping: 20 }}
-              className="w-full max-w-md"
+              exit={{ ...SORTIE_VERS, transition: SORTIE_ECRAN }}
+              transition={ENTREE_ECRAN}
+              className="w-full max-w-md md:max-w-lg"
             >
-              <div className="bg-white rounded-2xl p-6 shadow-2xl">
+              <div className="bg-white rounded-2xl p-6 md:p-8 shadow-2xl">
                 <h2 className="text-xl font-black text-gray-900 text-center mb-4">
                   Rejoindre une partie
                 </h2>
@@ -645,7 +774,8 @@ export default function Home() {
 
                   <motion.button
                     onClick={handleJoin}
-                    disabled={!playerName.trim() || !gender || roomCode.length < 6 || loading}
+                    disabled={!!raisonRejoindreBloquee() || loading}
+                    aria-describedby="aide-rejoindre"
                     className="btn-join w-full disabled:opacity-50 disabled:cursor-not-allowed mt-6"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -653,12 +783,16 @@ export default function Home() {
                     {loading ? (
                       <span className="flex items-center justify-center gap-3">
                         <div className="spinner w-5 h-5 border-white/30 border-t-white" />
-                        Connexion...
+                        Connexion…
                       </span>
                     ) : (
                       'Rejoindre'
                     )}
                   </motion.button>
+                  {/* U7 : dire ce qui manque plutot que griser en silence. */}
+                  <p id="aide-rejoindre" className="field-hint min-h-[1.2em]">
+                    {raisonRejoindreBloquee() ?? ''}
+                  </p>
                 </div>
               </div>
 
@@ -675,13 +809,13 @@ export default function Home() {
           {mode === 'thematic' && (
             <motion.div
               key="thematic"
-              initial={{ opacity: 0, y: 30 }}
+              initial={ENTREE_DEPUIS}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30, scale: 0.95 }}
-              transition={{ type: 'spring', damping: 20 }}
-              className="w-full max-w-md"
+              exit={{ ...SORTIE_VERS, transition: SORTIE_ECRAN }}
+              transition={ENTREE_ECRAN}
+              className="w-full max-w-md md:max-w-xl"
             >
-              <div className="bg-white rounded-2xl shadow-2xl max-h-[82dvh] flex flex-col">
+              <div className="bg-white rounded-2xl shadow-2xl max-h-[82dvh] md:max-h-[88dvh] flex flex-col">
                 <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-pink-500 to-rose-600 rounded-t-2xl relative">
                   <motion.button
                     onClick={() => { setSelectedTheme(null); switchMode('home'); }}
@@ -746,20 +880,7 @@ export default function Home() {
 
                   <GameModeSelector value={gameMode} onChange={setGameMode} disabled={loading} />
 
-                  <div>
-                    <label className="block text-gray-600 font-bold text-sm mb-1 uppercase tracking-wide">
-                      Questions: {questionCount === 50 ? '∞' : questionCount}
-                    </label>
-                    <input
-                      type="range"
-                      min="5"
-                      max="50"
-                      step="5"
-                      value={questionCount}
-                      onChange={(e) => setQuestionCount(parseInt(e.target.value))}
-                      className="w-full h-2 rounded-full cursor-pointer accent-pink-500"
-                    />
-                  </div>
+                  <CurseurQuestions value={questionCount} onChange={setQuestionCount} />
 
                   <div>
                     <label className="block text-gray-600 font-bold text-sm mb-2 uppercase tracking-wide">
@@ -797,7 +918,8 @@ export default function Home() {
                 <div className="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
                   <motion.button
                     onClick={handleCreateThematic}
-                    disabled={!playerName.trim() || !gender || !selectedTheme || loading || !connected}
+                    disabled={!!raisonThematiqueBloquee() || loading}
+                    aria-describedby="aide-thematique"
                     className="w-full py-4 rounded-xl font-bold text-lg text-white bg-gradient-to-r from-pink-500 to-rose-600 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -813,6 +935,10 @@ export default function Home() {
                       </span>
                     )}
                   </motion.button>
+                  {/* U7 : dire ce qui manque plutot que griser en silence. */}
+                  <p id="aide-thematique" className="field-hint min-h-[1.2em]">
+                    {raisonThematiqueBloquee() ?? ''}
+                  </p>
                 </div>
               </div>
 
@@ -824,6 +950,51 @@ export default function Home() {
       {/* Footer */}
       <div className="text-center py-2 text-white/60 text-xs">
         Made with 💕
+      </div>
+    </div>
+  );
+}
+
+/**
+ * U8 — LE CURSEUR "QUESTIONS: 10".
+ *
+ * Deux defauts corriges :
+ *  - il n'affichait ni minimum ni maximum : impossible de savoir si 10 etait
+ *    beaucoup ou trois fois rien. Les bornes sont maintenant ecrites dessous.
+ *  - sa piste allait du rouge (a gauche) au vert (a droite) : une partie
+ *    courte passait pour un mauvais choix. La couleur ne juge plus, elle
+ *    situe : la portion parcourue prend le rose de marque, le reste est gris.
+ */
+const QUESTIONS_MIN = 5;
+const QUESTIONS_MAX = 50;
+
+function CurseurQuestions({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  const pourcentage = ((value - QUESTIONS_MIN) / (QUESTIONS_MAX - QUESTIONS_MIN)) * 100;
+  const libelle = value === QUESTIONS_MAX ? 'Sans limite' : `${value}`;
+
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1">
+        <label htmlFor="curseur-questions" className="text-gray-600 font-bold text-sm uppercase tracking-wide">
+          Nombre de questions
+        </label>
+        <span className="text-[#a3235e] font-black text-base tabular-nums">{libelle}</span>
+      </div>
+      <input
+        id="curseur-questions"
+        type="range"
+        min={QUESTIONS_MIN}
+        max={QUESTIONS_MAX}
+        step={5}
+        value={value}
+        onChange={(e) => onChange(parseInt(e.target.value))}
+        aria-valuetext={value === QUESTIONS_MAX ? 'sans limite' : `${value} questions`}
+        className="w-full h-2 rounded-full cursor-pointer"
+        style={{ ['--range-fill' as string]: `${pourcentage}%` }}
+      />
+      <div className="flex justify-between text-[11px] font-bold text-gray-400 mt-1">
+        <span>5</span>
+        <span>50 = sans limite</span>
       </div>
     </div>
   );

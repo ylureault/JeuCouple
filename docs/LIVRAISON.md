@@ -29,6 +29,14 @@ tout était « vert » :
 - **Un bug d'affichage peut venir du modèle.** Des manches entières sans aucun
   bouton : `rowToQuestion` lisait 10 colonnes sur 12, `emoji_a`/`emoji_b`
   tombaient dans le vide.
+- **`\b` ne connaît pas les accents.** Il raisonne sur `[A-Za-z0-9_]`, donc il
+  voit une frontière de mot au milieu de « mètres » et de « rencontrés il ».
+  `fixMissingAccents` a ainsi écrit « mètrès », « rencontrés'il » et
+  « ami(e)s'en » — 62 questions abîmées. Toute expression régulière appliquée au
+  corpus s'écrit désormais avec `\p{L}` et le drapeau `u` (helper `mot()` dans
+  `database.ts`), jamais avec `\b`. Un correctif de contenu qui abîme le contenu
+  coûte plus cher que le défaut qu'il visait : `fixDegatsAccents()` répare les
+  bases déjà installées, et un test rejoue l'aller-retour sur tout le corpus.
 
 ---
 
@@ -42,7 +50,10 @@ cd app/backend  && npx tsc --noEmit
 cd app/frontend && npx tsc --noEmit && npx vite build
 
 # 2. Tests (séquentiel : en parallèle, les suites se disputent ports et base)
-cd app/backend && npx jest --runInBand
+#    Le drapeau ESM est indispensable : sans lui, 18 suites ne compilent même
+#    pas (TS1343 sur `import.meta`) et jest annonce quand même « 366 passed ».
+cd app/backend && NODE_OPTIONS='--experimental-vm-modules' npx jest --runInBand
+#    ou simplement : npm test
 
 # 3. Parties réelles, 10 modes, ~223 scénarios
 cd app/backend && npm run test:gameplay
@@ -86,7 +97,11 @@ Un fichier par lot dans `app/backend/data/`, structure `{"questions": [...]}`,
 | F | Qui de nous deux | — |
 | G | Vrai / Faux | — |
 | S | Opinion tranchée | — |
-| N | Plus / Moins | `reference_value` — **colonne absente en base, type mort** |
+| N | Plus / Moins | `reference_value` **et** le même nombre écrit dans l'énoncé |
+
+Le client dessine deux boutons PLUS / MOINS mais **n'affiche jamais**
+`reference_value` : sans le nombre dans le texte, la question devient « plus ou
+moins que quoi ? ». Un test l'interdit.
 
 Piège fréquent : **l'énoncé doit correspondre au type**. « Décris… » sur un
 curseur 1‑10 est inrépondable ; « Sur 10, note… » dans un champ texte aussi.
@@ -99,16 +114,37 @@ que la table `categories`. L'import refuse désormais une catégorie inconnue.
 
 ### Vérifier son lot
 ```bash
-cd app/backend && npx jest --runInBand src/__tests__/questionData.test.ts
+cd app/backend && NODE_OPTIONS='--experimental-vm-modules' \
+  npx jest --runInBand src/__tests__/questionData.test.ts src/__tests__/contenu.elisions.test.ts
 ```
 Ces tests contrôlent : catégories enregistrées, champs par type, bonne réponse
 présente parmi les options, options non dupliquées, **unicité des énoncés**,
 accents, minuteur exploitable.
 
+### L'import doit rester stable
+Le fichier source et la base doivent dire **exactement** la même chose. Si une
+migration réécrit un énoncé, l'import ne le reconnaît plus et le réinsère — à
+chaque déploiement. Le contrôle tient en deux lignes :
+
+```bash
+DATABASE_PATH=/tmp/v.sqlite npx tsx src/import-thematic.ts   # 1re passe
+DATABASE_PATH=/tmp/v.sqlite npx tsx src/import-thematic.ts   # doit importer 0
+```
+
+La seconde passe qui importe autre chose que `0` désigne des questions dont le
+texte est corrigé après coup : accentuer le fichier source, pas seulement la
+base.
+
 ### Doublons
 Toujours comparer au corpus **entier** avant de livrer, pas seulement à son
 propre lot. Plusieurs agents écrivant en parallèle ont produit 51 doublons
-qu'il a fallu retirer après coup.
+qu'il a fallu retirer après coup. Le seed, lui, n'a jamais vérifié : il en
+portait 53 de plus, dont « Dessus ou dessous ? » trois fois dans le même thème.
+`deactivateDuplicateQuestions()` les désactive au démarrage (désactiver et non
+supprimer : `answers.question_id` est en `ON DELETE CASCADE`, une suppression
+effacerait des parties jouées). Et `getMixedQuestions()` dédoublonne par énoncé
+au tirage, pour la trentaine de questions qui vivent légitimement dans deux
+thèmes.
 
 ---
 
@@ -137,7 +173,10 @@ vérité des règles. Une définition suffit — ne pas disperser des
 - **Le serveur fait foi.** Manche, question, scores et échéance absolue partent
   dans `game:round-state`. Le client affiche, il ne dérive rien.
 - **La bonne réponse ne quitte jamais le serveur avant la révélation.** Elle est
-  retirée de `game:question` (émission normale **et** reconnexion).
+  retirée de `game:question` (émission normale **et** reconnexion). La suite
+  gameplay a besoin de la connaître pour vérifier le barème : elle la lit dans
+  la base jetable du serveur, en lecture seule
+  (`gameplay/harness/oracle.ts`) — **jamais** en la remettant dans la trame.
 - **Consentement partout.** Le joueur 2 valide les réglages avant le lancement ;
   la montée de palier en Escalade exige l'accord des deux ; un changement de
   mode se propose et s'accepte.
@@ -151,23 +190,31 @@ vérité des règles. Une définition suffit — ne pas disperser des
 
 ---
 
-## 6. Bugs connus, non corrigés
+## 6. Bugs connus — les quatre sont corrigés
 
-Trouvés par la suite gameplay, documentés et laissés en l'état :
+Trouvés par la suite gameplay, corrigés depuis. Gardés ici parce que chacun
+laisse une règle à ne pas casser :
 
-1. **Modes « sans points » qui marquent des points** — `envies` affiche 253/250
-   en 3 manches, `petits_noms` 102/100, alors que le catalogue annonce l'absence
-   de score. `gameService.ts` applique le barème sans regarder le drapeau
-   `scoreless`.
-2. **Question rejouée = manche bloquée** — les réponses sont indexées par
-   `question.id` ; quand le vivier est épuisé et qu'une question revient, les
-   nouvelles réponses sont refusées (« Réponse déjà enregistrée ») et l'ancien
-   résultat est rejoué. Indexer par `(question.id, numéro de manche)`.
-3. **Type N mort** — `isPlayable()` exige `reference_value`, colonne absente de
-   la table `questions`. Les 4 questions concernées ne sortent jamais.
-4. **Suite `etat-partie` instable** — journalise après la fin des tests
-   (`Cannot log after tests are done`). Problème d'hygiène de test, pas de
-   produit : nettoyer serveurs et sockets dans `afterAll`.
+1. **Modes « sans points »** (corrigé) — `envies` affichait 253/250 en 3 manches.
+   Le drapeau `scoreless` vit désormais dans le registre `gameModes.ts` (comme
+   `endless`) et `revealAnswers()` remet à zéro base, bonus de rapidité, bonus
+   de série, joker et micro-bonus anti-égalité en un seul endroit. Un test
+   croise le registre et le catalogue `GAME_MODES` : les deux ne peuvent plus
+   diverger. **Ne jamais tester un identifiant de mode en dur dans le moteur.**
+2. **Question rejouée** (corrigé) — `gameState.answers` est indexé par
+   `answerKey(question.id, index de manche)` et non plus par `question.id`.
+   Quand le vivier est épuisé, une question qui revient ouvre une ardoise
+   vierge. **Tout nouvel accès à `answers` passe par `answerKey()`.**
+3. **Type N** (corrigé) — la colonne `reference_value` existe (migration dans
+   `runMigrations`), elle est écrite par `import-thematic` / `createQuestion` /
+   le seed, lue par `rowToQuestion`, et `fixTypeNReferenceValues()` répare les
+   bases déjà installées en recopiant le nombre de l'énoncé. Le client n'affiche
+   toujours pas ce nombre : il **doit** rester écrit dans le texte (cf. §3).
+4. **Journalisation après la fin des tests** (corrigé) — ce n'étaient pas les
+   sockets mais les **minuteurs de partie** (question, enchaînement, choix de
+   thème, palier, délai de grâce) : fermer le serveur ne les annule pas.
+   `arreterToutesLesParties()` les solde, et le harnais l'appelle dans
+   `fermer()` avant d'attendre la vraie fermeture de `io` et du serveur HTTP.
 
 Le reste des points ouverts vient de la recette utilisateur du 7 août 2026 :
 sections **E1→E12** (cohérence des résultats, chat, pause) et **U1→U12**

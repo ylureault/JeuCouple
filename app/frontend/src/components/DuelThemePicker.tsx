@@ -50,8 +50,15 @@ export default function DuelThemePicker() {
 
             {duelChoice ? (
               <>
+                {/* E12 : la feuille s'ouvre pendant la REVELATION de la manche
+                    precedente, mais annonce le numero de la manche A VENIR. Un
+                    simple "Manche 5" affiche par-dessus un ecran qui dit encore
+                    "Manche 4" se lit comme un second declenchement consecutif —
+                    c'est ce qui a ete remonte en recette. La periodicite, elle,
+                    est bien d'une manche sur quatre (verifiee en partie reelle).
+                    On leve donc l'ambiguite dans le libelle. */}
                 <p className="text-white/60 text-xs font-bold uppercase tracking-wide mb-1">
-                  Manche {duelChoice.roundNumber}
+                  Thème de la manche {duelChoice.roundNumber} (la suivante)
                 </p>
                 <h2 className="text-white font-black text-xl mb-1">
                   Tu remportes la manche

@@ -42,6 +42,7 @@ export default function Game() {
     deadline,
     serverClockOffset,
     myAnswer,
+    pendingAnswer,
     otherAnswered,
     revealData,
     scores,
@@ -164,7 +165,7 @@ export default function Game() {
   }, [revealData, playSound]);
 
   const handleAnswer = (answer: string) => {
-    if (myAnswer) return;
+    if (myAnswer || pendingAnswer) return;
     playSound('click');
     submitAnswer(answer);
   };
@@ -332,16 +333,25 @@ export default function Game() {
               <span className="text-white/70 text-xs font-bold">Sans points — juste vous deux</span>
             </div>
           ) : (
+          /* E8 : le vert signale celui qui MENE, pas "moi". Il restait vert sur
+             -500 pendant que l'autre etait a -350 en gris : le repere couleur
+             disait exactement le contraire du classement. Egalite : aucun vert. */
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
               <span className="text-white/60 text-xs">Toi</span>
-              <div className="bg-[#3fae8f] rounded px-2 py-0.5">
+              <div
+                className={`rounded px-2 py-0.5 ${myScore > theirScore ? 'bg-[#3fae8f]' : 'bg-white/20'}`}
+                data-test="score-moi"
+              >
                 <span className="font-bold text-white text-sm">{myScore}</span>
               </div>
             </div>
             <span className="text-white/60">vs</span>
             <div className="flex items-center gap-1">
-              <div className="bg-white/20 rounded px-2 py-0.5">
+              <div
+                className={`rounded px-2 py-0.5 ${theirScore > myScore ? 'bg-[#3fae8f]' : 'bg-white/20'}`}
+                data-test="score-autre"
+              >
                 <span className="font-bold text-white text-sm">{theirScore}</span>
               </div>
               <span className="text-white/60 text-xs truncate max-w-[88px]">{theirName}</span>
@@ -369,7 +379,17 @@ export default function Game() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col items-center justify-start p-2 sm:p-4 pb-16 overflow-y-auto">
-        <AnimatePresence mode="wait">
+        {/* PAS de `mode="wait"` ici.
+            Avec lui, AnimatePresence n'introduit l'ecran suivant qu'une fois la
+            SORTIE du precedent terminee. Or les phases s'enchainent parfois en
+            quelques millisecondes (le partenaire a deja repondu : question ->
+            attente -> revelation d'un seul coup). La file de sorties restait
+            alors en plan et l'ecran se figeait sur la question, reponse
+            comprise : le joueur voyait sa reponse partir et le resultat
+            n'arrivait jamais. Reproduit en partie reelle sur les questions
+            "opinion tranchee". Chaque ecran s'anime desormais pour son compte —
+            meme correctif que celui deja applique au salon. */}
+        <AnimatePresence>
           {/* INTRO SEQUENCE */}
           {showIntro && (
             <motion.div
@@ -500,17 +520,44 @@ export default function Game() {
                   disabled inclut timeLeft === 0 : le serveur revele les reponses a
                   l'expiration du minuteur, l'interface restait active apres le decompte
                   et acceptait une reponse qui n'etait plus prise en compte. */}
+              {/* E4 : selectedAnswer prend d'abord la reponse EN VOL, pour que
+                  le bouton s'allume des le clic ; `confirmed` distingue ensuite
+                  "envoye" de "enregistre par le serveur". */}
               <QuestionCard
                 key={currentQuestion.id}
                 question={currentQuestion}
                 onAnswer={handleAnswer}
-                disabled={!!myAnswer || deadline === null || timeLeft === 0}
-                selectedAnswer={myAnswer}
+                disabled={!!myAnswer || !!pendingAnswer || deadline === null || timeLeft === 0}
+                selectedAnswer={myAnswer ?? pendingAnswer}
+                confirmed={!!myAnswer}
                 player1Name={player1Name}
                 player2Name={player2Name}
                 playerId={playerId!}
                 scoreless={scoreless}
               />
+
+              {/* Reponse partie mais pas encore confirmee : on le dit, plutot
+                  que de laisser croire a une prise en compte qui n'a pas eu
+                  lieu (E4). */}
+              {!myAnswer && pendingAnswer && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-3 text-center"
+                >
+                  <div className="inline-flex items-center gap-2 bg-white/15 rounded-full px-4 py-2">
+                    <motion.span
+                      animate={{ rotate: 360 }}
+                      transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                      className="text-base"
+                      aria-hidden="true"
+                    >
+                      ◌
+                    </motion.span>
+                    <span className="text-white font-bold text-sm">Envoi de ta réponse…</span>
+                  </div>
+                </motion.div>
+              )}
 
               {/* Other player status */}
               {myAnswer && (
@@ -599,6 +646,24 @@ export default function Game() {
                   En attente de {theirName}...
                 </p>
               </motion.div>
+            </motion.div>
+          )}
+
+          {/* Filet de securite : `AnimatePresence mode="wait"` ne doit JAMAIS
+              se retrouver sans enfant. Si la phase passe a 'reveal' avant que
+              les donnees n'arrivent (reconnexion pendant une revelation), la
+              transition restait bloquee sur la sortie de la question et
+              l'ecran se figeait. On affiche donc toujours quelque chose. */}
+          {phase === 'reveal' && !revealData && (
+            <motion.div
+              key="reveal-attente"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center bg-white/10 backdrop-blur rounded-2xl p-6"
+            >
+              <div className="spinner w-10 h-10 mx-auto mb-3" />
+              <p className="text-white font-bold">Révélation…</p>
             </motion.div>
           )}
 

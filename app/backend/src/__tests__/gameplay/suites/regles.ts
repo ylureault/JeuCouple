@@ -4,6 +4,7 @@
  */
 import type { Session } from '../harness/runner.js';
 import { accord, desaccord, playRound, until } from '../harness/client.js';
+import { bonneReponse } from '../harness/oracle.js';
 
 // Themes disposant tous de questions de type E : le choix du gagnant peut donc
 // etre honore sans repli sur un autre theme.
@@ -312,7 +313,7 @@ const inverse: Session = {
 
     const q3 = await party.host.wait('game:question', { timeout: 20000, what: 'seconde manche inversee' });
     const inv3 = q3.data.question;
-    const bonne = inv3.correct_answer;
+    const bonne = bonneReponse(inv3)!;
     const mauvaise = (inv3.options as string[]).find((o) => o !== bonne)!;
     await party.host.answer(bonne);
     await party.guest.answer(mauvaise);
@@ -328,13 +329,11 @@ const inverse: Session = {
       `points du joueur qui s'est trompe : ${rev3.data.points2} (attendu 0)`
     );
 
-    // Fuite : la question porte deja sa bonne reponse quand elle est envoyee.
-    t.bug(
+    // Anti-triche : la bonne reponse ne doit jamais partir avec la question.
+    // Elle n'arrive qu'a la revelation ; le harnais, lui, la lit dans la base.
+    t.ok(
       "[a l'envers] la bonne reponse n'est pas envoyee avec la question",
       typeof inv3.correct_answer !== 'string',
-      "gameService.ts:1521 (sendQuestion) diffuse l'objet Question complet : le champ correct_answer " +
-        "des questions de type H part vers les deux clients avant la reponse, la bonne reponse est lisible " +
-        'dans la trame socket',
       `correct_answer recu = "${String(inv3.correct_answer).slice(0, 60)}"`
     );
   },
@@ -557,7 +556,7 @@ const quizExpress: Session = {
     t.ok(
       '[Quiz Express] chacun marque ses propres points',
       r2.reveal.points1 >= 100 && r2.reveal.points2 === 0 &&
-        r2.reveal.correctAnswer === r2.question.correct_answer,
+        r2.reveal.correctAnswer === bonneReponse(r2.question),
       `points=${r2.reveal.points1}/${r2.reveal.points2}, bonne reponse annoncee="${r2.reveal.correctAnswer}"`
     );
 

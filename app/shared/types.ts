@@ -552,6 +552,25 @@ export interface RoomResponse {
   error?: string;
 }
 
+/**
+ * Verdict UNIQUE d'une manche (E1/E2 de la recette).
+ *
+ * L'ecran de revelation tirait quatre elements independamment : emoji, couleur
+ * du bandeau, titre et commentaire. On pouvait donc lire "Vous pensez pareil !"
+ * sous un coeur brise rouge, avec un commentaire de desaccord. Un seul etat
+ * pilote desormais les quatre.
+ *
+ * 'no-answer' est un troisieme etat a part entiere : quand personne n'a
+ * repondu, il n'y a ni accord ni desaccord, donc ni verdict ni celebration.
+ */
+export type RevealOutcome = 'match' | 'no-match' | 'no-answer';
+
+/** Fausse citation d'ambiance, choisie par le SERVEUR et diffusee aux deux. */
+export interface RevealQuote {
+  text: string;
+  author: string;
+}
+
 export interface GameRevealData {
   questionId: number;
   answer1: string | null;
@@ -576,6 +595,14 @@ export interface GameRevealData {
   /** Cadence : duree exacte avant la question suivante (7 s en binaire/QCM,
       14 s pour lire deux reponses libres). Le decompte client s'y cale. */
   nextInSeconds?: number;
+  /** Verdict de la manche. Emoji, couleur, titre et commentaire en decoulent. */
+  outcome?: RevealOutcome;
+  /** Commentaire d'animateur, TIRE PAR LE SERVEUR : les deux clients lisent
+      le meme. Tire cote client, chacun voyait une phrase differente (E3). */
+  comment?: string;
+  /** Fausse citation d'ambiance, elle aussi tiree par le serveur (E3) : un
+      joueur lisait Napoleon pendant que l'autre lisait Einstein. */
+  quote?: RevealQuote;
 }
 
 export interface QuestionHistory {

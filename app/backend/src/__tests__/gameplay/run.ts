@@ -11,6 +11,7 @@
  * source dediee) pour absorber la cadence reelle du jeu.
  */
 import { startGameServer } from './harness/server.js';
+import { ouvrirOracle, fermerOracle } from './harness/oracle.js';
 import { runAll, type Session } from './harness/runner.js';
 import { nominalSessions } from './suites/nominal.js';
 import { limitesSessions } from './suites/limites.js';
@@ -48,6 +49,10 @@ const server = await startGameServer({
   mixDuelPeriod: MIX_DUEL_PERIOD,
 });
 console.error(`Serveur pret sur ${server.url} — journal : ${server.logPath}`);
+
+// Le harnais lit la base en direct pour connaitre les bonnes reponses : le
+// serveur ne les envoie plus avec la question (cf. harness/oracle.ts).
+ouvrirOracle(server.dbPath);
 console.error(
   `${filter ? 'Sessions filtrees' : 'Sessions'} : ${sessions.length}, ` +
   `${concurrency} en parallele, ESCALADE_PALIER_LEN=${ESCALADE_PALIER_LEN}, MIX_DUEL_PERIOD=${MIX_DUEL_PERIOD}\n`
@@ -66,6 +71,7 @@ try {
   });
 } finally {
   console.log(`Duree totale : ${((Date.now() - debut) / 1000).toFixed(0)} s`);
+  fermerOracle();
   await server.stop();
 }
 

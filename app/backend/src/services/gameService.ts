@@ -21,18 +21,37 @@ import * as questionModel from '../models/question.js';
 import * as categoryModel from '../models/category.js';
 import {
   getGameMode,
+  isScorelessMode,
   listGameModes,
   QUIZ_EXPRESS_QUESTION_COUNT,
   QUIZ_EXPRESS_REVEAL_SECONDS,
   QUIZ_EXPRESS_ANSWER_SECONDS,
 } from './gameModes.js';
 import type { ModeDecision } from './gameModes.js';
+// E1/E2/E3 : verdict unique de la manche + narration tiree cote serveur.
+import { computeOutcome, pickComment, pickQuote } from './revealNarration.js';
 
 interface AnswerData {
   answer1?: string;
   answer2?: string;
   time1?: number;  // timestamp when player 1 answered
   time2?: number;  // timestamp when player 2 answered
+}
+
+/**
+ * Cle d'une MANCHE dans gameState.answers.
+ *
+ * POURQUOI la manche et pas la seule question : quand le vivier d'une petite
+ * categorie est epuise, un mode sans fin resert une question deja jouee. Avec
+ * l'ancienne cle (question.id seul), la nouvelle manche retrouvait les reponses
+ * de l'ancienne : les deux joueurs se voyaient refuser leur reponse
+ * (« Reponse deja enregistree »), la manche se revelait seule au chrono et
+ * rejouait l'ANCIEN resultat. L'index de manche rend chaque cle unique.
+ * On garde l'identifiant de question dans la cle : il rend les traces lisibles
+ * et documente a quelle question la manche correspond.
+ */
+function answerKey(questionId: number, roundIndex: number): string {
+  return `${questionId}:${roundIndex}`;
 }
 
 interface GamificationState {
@@ -66,7 +85,8 @@ interface GameState {
   roundSeq: number;
   currentQuestionIndex: number;
   currentQuestion: Question | null; // The prepared question currently being played (with substitutions done)
-  answers: Map<number, AnswerData>;
+  // Cle = answerKey(question.id, index de manche), jamais l'identifiant seul.
+  answers: Map<string, AnswerData>;
   scores: { player1: number; player2: number };
   timer: NodeJS.Timeout | null;
   phase: 'question' | 'waiting' | 'reveal';
@@ -562,7 +582,9 @@ export function setupSocketHandlers(
           // If in reveal phase, send the reveal data
           if (gameState.phase === 'reveal') {
             const question = gameState.questions[gameState.currentQuestionIndex];
-            const answers = gameState.answers.get(question.id) || {};
+            const answers = gameState.answers.get(
+              answerKey(question.id, gameState.currentQuestionIndex)
+            ) || {};
             // Re-send the latest reveal data from history if available
             const lastHistory = gameState.questionHistory[gameState.questionHistory.length - 1];
             if (lastHistory) {
@@ -792,7 +814,11 @@ export function setupSocketHandlers(
       callback({ success: true });
 
       // Premiere question apres un court delai de montage des clients.
-      setTimeout(() => {
+      // Le minuteur est RETENU dans l'etat de partie : un minuteur anonyme ne
+      // peut plus etre annule, et il continuait de reveiller une partie deja
+      // arretee (arret du serveur, fin d'une suite de tests).
+      gameState.nextQuestionTimer = setTimeout(() => {
+        gameState.nextQuestionTimer = null;
         sendQuestion(io, room.code, gameState);
       }, 800);
     });
@@ -839,8 +865,10 @@ export function setupSocketHandlers(
       const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
       const answerTime = Date.now();
 
-      // Save answer with timestamp
-      const questionAnswers = gameState.answers.get(currentQuestion.id) || {};
+      // Save answer with timestamp. La cle porte l'index de manche : une
+      // question resservie (vivier epuise) ouvre bien une ardoise vierge.
+      const cleManche = answerKey(currentQuestion.id, gameState.currentQuestionIndex);
+      const questionAnswers = gameState.answers.get(cleManche) || {};
 
       // Prevent duplicate answers from same player
       if (connection.playerId === 1 && questionAnswers.answer1 !== undefined) {
@@ -863,7 +891,7 @@ export function setupSocketHandlers(
         questionAnswers.answer2 = data.answer;
         questionAnswers.time2 = answerTime;
       }
-      gameState.answers.set(currentQuestion.id, questionAnswers);
+      gameState.answers.set(cleManche, questionAnswers);
 
       // Save to database
       gameModel.saveAnswer(
@@ -1597,8 +1625,17 @@ function revealAnswers(
   console.log('[REVEAL] Setting phase to reveal');
   gameState.phase = 'reveal';
   const question = gameState.questions[gameState.currentQuestionIndex];
-  const answers = gameState.answers.get(question.id) || {};
+  const answers = gameState.answers.get(
+    answerKey(question.id, gameState.currentQuestionIndex)
+  ) || {};
   const { gamification } = gameState;
+
+  // Mode sans points (envies, petits noms) : le registre de modes fait foi.
+  // Le bareme tournait quand meme et affichait 253/250 en trois manches sur un
+  // mode qui annonce « aucun point ». On calcule tout de meme la manche (le
+  // verdict d'accord sert a la revelation et aux modes), mais RIEN n'est
+  // credite : ni base, ni bonus de rapidite, ni serie, ni penalite de joker.
+  const sansPoints = isScorelessMode(roomSettings.get(roomCode)?.gameMode);
 
   // Check for joker, dontknow, and no answers
   const isJoker1 = answers.answer1 === 'joker';
@@ -1666,8 +1703,12 @@ function revealAnswers(
     // If only one answered, no speed bonus (need both to answer for bonus)
   }
 
-  // Update streaks
-  if (isTypeH) {
+  // Update streaks. Une serie n'existe que pour multiplier des points : sans
+  // bareme, elle n'a rien a multiplier et resterait affichee pour rien.
+  if (sansPoints) {
+    gamification.streak1 = 0;
+    gamification.streak2 = 0;
+  } else if (isTypeH) {
     // For Type H, individual streaks based on individual correctness
     if (individualPoints1 > 0) {
       gamification.streak1++;
@@ -1761,12 +1802,30 @@ function revealAnswers(
     gamification.streak2 = 0;
   }
 
+  // Mode sans points : on remet a zero TOUT ce qui alimente le score, une seule
+  // fois et au meme endroit, plutot que de truffer le bareme de conditions.
+  // Les compteurs de revelation partent aussi a zero : afficher « +100 » puis
+  // un total inchange serait le meme mensonge, en plus petit.
+  if (sansPoints) {
+    basePoints = 0;
+    speedBonus1 = 0;
+    speedBonus2 = 0;
+    streakBonus1 = 0;
+    streakBonus2 = 0;
+    points1 = 0;
+    points2 = 0;
+  }
+
   // --- Resultat de la manche, consomme par le registre de modes -------------
   // Le gagnant est celui qui marque le plus ; a egalite de points, le plus
   // rapide l'emporte. Si aucun des deux ne se detache, la manche est nulle et
   // le mode decidera quoi faire (le duel alterne alors la main).
   let roundWinner: 1 | 2 | null = null;
-  if (points1 > points2) {
+  if (sansPoints) {
+    // Sans points, personne ne remporte la manche : ces modes n'ont pas de
+    // perdant, designer un gagnant au chrono serait un classement deguise.
+    roundWinner = null;
+  } else if (points1 > points2) {
     roundWinner = 1;
   } else if (points2 > points1) {
     roundWinner = 2;
@@ -1777,11 +1836,13 @@ function revealAnswers(
   gameState.roundWinners.push(roundWinner);
   gameState.roundAgreements.push(correct);
 
-  // Apply joker penalty (overrides no answer if both)
-  if (isJoker1) {
+  // Apply joker penalty (overrides no answer if both).
+  // Rien a payer quand il n'y a rien a gagner : le joker n'est meme pas propose
+  // par le client dans un mode sans points.
+  if (isJoker1 && !sansPoints) {
     points1 = JOKER_PENALTY;
   }
-  if (isJoker2) {
+  if (isJoker2 && !sansPoints) {
     points2 = JOKER_PENALTY;
   }
 
@@ -1789,8 +1850,10 @@ function revealAnswers(
   // Applies when both players would get the same score (positive or zero, but not negative)
   // Les sorties volontaires (passer/joker/je-ne-sais-pas) ne concourent pas
   // au bonus de vitesse : on ne recompense pas "celui qui a esquive le plus vite".
-  const realAnswer1 = !isPass1 && !isJoker1 && !isDontKnow1 && !noAnswer1;
-  const realAnswer2 = !isPass2 && !isJoker2 && !isDontKnow2 && !noAnswer2;
+  // Sans points, ce micro-bonus est le dernier a pouvoir departager deux
+  // joueurs : on le desactive aussi, sinon 0/0 devient 2/0 en trois manches.
+  const realAnswer1 = !sansPoints && !isPass1 && !isJoker1 && !isDontKnow1 && !noAnswer1;
+  const realAnswer2 = !sansPoints && !isPass2 && !isJoker2 && !isDontKnow2 && !noAnswer2;
   if (points1 === points2 && points1 >= 0 && answerTime1 !== null && answerTime2 !== null && realAnswer1 && realAnswer2) {
     // Player who answered faster gets a small bonus (1-3 points based on time difference)
     const timeDiff = Math.abs(answerTime1 - answerTime2);
@@ -1805,7 +1868,7 @@ function revealAnswers(
     }
   }
   // Also handle case where both players tie on negative/zero but one answered
-  else if (points1 === points2 && (answerTime1 !== null || answerTime2 !== null)) {
+  else if (!sansPoints && points1 === points2 && (answerTime1 !== null || answerTime2 !== null)) {
     // Player who answered gets a small bonus
     if (answerTime1 !== null && answerTime2 === null) {
       points1 += 1;
@@ -1861,6 +1924,21 @@ function revealAnswers(
   };
 
   revealData.nextInSeconds = revealSeconds(question.type, roomSettings.get(roomCode)?.gameMode);
+
+  // E1/E2/E3 : le verdict de la manche et sa narration sont decides ICI, une
+  // seule fois, puis diffuses aux deux clients. Tires cote client, l'emoji, le
+  // titre, le commentaire et la citation pouvaient se contredire sur un meme
+  // ecran, et differer d'un joueur a l'autre sur une meme manche.
+  const narrationRoom = roomModel.getRoomByCode(roomCode);
+  revealData.outcome = computeOutcome(answers.answer1, answers.answer2, correct);
+  revealData.comment = pickComment(
+    revealData.outcome,
+    Math.max(gamification.streak1, gamification.streak2),
+    narrationRoom?.player1_name || 'Joueur 1',
+    narrationRoom?.player2_name || 'Joueur 2'
+  );
+  revealData.quote = pickQuote();
+
   io.to(roomCode).emit('game:reveal', revealData);
 
   // Send score update
@@ -2442,7 +2520,12 @@ function finishGame(
 
   // Determine winner - with tie-breakers
   let winner: 1 | 2 | 'tie';
-  if (gameState.scores.player1 > gameState.scores.player2) {
+  if (isScorelessMode(roomSettings.get(roomCode)?.gameMode)) {
+    // Mode sans points : aucun podium. Les departages (serie, bonus, nombre de
+    // reponses) finissaient sinon par un tirage au sort qui sacrait un gagnant
+    // dans un mode qui promet de n'en avoir aucun.
+    winner = 'tie';
+  } else if (gameState.scores.player1 > gameState.scores.player2) {
     winner = 1;
   } else if (gameState.scores.player2 > gameState.scores.player1) {
     winner = 2;
@@ -2482,7 +2565,9 @@ function finishGame(
   let correctAnswers1 = 0;
   let correctAnswers2 = 0;
   gameState.questions.forEach((q, idx) => {
-    const answers = gameState.answers.get(q.id);
+    // Chaque entree de `questions` est une manche : l'index EST le numero de
+    // manche, la meme question pouvant revenir plus loin dans la liste.
+    const answers = gameState.answers.get(answerKey(q.id, idx));
     if (answers?.answer1 && answers?.answer2) {
       if (q.type === 'C') {
         // For Type C, count as "correct" if both answered
@@ -2555,4 +2640,35 @@ function finishGame(
 
 export function getActiveGamesCount(): number {
   return activeGames.size;
+}
+
+/**
+ * Arrete net TOUTES les parties en cours et libere leurs minuteurs.
+ *
+ * POURQUOI : fermer le serveur socket ne coupe pas les minuteurs d'une partie
+ * (question en cours, enchainement de manche, choix de theme, montee de palier,
+ * delai de grace d'une deconnexion, proposition de mode). Ils continuent de se
+ * declencher dans le vide : en test, Jest le signale par « Cannot log after
+ * tests are done » et fait echouer la campagne ; hors test, c'est un processus
+ * qu'on ne peut pas arreter proprement.
+ * Aucun evenement n'est emis : on ne cloture pas la partie, on relache l'etat.
+ */
+export function arreterToutesLesParties(): void {
+  for (const gameState of activeGames.values()) {
+    if (gameState.timer) { clearTimeout(gameState.timer); gameState.timer = null; }
+    if (gameState.nextQuestionTimer) { clearTimeout(gameState.nextQuestionTimer); gameState.nextQuestionTimer = null; }
+    if (gameState.themeChoiceTimer) { clearTimeout(gameState.themeChoiceTimer); gameState.themeChoiceTimer = null; }
+    if (gameState.escaladeConsent) { clearTimeout(gameState.escaladeConsent.timer); gameState.escaladeConsent = null; }
+    for (const t of gameState.disconnectGraceTimers.values()) clearTimeout(t);
+    gameState.disconnectGraceTimers.clear();
+  }
+  activeGames.clear();
+
+  for (const proposal of pendingModeProposals.values()) clearTimeout(proposal.timer);
+  pendingModeProposals.clear();
+
+  // Les connexions et les reglages pointent vers des salons dont plus aucune
+  // partie ne tourne : les garder ferait repondre le moteur a des sockets morts.
+  playerConnections.clear();
+  roomSettings.clear();
 }

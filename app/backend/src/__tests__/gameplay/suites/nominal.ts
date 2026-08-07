@@ -8,7 +8,7 @@
  */
 import type { Session } from '../harness/runner.js';
 import { accord, baremeAccord, playRound } from '../harness/client.js';
-import { MODES, P, type ModeCfg } from './modes.js';
+import { MODES, P, estSansPoints, type ModeCfg } from './modes.js';
 
 function session(m: ModeCfg): Session {
   return {
@@ -67,9 +67,14 @@ function session(m: ModeCfg): Session {
       );
 
       // 5. Bareme : accord = 100 points de base (50 pour une reponse libre).
-      const attendu = baremeAccord(r1.question.type);
+      //    Les modes sans points, eux, n'en accordent aucun — c'est leur regle,
+      //    pas une exception : l'accord est constate, il n'est pas note.
+      const sansPoints = estSansPoints(m.id);
+      const attendu = sansPoints ? 0 : baremeAccord(r1.question.type);
       t.ok(
-        `${P(m)} l'accord des deux joueurs est score au bareme attendu`,
+        sansPoints
+          ? `${P(m)} l'accord des deux joueurs ne rapporte aucun point (mode sans score)`
+          : `${P(m)} l'accord des deux joueurs est score au bareme attendu`,
         r1.reveal.correct === true && r1.reveal.basePoints === attendu,
         `type ${r1.question.type} : basePoints=${r1.reveal.basePoints} (attendu ${attendu}), correct=${r1.reveal.correct}`
       );

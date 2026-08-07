@@ -65,43 +65,48 @@ export default function GameModeSelector({ value, onChange, disabled, variant = 
 
   return (
     <div className="w-full">
-      <div className="flex items-baseline justify-between mb-2">
+      {/* U5 — les fleches ‹ › flottaient PAR-DESSUS la rangee : elles
+          recouvraient la 3e vignette et sa description passait pour tronquee.
+          Elles remontent dans l'en-tete, a cote du compteur : plus rien ne se
+          superpose au contenu, et elles restent a portee de pouce sur mobile.
+          Elles sont toujours rendues (desactivees en bout de course) pour que
+          la ligne d'en-tete ne saute pas au fil du defilement. */}
+      <div className="flex items-center justify-between mb-2 gap-2">
         <span className={`${c.title} text-sm font-bold uppercase tracking-wide`}>Type de jeu</span>
-        <span className={`${c.count} text-xs`}>{GAME_MODES.length} disponibles</span>
+        <div className="flex items-center gap-1.5">
+          <span className={`${c.count} text-xs`}>{GAME_MODES.length} disponibles</span>
+          <button
+            type="button"
+            aria-label="Voir les jeux precedents"
+            disabled={!canLeft}
+            onClick={() => scrollBy(-1)}
+            className={`w-8 h-8 min-w-0 min-h-0 rounded-full flex items-center justify-center
+                        text-lg leading-none ${arrowCls} ${canLeft ? '' : 'opacity-30 cursor-default'}`}
+          >
+            <span aria-hidden="true">‹</span>
+          </button>
+          <button
+            type="button"
+            aria-label="Voir les jeux suivants"
+            disabled={!canRight}
+            onClick={() => scrollBy(1)}
+            className={`w-8 h-8 min-w-0 min-h-0 rounded-full flex items-center justify-center
+                        text-lg leading-none ${arrowCls} ${canRight ? '' : 'opacity-30 cursor-default'}`}
+          >
+            <span aria-hidden="true">›</span>
+          </button>
+        </div>
       </div>
 
       {/* Rangee defilante : evite une grille qui pousse le bouton de creation
           hors de l'ecran sur mobile. */}
       <div className="relative">
-        {/* Fleche gauche, seulement s'il reste du contenu de ce cote */}
-        {canLeft && (
-          <button
-            type="button"
-            aria-label="Voir les jeux precedents"
-            onClick={() => scrollBy(-1)}
-            className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 min-w-0 min-h-0
-                        rounded-full flex items-center justify-center ${arrowCls}`}
-          >
-            <span aria-hidden="true">‹</span>
-          </button>
-        )}
-        {canRight && (
-          <button
-            type="button"
-            aria-label="Voir les jeux suivants"
-            onClick={() => scrollBy(1)}
-            className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 min-w-0 min-h-0
-                        rounded-full flex items-center justify-center ${arrowCls}`}
-          >
-            <span aria-hidden="true">›</span>
-          </button>
-        )}
-
       <div
         ref={trackRef}
         role="radiogroup"
         aria-label="Type de jeu"
-        className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory scroll-fade-x"
+        className={`flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory
+                    ${canRight ? 'scroll-fade-x' : ''}`}
         style={{ scrollbarWidth: 'none' }}
       >
         {GAME_MODES.map((m) => {
@@ -117,7 +122,7 @@ export default function GameModeSelector({ value, onChange, disabled, variant = 
               onClick={() => onChange(m.id)}
               whileTap={disabled ? {} : { scale: 0.96 }}
               className={`
-                shrink-0 snap-start w-[132px] rounded-[18px] px-3 py-3 text-left
+                shrink-0 snap-start w-[146px] rounded-[18px] px-3 py-3 text-left
                 border transition-colors
                 ${active ? c.cardOn : c.cardOff}
                 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
@@ -141,12 +146,16 @@ export default function GameModeSelector({ value, onChange, disabled, variant = 
       </div>
       </div>
 
-      {/* Description du mode retenu : evite d'avoir a tout lire dans les vignettes */}
+      {/* Description du mode retenu : evite d'avoir a tout lire dans les
+          vignettes. min-height : les descriptions n'ont pas la meme longueur ;
+          sans hauteur reservee, changer de mode faisait sauter le bouton de
+          creation sous le doigt (meme defaut que U1). */}
       <motion.p
         key={selected.id}
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`${c.desc} text-xs leading-snug mt-1`}
+        transition={{ duration: 0.15 }}
+        className={`${c.desc} text-xs leading-snug mt-1 min-h-[3.2em]`}
       >
         {selected.description}
       </motion.p>

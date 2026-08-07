@@ -14,6 +14,7 @@ interface QuestionImport {
   option_a?: string;
   option_b?: string;
   correct_answer?: string;
+  reference_value?: number;   // type N (Plus/Moins) uniquement
   timer: number;
 }
 
@@ -27,9 +28,11 @@ if (!existsSync(questionsPath)) {
 
 const data = JSON.parse(readFileSync(questionsPath, 'utf-8'));
 
+// reference_value fait partie de l'INSERT : sans elle, une question N arrive
+// en base sans son nombre et isPlayable() l'ecarte a jamais du tirage.
 const insert = db.prepare(`
-  INSERT INTO questions (type, category, text, options, option_a, option_b, correct_answer, timer, active)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+  INSERT INTO questions (type, category, text, options, option_a, option_b, correct_answer, reference_value, timer, active)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
 `);
 
 let imported = 0;
@@ -43,6 +46,7 @@ const transaction = db.transaction(() => {
       q.option_a || null,
       q.option_b || null,
       q.correct_answer || null,
+      typeof q.reference_value === 'number' ? q.reference_value : null,
       q.timer || 20
     );
     imported++;

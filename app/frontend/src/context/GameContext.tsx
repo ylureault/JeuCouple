@@ -78,6 +78,15 @@ interface GameState {
   serverClockOffset: number;
   phase: 'idle' | 'lobby' | 'question' | 'waiting' | 'reveal' | 'finished';
   myAnswer: string | null;
+  /**
+   * E4 — reponse cliquee, pas encore confirmee par le serveur.
+   *
+   * Avant, RIEN ne changeait a l'ecran entre le clic et l'accuse de reception :
+   * on ne savait jamais si le clic avait ete pris. Le bouton s'allume desormais
+   * tout de suite grace a cette valeur, et passe en "enregistre" quand l'ack
+   * arrive. Un refus la remet a null et le joueur peut recliquer.
+   */
+  pendingAnswer: string | null;
   otherAnswered: boolean;
   revealData: GameRevealData | null;
   scores: { player1: number; player2: number };
@@ -124,6 +133,8 @@ type GameAction =
   | { type: 'GAME_STARTED'; gameId: number; gameMode?: GameMode }
   | { type: 'SET_QUESTION'; question: Question; questionNumber: number; totalQuestions: number }
   | { type: 'SET_MY_ANSWER'; answer: string }
+  | { type: 'SET_PENDING_ANSWER'; answer: string }
+  | { type: 'CLEAR_PENDING_ANSWER' }
   | { type: 'OTHER_ANSWERED' }
   | { type: 'SET_REVEAL'; data: GameRevealData }
   | { type: 'UPDATE_SCORES'; scores: { score1: number; score2: number } }
@@ -180,6 +191,7 @@ const initialState: GameState = {
   serverClockOffset: 0,
   phase: 'idle',
   myAnswer: null,
+  pendingAnswer: null,
   otherAnswered: false,
   revealData: null,
   scores: { player1: 0, player2: 0 },
@@ -259,6 +271,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         // Sur une simple rediffusion (score, pause, reconnexion) on ne touche
         // a rien : effacer la reponse deja posee la ferait ressaisir.
         myAnswer: newRound ? null : state.myAnswer,
+        // Une reponse en attente n'a plus de sens sur une nouvelle manche.
+        pendingAnswer: newRound ? null : state.pendingAnswer,
         otherAnswered: newRound ? false : state.otherAnswered,
         revealData: newRound ? null : state.revealData,
         // 'waiting' est un etat purement local (j'ai repondu, j'attends
@@ -338,6 +352,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         totalQuestions: action.totalQuestions,
         phase: sameRound ? state.phase : 'question',
         myAnswer: sameRound ? state.myAnswer : null,
+        pendingAnswer: sameRound ? state.pendingAnswer : null,
         otherAnswered: sameRound ? state.otherAnswered : false,
         revealData: sameRound ? state.revealData : null
       };
@@ -347,14 +362,37 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         myAnswer: action.answer,
-        phase: state.otherAnswered ? 'reveal' : 'waiting'
+        pendingAnswer: null,   // confirmee : elle n'est plus "en vol"
+        /**
+         * E4 — on n'entre JAMAIS en phase 'reveal' sans les donnees de
+         * revelation.
+         *
+         * Quand le partenaire avait deja repondu, cette action passait
+         * directement en 'reveal' alors que `revealData` etait encore nul. Le
+         * jeu n'affichait alors plus AUCUN ecran (la carte de resultat exige
+         * ses donnees), et l'`AnimatePresence mode="wait"` de l'ecran de jeu
+         * restait bloque sur la sortie de la question : l'ecran se figeait sur
+         * la question, reponse comprise, et le resultat n'arrivait jamais. Vu
+         * en recette comme "ma reponse n'est pas prise en compte".
+         *
+         * On reste donc en 'waiting' (ecran d'attente, toujours affichable)
+         * jusqu'a l'arrivee de game:reveal, qui bascule en 'reveal'.
+         */
+        phase: state.otherAnswered && state.revealData ? 'reveal' : 'waiting'
       };
+
+    case 'SET_PENDING_ANSWER':
+      return { ...state, pendingAnswer: action.answer };
+
+    case 'CLEAR_PENDING_ANSWER':
+      return { ...state, pendingAnswer: null };
 
     case 'OTHER_ANSWERED':
       return {
         ...state,
         otherAnswered: true,
-        phase: state.myAnswer ? 'reveal' : state.phase
+        // Meme regle que SET_MY_ANSWER : pas de phase 'reveal' sans donnees.
+        phase: state.myAnswer && state.revealData ? 'reveal' : state.phase
       };
 
     case 'SET_REVEAL':
@@ -388,6 +426,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         deadline: null,
         phase: 'lobby',
         myAnswer: null,
+        pendingAnswer: null,
         otherAnswered: false,
         revealData: null,
         scores: { player1: 0, player2: 0 },
@@ -1018,8 +1057,31 @@ export function GameProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'ADD_SOUND_REACTION', soundReaction: data });
     });
 
+    /**
+     * E7 — relais du chat.
+     *
+     * Le message est REPRIS TEL QUEL du serveur, y compris son `playerId` :
+     * c'est lui, et jamais le nom, qui decide de l'attribution a l'affichage.
+     * On refuse au passage les trames incompletes (un playerId absent tombait
+     * a `undefined`, se comparait a `playerId` par egalite stricte et rangeait
+     * donc le message du cote du partenaire, quel qu'en soit l'auteur).
+     */
     socket.on('lobby:chat', (data) => {
-      dispatch({ type: 'ADD_CHAT_MESSAGE', message: data });
+      if (!data || (data.playerId !== 1 && data.playerId !== 2)) {
+        console.warn('[chat] message ignore : identifiant de joueur absent', data);
+        return;
+      }
+      if (typeof data.message !== 'string' || data.message.length === 0) return;
+      dispatch({
+        type: 'ADD_CHAT_MESSAGE',
+        message: {
+          ...data,
+          // Un identifiant stable est indispensable : sans lui, React reutilise
+          // les lignes par index et melange les auteurs a l'affichage.
+          id: data.id || `${data.timestamp ?? Date.now()}-${data.playerId}`,
+          playerName: data.playerName || `Joueur ${data.playerId}`,
+        }
+      });
     });
 
     socket.on('game:quick-message', (data) => {
@@ -1245,33 +1307,69 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [state.socket]);
 
+  /**
+   * E4 — un clic doit se VOIR tout de suite, et etre reellement pris en compte.
+   *
+   * Deux defauts distincts se cumulaient :
+   *  - rien ne changeait a l'ecran entre le clic et l'ack : on ne savait jamais
+   *    si le clic avait porte, d'ou les doubles clics et les "j'ai pourtant
+   *    repondu" ;
+   *  - sans ack au bout de 3 s, on affichait quand meme "reponse enregistree"
+   *    sans jamais renvoyer quoi que ce soit. Si l'emission s'etait perdue, le
+   *    serveur n'avait rien, et la revelation annoncait "Toi : Pas de reponse"
+   *    alors que le joueur avait bien clique. C'est le bug remonte en recette.
+   *
+   * Desormais : selection immediate (pendingAnswer), UNE retentative si l'ack
+   * tarde, et un message clair si le serveur refuse ou reste muet. Le doublon
+   * renvoye par la retentative vaut confirmation : la premiere emission etait
+   * bien arrivee, seul son ack s'etait perdu.
+   */
   const submitAnswer = useCallback((answer: string) => {
-    // Prevent submitting if no socket, already answered, or not in question phase
-    if (!state.socket || state.myAnswer || state.phase !== 'question') return;
+    // Un seul envoi a la fois : deja repondu, deja en vol, ou hors question.
+    if (!state.socket || state.myAnswer || state.pendingAnswer) return;
+    if (state.phase !== 'question') return;
 
-    // Ack serveur (P0-2 du plan d'audit) : la reponse n'est consideree comme
-    // posee que si le serveur l'accepte ; un refus est affiche, jamais une
-    // troncature silencieuse. Filet : sans ack sous 3 s (vieux serveur),
-    // on retombe sur l'ancien comportement optimiste.
+    // Retour visuel IMMEDIAT, avant tout aller-retour reseau.
+    dispatch({ type: 'SET_PENDING_ANSWER', answer });
+
+    const ACK_TIMEOUT_MS = 3500;
     let settled = false;
-    const fallback = setTimeout(() => {
-      if (!settled) {
-        settled = true;
-        dispatch({ type: 'SET_MY_ANSWER', answer });
-      }
-    }, 3000);
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
-    state.socket.emit('game:answer', { answer }, (res) => {
+    const confirm = () => {
       if (settled) return;
       settled = true;
-      clearTimeout(fallback);
-      if (res?.accepted) {
-        dispatch({ type: 'SET_MY_ANSWER', answer });
-      } else {
-        dispatch({ type: 'SET_ERROR', error: res?.error || 'Reponse refusee, reessaie' });
-      }
-    });
-  }, [state.socket, state.myAnswer, state.phase]);
+      if (timer) clearTimeout(timer);
+      dispatch({ type: 'SET_MY_ANSWER', answer });
+    };
+
+    const refuse = (message: string) => {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      dispatch({ type: 'CLEAR_PENDING_ANSWER' });
+      dispatch({ type: 'SET_ERROR', error: message });
+    };
+
+    const send = (isRetry: boolean) => {
+      state.socket!.emit('game:answer', { answer }, (res) => {
+        if (settled) return;
+        if (res?.accepted) { confirm(); return; }
+        // "Reponse deja enregistree" a la retentative = le premier envoi etait
+        // bien arrive. C'est une confirmation, pas un refus.
+        if (isRetry && (res?.error || '').toLowerCase().includes('deja')) { confirm(); return; }
+        refuse(res?.error || 'Reponse refusee, reessaie');
+      });
+
+      timer = setTimeout(() => {
+        if (settled) return;
+        if (!isRetry) { send(true); return; }
+        refuse('Reponse non confirmee par le serveur, reessaie');
+      }, ACK_TIMEOUT_MS);
+    };
+
+    send(false);
+  }, [state.socket, state.myAnswer, state.pendingAnswer, state.phase]);
 
   const leaveRoom = useCallback(() => {
     if (state.socket) {

@@ -16,6 +16,7 @@ interface QuestionImport {
   emoji_a?: string;
   emoji_b?: string;
   correct_answer?: string;
+  reference_value?: number;   // type N (Plus/Moins) uniquement
   timer: number;
 }
 
@@ -33,9 +34,12 @@ const knownCategories = new Set(
 );
 
 // Import questions from all JSON files in data folder
+// reference_value fait partie de l'INSERT : oublie ici, une question N
+// importee arriverait en base sans son nombre, donc injouable a jamais
+// (l'import saute ensuite le doublon, il n'y a pas de seconde chance).
 const insertQuestion = db.prepare(`
-  INSERT INTO questions (type, category, text, options, option_a, option_b, emoji_a, emoji_b, correct_answer, timer, active)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+  INSERT INTO questions (type, category, text, options, option_a, option_b, emoji_a, emoji_b, correct_answer, reference_value, timer, active)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
 `);
 
 // Check for duplicates
@@ -88,6 +92,7 @@ const transaction = db.transaction(() => {
         q.emoji_a || null,
         q.emoji_b || null,
         q.correct_answer || null,
+        typeof q.reference_value === 'number' ? q.reference_value : null,
         q.timer || 20
       );
       fileImported++;
