@@ -193,7 +193,12 @@ export default function Results() {
 
   const totalPoints = finalResults.score1 + finalResults.score2;
   const maxPoints = finalResults.totalQuestions * 200;
-  const compatibility = Math.round((totalPoints / maxPoints) * 100);
+  // Une partie sans question donnait 0/0 => "NaN%" affiche a l'ecran.
+  // Le score peut aussi depasser le maximum theorique via les bonus de rapidite
+  // et de serie : on borne a 100 pour ne pas afficher "124% de compatibilite".
+  const compatibility = maxPoints > 0
+    ? Math.min(100, Math.round((totalPoints / maxPoints) * 100))
+    : 0;
 
   // Gamification stats
   const myMaxStreak = playerId === 1 ? finalResults.maxStreak1 : finalResults.maxStreak2;

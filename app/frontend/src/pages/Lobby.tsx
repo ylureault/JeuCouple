@@ -9,6 +9,10 @@ import ReactionBar from '../components/ReactionBar';
 import ReactionOverlay from '../components/ReactionOverlay';
 import TextReactionBar from '../components/TextReactionBar';
 import TextReactionOverlay from '../components/TextReactionOverlay';
+// Les messages lobby:chat etaient recus et stockes, mais aucune interface ne
+// les affichait ni ne permettait d'en envoyer.
+import LobbyChat from '../components/LobbyChat';
+import SoundReactionHandler from '../components/SoundReactionHandler';
 import VoiceChat from '../components/VoiceChat';
 import type { Gender } from '../../../shared/types';
 
@@ -110,6 +114,8 @@ export default function Lobby() {
       <MuteButton />
       <ReactionOverlay />
       <TextReactionOverlay />
+      <SoundReactionHandler />
+      <LobbyChat />
 
       {/* Voice chat - top right */}
       <div className="fixed top-4 right-16 z-50 flex items-center gap-2">

@@ -434,7 +434,15 @@ export default function RevealCard({
                 transition={{ delay: 0.3, type: 'spring', damping: 15 }}
                 className="text-xl sm:text-2xl font-black text-white mb-2 text-shadow-strong"
               >
-                {answersMatch ? 'Vous pensez pareil !' : 'Pas cette fois...'}
+                {/* Trois etats et non deux : le bandeau se colore selon `correct`
+                    (renvoye par le serveur), qui vaut true pour les reponses
+                    proches sur une echelle. Se fier au seul `answersMatch`
+                    affichait "Pas cette fois..." sur un bandeau vert de reussite. */}
+                {answersMatch
+                  ? 'Vous pensez pareil !'
+                  : correct
+                    ? 'Tout proches !'
+                    : 'Pas cette fois...'}
               </motion.h2>
 
               {/* Points counter with dramatic animation */}

@@ -297,7 +297,8 @@ function initDefaultCategories() {
     { code: 'public', name: 'Sexe en public', icon: '🏖️', color: '#0ea5e9', description: 'Oser en dehors de la chambre', sort_order: 109 },
     { code: 'extreme', name: 'Ultra coquin', icon: '🔞', color: '#dc2626', description: 'Pour les couples audacieux', sort_order: 110 },
     { code: 'masturbation', name: 'Masturbation', icon: '✋', color: '#c026d3', description: 'Plaisir solitaire et mutuel', sort_order: 111 },
-    { code: 'orgasme', name: 'Orgasme', icon: '💥', color: '#be123c', description: 'Jouissance, sensations et intensite', sort_order: 112 }
+    { code: 'orgasme', name: 'Orgasme', icon: '💥', color: '#be123c', description: 'Jouissance, sensations et intensite', sort_order: 112 },
+    { code: 'sans_tabou', name: 'Sans tabou', icon: '🔥', color: '#7f1d1d', description: 'Le palier le plus explicite : rien n\'est hors sujet', sort_order: 113 }
   ];
 
   const insert = db.prepare(`

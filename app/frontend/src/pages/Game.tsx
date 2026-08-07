@@ -15,6 +15,9 @@ import TextReactionBar from '../components/TextReactionBar';
 import TextReactionOverlay from '../components/TextReactionOverlay';
 import VoiceChat from '../components/VoiceChat';
 import GameAlerts from '../components/GameAlerts';
+// Sans ce composant monte, les evenements game:sound-reaction arrivaient bien
+// dans le state mais aucun son n'etait joue : la fonctionnalite etait inerte.
+import SoundReactionHandler from '../components/SoundReactionHandler';
 import Lobby from './Lobby';
 
 export default function Game() {
@@ -151,6 +154,7 @@ export default function Game() {
     <div className={`min-h-[100dvh] bg-gradient-to-br ${theme.colors.background} flex flex-col pb-20`}>
       <ReactionOverlay />
       <TextReactionOverlay />
+      <SoundReactionHandler />
       <GameAlerts
         otherAnswered={otherAnswered}
         myAnswer={myAnswer}
@@ -427,12 +431,15 @@ export default function Game() {
 
               {/* Answers */}
               {/* key = remonte le composant a chaque question, sinon son etat local
-                  (texte saisi, position du curseur 1-10) persiste d'une question a l'autre */}
+                  (texte saisi, position du curseur 1-10) persiste d'une question a l'autre.
+                  disabled inclut timeLeft === 0 : le serveur revele les reponses a
+                  l'expiration du minuteur, l'interface restait active apres le decompte
+                  et acceptait une reponse qui n'etait plus prise en compte. */}
               <QuestionCard
                 key={currentQuestion.id}
                 question={currentQuestion}
                 onAnswer={handleAnswer}
-                disabled={!!myAnswer}
+                disabled={!!myAnswer || timeLeft === 0}
                 selectedAnswer={myAnswer}
                 player1Name={player1Name}
                 player2Name={player2Name}

@@ -356,6 +356,7 @@ interface GameContextType extends GameState {
   sendHesitation: (isHesitating: boolean) => void;
   sendKiss: () => void;
   requestPause: () => void;
+  clearError: () => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -871,10 +872,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [state.socket]);
 
+  // L'action CLEAR_ERROR existait dans le reducer mais n'etait jamais declenchee :
+  // une fois affichee, la banniere d'erreur rouge restait a l'ecran indefiniment,
+  // y compris apres un nouvel essai reussi ou un changement d'ecran.
+  const clearError = useCallback(() => {
+    dispatch({ type: 'CLEAR_ERROR' });
+  }, []);
+
   return (
     <GameContext.Provider
       value={{
         ...state,
+        clearError,
         createRoom,
         joinRoom,
         startGame,
