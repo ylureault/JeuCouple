@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
-import { GAME_MODES } from '../../../shared/types';
+import { GAME_MODES, OUVERTURE_MANCHE_MS } from '../../../shared/types';
 import { useAudio } from '../context/AudioContext';
 import { useTheme } from '../context/ThemeContext';
 import MuteButton from '../components/MuteButton';
@@ -98,12 +98,15 @@ export default function Game() {
       setIntroStep('number');
       playSound('reveal');
 
-      // Cadence : la ceremonie complete (3 s) n'a de sens qu'a la premiere
-      // question ; ensuite elle hachait le rythme a chaque manche.
-      const fast = questionNumber > 1;
-      const step1 = setTimeout(() => setIntroStep('category'), fast ? 450 : 800);
-      const step2 = setTimeout(() => setIntroStep('question'), fast ? 900 : 1600);
-      const step3 = setTimeout(() => setShowIntro(false), fast ? 1700 : 3000);
+      // Cadence : une seule duree de ceremonie, celle que le serveur connait
+      // (OUVERTURE_MANCHE_MS). Elle valait 3 s a la premiere question et 1,7 s
+      // ensuite, pendant que le chrono tournait deja : le joueur perdait ce
+      // temps-la sans avoir vu la question. Le serveur decale maintenant le
+      // depart du chrono d'exactement cette valeur — la changer ici sans la
+      // changer la-bas remettrait le decalage.
+      const step1 = setTimeout(() => setIntroStep('category'), OUVERTURE_MANCHE_MS * 0.26);
+      const step2 = setTimeout(() => setIntroStep('question'), OUVERTURE_MANCHE_MS * 0.53);
+      const step3 = setTimeout(() => setShowIntro(false), OUVERTURE_MANCHE_MS);
 
       return () => {
         clearTimeout(step1);
@@ -214,6 +217,7 @@ export default function Game() {
         theirScore={theirScore}
         theirName={theirName}
         questionNumber={questionNumber}
+        totalQuestions={totalQuestions}
       />
 
       {/* Pause overlay when partner disconnected or manual pause */}
@@ -288,17 +292,21 @@ export default function Game() {
                   >
                     ▶️ Reprendre le jeu
                   </motion.button>
-                  {/* WhatsApp button during pause */}
+                  {/*
+                    U10 — deux boutons verts pleins se disputaient l'ecran de
+                    pause : rien ne disait lequel reprend la partie. « Reprendre »
+                    reste le seul bouton plein ; passer sur WhatsApp devient une
+                    sortie discrete, en retrait.
+                  */}
                   <motion.a
                     href={`https://wa.me/?text=${encodeURIComponent("Viens, on en parle ! 💬")}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-4 inline-flex items-center gap-2 bg-[#25D366] text-white font-bold py-3 px-6 rounded-xl shadow-lg"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    className="mt-5 inline-flex items-center gap-2 text-white/70 font-semibold text-sm py-2 px-4 rounded-xl border border-white/20 hover:text-white hover:border-white/40 transition-colors"
+                    whileTap={{ scale: 0.97 }}
                   >
-                    <span className="text-xl">💬</span>
-                    Viens on en parle sur WhatsApp
+                    <span className="text-base">💬</span>
+                    En parler sur WhatsApp
                   </motion.a>
                 </>
               )}

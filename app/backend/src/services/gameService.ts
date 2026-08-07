@@ -14,7 +14,7 @@ import type {
   SoundReactionId,
   QuickMessageId
 } from '../types.js';
-import { REACTION_EMOJIS, TEXT_REACTIONS, SOUND_REACTIONS, QUICK_MESSAGES } from '../types.js';
+import { REACTION_EMOJIS, TEXT_REACTIONS, SOUND_REACTIONS, QUICK_MESSAGES, OUVERTURE_MANCHE_MS } from '../types.js';
 import * as roomModel from '../models/room.js';
 import * as gameModel from '../models/game.js';
 import * as questionModel from '../models/question.js';
@@ -1138,7 +1138,10 @@ export function setupSocketHandlers(
         if (gameState.phase === 'question') {
           const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
           const elapsed = (Date.now() - gameState.questionStartTime) / 1000;
-          gameState.remainingTime = Math.max(0, currentQuestion.timer - elapsed);
+          // Borne haute : pendant la ceremonie d'ouverture, `elapsed` est negatif
+          // (le chrono n'a pas encore demarre) et la manche repartirait avec plus
+          // de temps qu'elle n'en a jamais eu.
+          gameState.remainingTime = Math.min(currentQuestion.timer, Math.max(0, currentQuestion.timer - elapsed));
         }
 
         const room = roomModel.getRoomByCode(connection.roomCode);
@@ -1398,7 +1401,7 @@ function pauseGameForDisconnect(
   // Temps restant fige : la reprise repartira de la, pas de zero.
   if (gameState.phase === 'question' && gameState.currentQuestion) {
     const elapsed = (Date.now() - gameState.questionStartTime) / 1000;
-    gameState.remainingTime = Math.max(0, gameState.currentQuestion.timer - elapsed);
+    gameState.remainingTime = Math.min(gameState.currentQuestion.timer, Math.max(0, gameState.currentQuestion.timer - elapsed));
   }
 
   console.log('Partie en pause dans le salon', roomCode, '- en attente de', playerName);
@@ -1529,7 +1532,10 @@ function sendQuestion(
   const question = { ...source };
   gameState.servedIds.add(question.id);
   gameState.phase = 'question';
-  gameState.questionStartTime = Date.now();
+  // Le chrono ne part qu'a la fin de la ceremonie d'ouverture : jusque-la, le
+  // joueur regarde le numero de manche et le theme, pas la question. Le compter
+  // revenait a lui prendre 1,7 s de reflexion sur chaque manche.
+  gameState.questionStartTime = Date.now() + OUVERTURE_MANCHE_MS;
   gameState.roundSeq++;   // nouvelle manche : nouvel identifiant d'etat
   console.log(`[SEND_QUESTION] Sending question ID ${question.id}, type ${question.type}`);
 
@@ -1566,7 +1572,8 @@ function sendQuestion(
   gameState.timer = setTimeout(() => {
     // Time's up - reveal with whatever answers we have
     revealAnswers(io, roomCode, gameState);
-  }, (question.timer + 3) * 1000); // Extra 3 seconds for network latency
+    // Ceremonie d'ouverture + temps de reponse + 3 s de marge reseau.
+  }, OUVERTURE_MANCHE_MS + (question.timer + 3) * 1000);
 }
 
 /**

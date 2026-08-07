@@ -178,6 +178,10 @@ vérité des règles. Une définition suffit — ne pas disperser des
 
 - **Le serveur fait foi.** Manche, question, scores et échéance absolue partent
   dans `game:round-state`. Le client affiche, il ne dérive rien.
+- **Le chrono ne tourne pas sur un écran illisible.** La cérémonie d'ouverture
+  dure `OUVERTURE_MANCHE_MS` (types partagés) et le serveur décale le départ du
+  chrono d'exactement cette valeur. Allonger l'animation sans toucher à la
+  constante reprendrait au joueur du temps de réflexion qu'il n'a jamais vu.
 - **La bonne réponse ne quitte jamais le serveur avant la révélation.** Elle est
   retirée de `game:question` (émission normale **et** reconnexion). La suite
   gameplay a besoin de la connaître pour vérifier le barème : elle la lit dans

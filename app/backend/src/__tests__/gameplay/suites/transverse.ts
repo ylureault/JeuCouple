@@ -188,4 +188,55 @@ const interruptions: Session = {
   },
 };
 
-export const transverseSessions: Session[] = [changementDeMode, interruptions];
+// ────────────────────────────────────── depart du chrono et ceremonie ───────
+/**
+ * Le client joue une ceremonie d'ouverture (numero de manche, theme, question)
+ * avant que quoi que ce soit soit lisible. Le chrono ne doit pas tourner
+ * pendant : sinon le joueur perd ces secondes-la sans avoir vu la question —
+ * 1,7 s sur les 12 s du Quiz Express.
+ */
+const chronoOuverture: Session = {
+  id: 'transverse/chrono-ouverture',
+  group: 'transverse',
+  expected: 4,
+  timeoutMs: 120_000,
+  async run(t) {
+    const party = await t.party({ gameMode: 'classic', questionTypes: ['E'], questionCount: 6 });
+    await party.accept();
+    await party.start();
+
+    const q = await party.host.wait('game:question', { timeout: 20000, what: 'premiere question' });
+    const etat = await party.host.wait('game:round-state', { timeout: 8000, what: 'etat de manche' });
+    const recu = Date.now();
+    const timer = q.data.question.timer as number;
+    const restant = (etat.data.deadline - recu) / 1000;
+
+    t.ok(
+      '[chrono] la manche annonce une echeance absolue',
+      typeof etat.data.deadline === 'number' && etat.data.deadline > recu,
+      `deadline=${etat.data.deadline}, maintenant=${recu}`
+    );
+    t.ok(
+      "[chrono] le chrono ne demarre qu'apres la ceremonie d'ouverture",
+      restant > timer,
+      `il reste ${restant.toFixed(2)} s pour une question de ${timer} s ` +
+        '(le chrono aurait donc demarre pendant la ceremonie)'
+    );
+    t.ok(
+      "[chrono] la ceremonie ne gonfle pas le temps de reponse au-dela de 3 s",
+      restant - timer > 0 && restant - timer <= 3,
+      `supplement=${(restant - timer).toFixed(2)} s`
+    );
+
+    // Et une reponse donnee juste apres la ceremonie reste acceptee.
+    await new Promise((r) => setTimeout(r, 1800));
+    const ack = await party.host.answer(accord(q.data.question));
+    t.ok(
+      '[chrono] repondre a la fin de la ceremonie est accepte',
+      ack?.accepted === true,
+      `accuse=${JSON.stringify(ack)}`
+    );
+  },
+};
+
+export const transverseSessions: Session[] = [changementDeMode, interruptions, chronoOuverture];

@@ -16,6 +16,8 @@ interface GameAlertsProps {
   theirScore: number;
   theirName: string;
   questionNumber: number;
+  /** 0 dans les modes sans fin : il n'y a alors pas de parcours a situer. */
+  totalQuestions: number;
 }
 
 export default function GameAlerts({
@@ -24,7 +26,8 @@ export default function GameAlerts({
   myScore,
   theirScore,
   theirName,
-  questionNumber
+  questionNumber,
+  totalQuestions
 }: GameAlertsProps) {
   const { playSound } = useAudio();
   const [alerts, setAlerts] = useState<AlertMessage[]>([]);
@@ -113,19 +116,28 @@ export default function GameAlerts({
     setLastQuestionNumber(questionNumber);
   }, [myScore, theirScore, theirName, questionNumber]);
 
-  // Random motivational alerts during game
+  /**
+   * U12 — l'encouragement periodique disait n'importe quoi : « Mi-parcours ? »
+   * tombait a la manche 5 d'une partie de 30, « On continue sur cette lancee »
+   * apparaissait meme quand la manche precedente s'etait mal passee. Il annonce
+   * maintenant l'avancement reel, et se tait dans les modes sans fin, ou il n'y
+   * a aucun parcours a situer.
+   */
   useEffect(() => {
-    if (questionNumber > 0 && questionNumber % 5 === 0) {
-      const messages = [
-        `Question ${questionNumber} ! On continue sur cette lancée !`,
-        `Mi-parcours ? Non, on ne lâche rien !`,
-        `${questionNumber} questions ! Vous êtes incroyables ! 💕`
-      ];
-      setTimeout(() => {
-        addAlert(messages[Math.floor(Math.random() * messages.length)], '🎮', 'info');
-      }, 1500);
-    }
-  }, [questionNumber]);
+    if (questionNumber <= 0 || questionNumber % 5 !== 0) return;
+    if (!totalQuestions || questionNumber >= totalQuestions) return;
+
+    const restantes = totalQuestions - questionNumber;
+    const message =
+      questionNumber * 2 === totalQuestions
+        ? `Mi-parcours : ${questionNumber} jouées, ${restantes} à venir`
+        : restantes <= 3
+          ? `Plus que ${restantes} question${restantes > 1 ? 's' : ''} !`
+          : `${questionNumber} sur ${totalQuestions} — encore ${restantes} à jouer`;
+
+    const t = setTimeout(() => addAlert(message, '🎮', 'info'), 1500);
+    return () => clearTimeout(t);
+  }, [questionNumber, totalQuestions]);
 
   const getAlertStyle = (type: AlertMessage['type']) => {
     switch (type) {

@@ -124,6 +124,20 @@ export interface Answer {
   answered_at: string;
 }
 
+/**
+ * Ceremonie d'ouverture d'une manche : numero, theme, puis la question.
+ *
+ * Le client la joue avant d'afficher quoi que ce soit de lisible. Le serveur
+ * decale donc le depart du chrono d'autant : sans ce decalage, le joueur
+ * perdait ces secondes-la sans jamais avoir vu la question — 1,7 s sur les 12 s
+ * du Quiz Express, soit un septieme du temps de reflexion.
+ *
+ * Client et serveur DOIVENT lire la meme valeur : allonger l'animation sans
+ * toucher a cette constante rendrait la triche impossible mais la question
+ * injouable.
+ */
+export const OUVERTURE_MANCHE_MS = 1700;
+
 // Emoji reactions
 export const REACTION_EMOJIS = ['❤️', '😂', '😮', '😢', '👏', '🔥', '😍', '🤔', '💋', '🤗'] as const;
 export type ReactionEmoji = typeof REACTION_EMOJIS[number];
