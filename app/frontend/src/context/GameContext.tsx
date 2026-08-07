@@ -28,7 +28,8 @@ import type {
   KissData,
   GameMode,
   ThemeChoiceRequest,
-  ThemeChoiceWaiting
+  ThemeChoiceWaiting,
+  ModeProposal
 } from '../../../shared/types';
 
 interface GameState {
@@ -66,6 +67,10 @@ interface GameState {
   duelChoice: ThemeChoiceRequest | null;      // je dois choisir
   duelWaiting: ThemeChoiceWaiting | null;     // j'attends que l'autre choisisse
   duelLastTheme: { name: string; icon: string; autoPicked: boolean } | null;
+  // Changement de mode en cours de partie
+  modeProposal: ModeProposal | null;                       // on me propose un mode
+  currentMode: GameMode;                                   // mode actif
+  modeNotice: { text: string; kind: 'changed' | 'declined' } | null;
 }
 
 type GameAction =
@@ -102,6 +107,11 @@ type GameAction =
   | { type: 'DUEL_CHOOSE'; request: ThemeChoiceRequest }
   | { type: 'DUEL_AWAIT'; waiting: ThemeChoiceWaiting }
   | { type: 'DUEL_RESOLVED'; name: string; icon: string; autoPicked: boolean }
+  | { type: 'MODE_PROPOSED'; proposal: ModeProposal }
+  | { type: 'MODE_CHANGED'; mode: GameMode; label: string; icon: string }
+  | { type: 'MODE_DECLINED'; byName: string }
+  | { type: 'MODE_CLEAR_PROPOSAL' }
+  | { type: 'MODE_CLEAR_NOTICE' }
   | { type: 'RESET' };
 
 const initialState: GameState = {
@@ -134,7 +144,10 @@ const initialState: GameState = {
   lastKiss: null,
   duelChoice: null,
   duelWaiting: null,
-  duelLastTheme: null
+  duelLastTheme: null,
+  modeProposal: null,
+  currentMode: 'classic',
+  modeNotice: null
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -262,6 +275,30 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'CLEAR_ERROR':
       return { ...state, error: null };
 
+    case 'MODE_PROPOSED':
+      return { ...state, modeProposal: action.proposal };
+
+    case 'MODE_CHANGED':
+      return {
+        ...state,
+        modeProposal: null,
+        currentMode: action.mode,
+        modeNotice: { text: `${action.icon} Nouveau jeu : ${action.label}`, kind: 'changed' }
+      };
+
+    case 'MODE_DECLINED':
+      return {
+        ...state,
+        modeProposal: null,
+        modeNotice: { text: `${action.byName} prefere continuer ainsi`, kind: 'declined' }
+      };
+
+    case 'MODE_CLEAR_PROPOSAL':
+      return { ...state, modeProposal: null };
+
+    case 'MODE_CLEAR_NOTICE':
+      return { ...state, modeNotice: null };
+
     case 'DUEL_CHOOSE':
       return { ...state, duelChoice: action.request, duelWaiting: null };
 
@@ -386,6 +423,9 @@ interface GameContextType extends GameState {
   requestPause: () => void;
   clearError: () => void;
   chooseDuelTheme: (category: string) => void;
+  proposeMode: (mode: GameMode) => void;
+  respondToModeProposal: (accept: boolean) => void;
+  dismissModeNotice: () => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -639,6 +679,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'ADD_KISS', kiss: data });
       // Auto-clear kiss display after 2 seconds
       setTimeout(() => dispatch({ type: 'CLEAR_KISS' }), 2000);
+    });
+
+    socket.on('mode:proposal', (data) => {
+      dispatch({ type: 'MODE_PROPOSED', proposal: data });
+    });
+
+    socket.on('mode:changed', (data) => {
+      dispatch({ type: 'MODE_CHANGED', mode: data.mode, label: data.label, icon: data.icon });
+    });
+
+    socket.on('mode:declined', (data) => {
+      dispatch({ type: 'MODE_DECLINED', byName: data.byName });
     });
 
     socket.on('duel:choose-theme', (data) => {
@@ -920,6 +972,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'CLEAR_ERROR' });
   }, []);
 
+  const proposeMode = useCallback((mode: GameMode) => {
+    if (!state.socket) return;
+    state.socket.emit('mode:propose', { mode });
+  }, [state.socket]);
+
+  const respondToModeProposal = useCallback((accept: boolean) => {
+    if (!state.socket) return;
+    state.socket.emit('mode:respond', { accept });
+    // On referme tout de suite : le serveur ignore les reponses en double.
+    dispatch({ type: 'MODE_CLEAR_PROPOSAL' });
+  }, [state.socket]);
+
+  const dismissModeNotice = useCallback(() => {
+    dispatch({ type: 'MODE_CLEAR_NOTICE' });
+  }, []);
+
   const chooseDuelTheme = useCallback((category: string) => {
     if (!state.socket) return;
     state.socket.emit('duel:choose-theme', { category });
@@ -934,6 +1002,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ...state,
         clearError,
         chooseDuelTheme,
+        proposeMode,
+        respondToModeProposal,
+        dismissModeNotice,
         createRoom,
         joinRoom,
         startGame,

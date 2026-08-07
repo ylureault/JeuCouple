@@ -18,7 +18,7 @@ import * as roomModel from '../models/room.js';
 import * as gameModel from '../models/game.js';
 import * as questionModel from '../models/question.js';
 import * as categoryModel from '../models/category.js';
-import { getGameMode } from './gameModes.js';
+import { getGameMode, listGameModes } from './gameModes.js';
 import type { ModeDecision } from './gameModes.js';
 
 interface AnswerData {
@@ -94,6 +94,16 @@ interface PlayerConnection {
 const activeGames = new Map<string, GameState>();
 const playerConnections = new Map<string, PlayerConnection>();
 const roomSettings = new Map<string, { questionCount: number; categories: string[]; questionTypes: string[]; gameMode: string }>();
+
+// Changement de mode en cours de partie : proposition en attente de validation.
+// Un seul echange a la fois par salon, avec expiration pour ne pas laisser
+// l'autre joueur bloque sur une demande jamais tranchee.
+const MODE_PROPOSAL_TIMEOUT_SECONDS = 30;
+const pendingModeProposals = new Map<string, {
+  mode: string;
+  from: 1 | 2;
+  timer: ReturnType<typeof setTimeout>;
+}>();
 
 const DEFAULT_QUESTION_COUNT = 10;
 
@@ -605,6 +615,78 @@ export function setupSocketHandlers(
     // Send reaction emoji to partner
     // Manual pause/resume requested by a player
     // Mode duel : le gagnant de la manche choisit le theme suivant.
+    // Un joueur propose de basculer sur un autre jeu, sans quitter la partie.
+    socket.on('mode:propose', (data: { mode: string }) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+      const { roomCode, playerId } = connection;
+      if (!data || typeof data.mode !== 'string') return;
+
+      const target = listGameModes().find(m => m.id === data.mode);
+      if (!target) return;                                   // mode inconnu
+      const settings = roomSettings.get(roomCode);
+      if (!settings || settings.gameMode === target.id) return;  // deja actif
+      if (pendingModeProposals.has(roomCode)) return;        // une seule a la fois
+
+      const room = roomModel.getRoomByCode(roomCode);
+      const fromName = (playerId === 1 ? room?.player1_name : room?.player2_name) || `Joueur ${playerId}`;
+
+      const timer = setTimeout(() => {
+        pendingModeProposals.delete(roomCode);
+      }, MODE_PROPOSAL_TIMEOUT_SECONDS * 1000);
+      pendingModeProposals.set(roomCode, { mode: target.id, from: playerId, timer });
+
+      for (const [, conn] of playerConnections) {
+        if (conn.roomCode !== roomCode || conn.playerId === playerId) continue;
+        conn.socket.emit('mode:proposal', {
+          mode: target.id as never,
+          label: target.label,
+          icon: target.icon,
+          fromPlayerId: playerId,
+          fromName,
+          timeoutSeconds: MODE_PROPOSAL_TIMEOUT_SECONDS,
+        });
+      }
+    });
+
+    // Le partenaire tranche. Seul le destinataire peut repondre.
+    socket.on('mode:respond', (data: { accept: boolean }) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+      const { roomCode, playerId } = connection;
+      const pending = pendingModeProposals.get(roomCode);
+      if (!pending || pending.from === playerId) return;
+
+      clearTimeout(pending.timer);
+      pendingModeProposals.delete(roomCode);
+
+      const room = roomModel.getRoomByCode(roomCode);
+      const byName = (playerId === 1 ? room?.player1_name : room?.player2_name) || `Joueur ${playerId}`;
+
+      if (!data?.accept) {
+        for (const [, conn] of playerConnections) {
+          if (conn.roomCode === roomCode && conn.playerId === pending.from) {
+            conn.socket.emit('mode:declined', { byName });
+          }
+        }
+        return;
+      }
+
+      const settings = roomSettings.get(roomCode);
+      if (!settings) return;
+      settings.gameMode = pending.mode;
+      roomSettings.set(roomCode, settings);
+
+      const def = listGameModes().find(m => m.id === pending.mode)!;
+      io.to(roomCode).emit('mode:changed', {
+        mode: def.id as never,
+        label: def.label,
+        icon: def.icon,
+      });
+      // Le nouveau mode s'applique des la manche suivante : la question en
+      // cours reste valable, on n'interrompt pas les joueurs en plein tour.
+    });
+
     socket.on('duel:choose-theme', (data: { category: string }) => {
       const connection = playerConnections.get(socket.id);
       if (!connection) return;
@@ -1702,6 +1784,20 @@ function finishGame(
   roomCode: string,
   gameState: GameState
 ) {
+  // Une proposition de changement de mode restee en attente garderait un
+  // minuteur actif apres la fin de la partie : on la solde ici.
+  const pendingProposal = pendingModeProposals.get(roomCode);
+  if (pendingProposal) {
+    clearTimeout(pendingProposal.timer);
+    pendingModeProposals.delete(roomCode);
+  }
+  // De meme pour le choix de theme du mode duel.
+  if (gameState.themeChoiceTimer) {
+    clearTimeout(gameState.themeChoiceTimer);
+    gameState.themeChoiceTimer = null;
+    gameState.awaitingThemeFrom = null;
+  }
+
   // Clear all timers before finishing
   if (gameState.timer) {
     clearTimeout(gameState.timer);

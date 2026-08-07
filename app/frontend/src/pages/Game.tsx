@@ -20,6 +20,8 @@ import SoundReactionHandler from '../components/SoundReactionHandler';
 // Le chat remplace les reactions toutes faites : il reste visible en permanence.
 import GameChat from '../components/GameChat';
 import DuelThemePicker from '../components/DuelThemePicker';
+// Changement de jeu en cours de partie, sur validation du partenaire.
+import ModeSwitcher from '../components/ModeSwitcher';
 import Lobby from './Lobby';
 
 export default function Game() {
@@ -262,7 +264,7 @@ export default function Game() {
       <motion.div
         initial={{ y: -50 }}
         animate={{ y: 0 }}
-        className="bg-black/30 px-2 py-2 sticky top-0 z-50"
+        className="bg-black/35 backdrop-blur-xl px-2 py-2 sticky top-0 z-50 safe-top"
       >
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
           {/* Left: Question progress */}
@@ -291,13 +293,15 @@ export default function Game() {
 
           {/* Right: Pause, voice, mute */}
           <div className="flex items-center gap-1 flex-shrink-0">
+            <ModeSwitcher />
             <motion.button
               onClick={requestPause}
-              className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-white text-sm"
+              aria-label="Mettre la partie en pause"
+              className="w-11 h-11 rounded-full bg-white/15 flex items-center justify-center text-white text-sm"
               whileTap={{ scale: 0.9 }}
               title="Pause"
             >
-              ⏸
+              <span aria-hidden="true">⏸</span>
             </motion.button>
             <VoiceChat compact />
             <MuteButton compact />

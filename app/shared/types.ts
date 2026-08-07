@@ -267,6 +267,10 @@ export interface ServerToClientEvents {
   'duel:choose-theme': (data: ThemeChoiceRequest) => void;      // -> au gagnant
   'duel:awaiting-theme': (data: ThemeChoiceWaiting) => void;    // -> a l'autre joueur
   'duel:theme-selected': (data: { category: string; name: string; icon: string; chooserPlayerId: 1 | 2; autoPicked: boolean }) => void;
+  // Changement de mode en cours de partie
+  'mode:proposal': (data: ModeProposal) => void;                                   // -> au partenaire
+  'mode:changed': (data: { mode: GameMode; label: string; icon: string }) => void; // -> aux deux
+  'mode:declined': (data: { byName: string }) => void;                             // -> au proposant
   // Voice chat
   'voice:offer': (data: VoiceOffer) => void;
   'voice:answer': (data: VoiceAnswer) => void;
@@ -322,6 +326,9 @@ export interface ClientToServerEvents {
   'game:request-pause': (callback: (response: { success: boolean; paused?: boolean }) => void) => void;
   // Mode duel : theme choisi par le gagnant de la manche
   'duel:choose-theme': (data: { category: string }) => void;
+  // Changement de mode en cours de partie
+  'mode:propose': (data: { mode: GameMode }) => void;
+  'mode:respond': (data: { accept: boolean }) => void;
   'room:reconnect': (data: { code: string; playerId: 1 | 2 }, callback: (response: RoomResponse) => void) => void;
   'game:reaction': (data: { emoji: ReactionEmoji }) => void;
   'game:text-reaction': (data: { reactionId: TextReactionId }) => void;
@@ -410,6 +417,16 @@ export interface ThemeChoiceRequest {
   options: ThemeChoiceOption[];
   timeoutSeconds: number;   // au-dela, le serveur tire un theme au hasard
   roundNumber: number;
+}
+
+// Changement de mode en cours de partie : un joueur propose, l'autre valide.
+export interface ModeProposal {
+  mode: GameMode;
+  label: string;
+  icon: string;
+  fromPlayerId: 1 | 2;
+  fromName: string;
+  timeoutSeconds: number;
 }
 
 export interface ThemeChoiceWaiting {

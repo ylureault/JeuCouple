@@ -285,6 +285,7 @@ function initDefaultCategories() {
     { code: 'culture', name: 'Culture G', icon: '🧠', color: '#673ab7', description: 'Culture generale', sort_order: 9 },
     // Categories thematiques - source unique de verite (import-thematic.ts les reutilise)
     { code: 'profond', name: 'Profond', icon: '🌌', color: '#6366f1', description: 'Philosophie, spiritualite et secrets', sort_order: 10 },
+    { code: 'intime', name: 'Intimite', icon: '🕯️', color: '#c2415f', description: 'Desir, tendresse et complicite du couple', sort_order: 11 },
     { code: 'fellation', name: 'Fellation', icon: '👄', color: '#ec4899', description: 'Questions sur les plaisirs oraux masculins', sort_order: 100 },
     { code: 'cunnilingus', name: 'Cunnilingus', icon: '👅', color: '#d946ef', description: 'Questions sur les plaisirs oraux feminins', sort_order: 101 },
     { code: 'sodomie', name: 'Sodomie', icon: '🍑', color: '#f97316', description: 'Plaisir anal et stimulation', sort_order: 102 },

@@ -305,7 +305,7 @@ export default function Home() {
               transition={{ type: 'spring', damping: 20 }}
               className="w-full max-w-md"
             >
-              <div className="bg-white rounded-2xl shadow-2xl max-h-[75vh] flex flex-col">
+              <div className="bg-white rounded-2xl shadow-2xl max-h-[70dvh] flex flex-col">
                 <div className="p-4 border-b border-gray-100">
                   <h2 className="text-xl font-black text-gray-900 text-center">
                     Créer une partie
@@ -589,7 +589,7 @@ export default function Home() {
               transition={{ type: 'spring', damping: 20 }}
               className="w-full max-w-md"
             >
-              <div className="bg-white rounded-2xl shadow-2xl max-h-[85vh] flex flex-col">
+              <div className="bg-white rounded-2xl shadow-2xl max-h-[80dvh] flex flex-col">
                 <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-pink-500 to-rose-600 rounded-t-2xl relative">
                   <motion.button
                     onClick={() => { setSelectedTheme(null); switchMode('home'); }}

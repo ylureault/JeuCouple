@@ -59,6 +59,11 @@ const getFakeQuote = () => {
   return FAKE_QUOTES[Math.floor(Math.random() * FAKE_QUOTES.length)];
 };
 
+// Reference stable : passer un litteral de tableau relancait l'effet de
+// FlyingEmojis a chaque rendu, soit une vingtaine de fois pendant l'animation
+// du compteur de points.
+const CELEBRATION_EMOJIS = ['💖', '✨', '🌟', '💕', '🎊', '💫'];
+
 // Flying emojis component for celebrations
 function FlyingEmojis({ emojis, count = 8 }: { emojis: string[]; count?: number }) {
   const [particles, setParticles] = useState<Array<{ id: number; emoji: string; x: number; delay: number }>>([]);
@@ -197,7 +202,10 @@ export default function RevealCard({
   useEffect(() => {
     if (showPoints && correct) {
       setShowFlash(true);
-      setTimeout(() => setShowFlash(false), 200);
+      // Sans nettoyage, ce timer s'executait apres demontage (fuite au
+      // changement de question) et declenchait un setState sur un composant mort.
+      const id = setTimeout(() => setShowFlash(false), 200);
+      return () => clearTimeout(id);
     }
   }, [showPoints, correct]);
 
@@ -247,7 +255,7 @@ export default function RevealCard({
         <>
           <Fireworks />
           <Confetti count={50} />
-          <FlyingEmojis emojis={['💖', '✨', '🌟', '💕', '🎊', '💫']} count={12} />
+          <FlyingEmojis emojis={CELEBRATION_EMOJIS} count={12} />
         </>
       )}
 
