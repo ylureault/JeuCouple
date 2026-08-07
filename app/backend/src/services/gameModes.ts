@@ -309,6 +309,40 @@ const mix: GameModeDefinition = {
   },
 };
 
+/**
+ * Mode quiz express : culture generale en QCM, rythme serre.
+ * C'est le seul mode ou le couple ne se compare pas : les questions de type H
+ * ont une bonne reponse, chacun marque donc ses propres points. La mecanique
+ * propre est la cadence — partie courte, revelation ecourtee (le moteur reduit
+ * la pause a QUIZ_EXPRESS_REVEAL_SECONDS) — d'ou "express".
+ * Le perimetre (theme 'culture', type 'H') n'est pas decide ici mais impose par
+ * le moteur a la creation du salon, comme le mix impose l'ouverture des themes :
+ * c'est un reglage de salon, pas une decision de fin de manche.
+ */
+export const QUIZ_EXPRESS_QUESTION_COUNT = 15;
+/** Duree de la revelation, plus courte que les 7 s par defaut du moteur. */
+export const QUIZ_EXPRESS_REVEAL_SECONDS = 4;
+/** Plafond du temps de reponse : un QCM de culture G ne merite pas 20 s. */
+export const QUIZ_EXPRESS_ANSWER_SECONDS = 12;
+
+const quizExpress: GameModeDefinition = {
+  id: 'quiz_express',
+  label: 'Quiz Express',
+  description: 'Culture generale en QCM, a toute vitesse. Chacun marque ses propres points.',
+  icon: '🧠',
+  endless: false,
+  // Liste courte et fixe chargee d'un bloc : un rechargement en cours de partie
+  // couterait une respiration, exactement ce que ce mode cherche a eviter.
+  // Un hote qui a choisi une autre longueur garde la sienne.
+  initialQuestionCount: (s) => (s.questionCount > 0 ? s.questionCount : QUIZ_EXPRESS_QUESTION_COUNT),
+  afterRound: (ctx) => {
+    if (ctx.questionIndex >= ctx.loadedQuestions) {
+      return { action: 'finish', reason: 'Quiz termine' };
+    }
+    return { action: 'next-question' };
+  },
+};
+
 const MODES: Record<string, GameModeDefinition> = {
   [classic.id]: classic,
   [duel.id]: duel,
@@ -319,6 +353,7 @@ const MODES: Record<string, GameModeDefinition> = {
   [envies.id]: envies,
   [petitsNoms.id]: petitsNoms,
   [mix.id]: mix,
+  [quizExpress.id]: quizExpress,
 };
 
 export function getGameMode(id: string | undefined): GameModeDefinition {

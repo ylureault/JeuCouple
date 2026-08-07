@@ -25,6 +25,9 @@ import EscaladePalierSheet from '../components/EscaladePalierSheet';
 import ModeSwitcher from '../components/ModeSwitcher';
 // Talkie-walkie : micro ferme au repos, ouvert tant qu'on maintient le bouton.
 import PushToTalk from '../components/PushToTalk';
+// Ecran d'attente/echec de reprise de session, en lieu et place du spinner
+// infini qui masquait les echecs.
+import ResumeGate from '../components/ResumeGate';
 import Lobby from './Lobby';
 
 export default function Game() {
@@ -152,13 +155,10 @@ export default function Game() {
     submitAnswer(answer);
   };
 
-  // No room - redirect to home
+  // Pas encore de salon : soit la reprise est en cours, soit elle a echoue.
+  // Le spinner nu d'avant restait a l'ecran pour toujours en cas d'echec.
   if (!room) {
-    return (
-      <div className="min-h-[100dvh] bg-[#180512] flex items-center justify-center">
-        <div className="spinner w-16 h-16" />
-      </div>
-    );
+    return <ResumeGate />;
   }
 
   // Lobby phase - show lobby screen

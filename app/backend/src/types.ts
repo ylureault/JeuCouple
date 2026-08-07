@@ -363,7 +363,7 @@ export interface ClientToServerEvents {
 // 'classic' : liste de questions fixee au demarrage, la partie se termine.
 // 'duel'    : boucle sans fin. A chaque manche, le gagnant (ou le plus rapide
 //             en cas d'egalite) choisit le theme de la question suivante.
-export type GameMode = 'mix' | 'classic' | 'duel' | 'escalade' | 'complices' | 'sudden_death' | 'inverse' | 'envies' | 'petits_noms';
+export type GameMode = 'mix' | 'classic' | 'duel' | 'escalade' | 'complices' | 'sudden_death' | 'inverse' | 'envies' | 'petits_noms' | 'quiz_express';
 
 // Catalogue affiche au joueur. Doit rester aligne avec le registre serveur
 // (backend/src/services/gameModes.ts), qui reste la source de verite des regles.
@@ -450,6 +450,17 @@ export const GAME_MODES: {
     description: "Chaque manche perdue coûte une vie. Trois vies perdues et la partie s'arrête net.",
     icon: '💀',
     endless: true,
+  },
+  {
+    // Seul mode ou l'on ne se compare pas : les QCM ont une bonne reponse, donc
+    // chacun marque ses propres points. Le theme est impose (culture generale),
+    // le selecteur de themes n'a donc aucun effet ici.
+    id: 'quiz_express',
+    label: 'Quiz Express',
+    tagline: 'Culture G, à toute vitesse',
+    description: "Que des QCM de culture générale, sur un rythme serré. Chacun marque ses propres points : ici, on joue l'un contre l'autre.",
+    icon: '🧠',
+    endless: false,
   },
 ];
 

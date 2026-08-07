@@ -160,7 +160,7 @@ export function initDatabase() {
  *  - enonce "sur 10 / a quel point / quel pourcentage"            => D (echelle)
  * Idempotent : peut tourner a chaque demarrage.
  */
-function fixQuestionInputTypes() {
+export function fixQuestionInputTypes() {
   const descriptif = /^(décris|decris|quel mot|comment |qu'est-ce qui|qu'est-ce que|quel conseil|raconte|avoue|décrivez)/i;
   const echelle = /(sur 10|note sur 10|à quel point|a quel point|quel pourcentage|à quel pourcentage)/i;
 
@@ -182,14 +182,14 @@ function fixQuestionInputTypes() {
   if (fixed > 0) console.log(`Types de saisie corriges en base : ${fixed} question(s)`);
 }
 
-function purgeSyntheticQuestions() {
+export function purgeSyntheticQuestions() {
   const purged = db.prepare(
     "DELETE FROM questions WHERE active = 0 AND text LIKE '%De quelle question cette réponse vient-elle%'"
   ).run().changes;
   if (purged > 0) console.log(`Purge: ${purged} questions synthetiques du mode inverse supprimees`);
 }
 
-function mergeLegacyCategories() {
+export function mergeLegacyCategories() {
   const merges: Record<string, string> = {
     connaissance: 'couple',        // "Selon toi, il/elle est plutot..."
     amour: 'couple',               // "Tu te sens aime(e) quand..."

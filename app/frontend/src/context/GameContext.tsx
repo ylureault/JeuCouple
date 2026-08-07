@@ -33,9 +33,26 @@ import type {
   RoomSettingsInfo
 } from '../../../shared/types';
 
+/**
+ * Etapes de la reprise de session, dans l'ordre ou elles se succedent.
+ * Elles existent parce que le bug de prod etait un probleme d'ORDONNANCEMENT :
+ * plusieurs gardes se declenchaient avant meme que le socket soit connecte et
+ * effacaient une session parfaitement valide. Un etat unique et explicite rend
+ * cet ordre impossible a violer.
+ */
+export type ResumePhase =
+  | 'booting'     // le provider vient de monter, le socket n'existe pas encore
+  | 'connecting'  // socket cree, on attend l'evenement 'connect'
+  | 'restoring'   // connecte, room:reconnect en cours (avec retentatives)
+  | 'live'        // rien a restaurer, ou reprise reussie
+  | 'failed';     // echec avere : on affiche le motif, jamais un ecran vide
+
 interface GameState {
   socket: Socket<ServerToClientEvents, ClientToServerEvents> | null;
   connected: boolean;
+  // Etape courante de la reprise + motif lisible en cas d'echec.
+  resumePhase: ResumePhase;
+  resumeError: string | null;
   room: Room | null;
   playerId: 1 | 2 | null;
   playerName: string;
@@ -82,6 +99,7 @@ interface GameState {
 type GameAction =
   | { type: 'SET_SOCKET'; socket: Socket<ServerToClientEvents, ClientToServerEvents> }
   | { type: 'SET_CONNECTED'; connected: boolean }
+  | { type: 'RESUME_PHASE'; phase: ResumePhase; reason?: string | null }
   | { type: 'JOIN_ROOM'; room: Room; playerId: 1 | 2; playerName: string }
   | { type: 'PLAYER_JOINED'; playerName: string; playerId: 1 | 2; gender: Gender }
   | { type: 'PLAYER_LEFT'; playerId: 1 | 2 }
@@ -128,6 +146,8 @@ type GameAction =
 const initialState: GameState = {
   socket: null,
   connected: false,
+  resumePhase: 'booting',
+  resumeError: null,
   room: null,
   playerId: null,
   playerName: '',
@@ -172,6 +192,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'SET_CONNECTED':
       return { ...state, connected: action.connected };
 
+    case 'RESUME_PHASE':
+      return {
+        ...state,
+        resumePhase: action.phase,
+        resumeError: action.phase === 'failed' ? action.reason ?? 'Reprise impossible' : null
+      };
+
     case 'JOIN_ROOM':
       // For playing rooms, keep phase as 'lobby' temporarily - the backend will immediately
       // send game:started + game:question events to set the correct phase.
@@ -182,7 +209,11 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         playerId: action.playerId,
         playerName: action.playerName,
         phase: 'lobby',
-        error: null
+        error: null,
+        // Entrer dans un salon vaut reprise reussie : un echec anterieur ne
+        // doit pas continuer a masquer l'ecran de jeu.
+        resumePhase: 'live',
+        resumeError: null
       };
 
     case 'PLAYER_JOINED':
@@ -426,7 +457,12 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...initialState,
         socket: state.socket,
-        connected: state.connected
+        connected: state.connected,
+        // Apres un reset il n'y a plus rien a restaurer : repartir de 'booting'
+        // relancerait un ecran d'attente sans raison. Un echec eventuel est
+        // repositionne juste apres par un RESUME_PHASE explicite.
+        resumePhase: state.connected ? 'live' : 'connecting',
+        resumeError: null
       };
 
     default:
@@ -492,33 +528,43 @@ function getStoredSession(): StoredSession | null {
 
     if (!stored) return null;
 
-    // Check if session is too old
+    // Peremption dure et locale : elle se juge a la LECTURE, avant toute
+    // tentative reseau. Elle n'entre donc jamais en concurrence avec le socket.
     if (timestamp) {
       const age = Date.now() - parseInt(timestamp, 10);
       if (age > SESSION_MAX_AGE_MS) {
-        console.log('Session expired (age:', Math.round(age / 1000 / 60), 'minutes)');
-        clearSession();
+        forgetSession(`session vieille de ${Math.round(age / 1000 / 60)} minutes`);
         return null;
       }
     }
 
     const session = JSON.parse(stored);
-    // Validate session structure
     if (!session.roomCode || !session.playerId || !session.playerName) {
-      clearSession();
+      forgetSession('session illisible (champs manquants)');
       return null;
     }
     return session;
   } catch {
-    clearSession();
+    forgetSession('session illisible (JSON invalide)');
     return null;
   }
 }
 
-function clearSession() {
+/**
+ * SEULE fonction autorisee a effacer la session locale.
+ *
+ * Elle n'est appelee que sur un verdict explicite : refus du serveur, fin de
+ * partie annoncee par le serveur, depart volontaire du joueur, ou peremption
+ * locale constatee a la lecture. Jamais sur un simple delai, jamais avant que
+ * le socket soit connecte : c'est exactement ce qui produisait l'ecran vide
+ * apres refresh (un watchdog effacait la session, puis 'connect' arrivait trop
+ * tard pour la restaurer).
+ */
+function forgetSession(reason: string) {
   try {
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SESSION_TIMESTAMP_KEY);
+    console.log('[reprise] session effacee :', reason);
   } catch (e) {
     console.warn('Failed to clear session:', e);
   }
@@ -552,38 +598,73 @@ export function GameProvider({ children }: { children: ReactNode }) {
       reconnectionDelayMax: 5000
     });
 
-    // Track if we're currently trying to reconnect to prevent duplicate attempts
-    let reconnectAttemptPending = false;
-    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+    // ---------------------------------------------------------------------
+    // MACHINE DE REPRISE : booting -> connecting -> restoring -> live | failed
+    //
+    // Tout passe par ici et par nulle part ailleurs. Avant, trois gardes
+    // concurrents (timer de validation, watchdog "phase idle", timeout de
+    // reconnexion de 10 s) pouvaient effacer la session pendant que le socket
+    // etait encore en train de se connecter : la session disparaissait AVANT
+    // 'connect', donc plus rien a restaurer, donc ecran vide definitif.
+    // ---------------------------------------------------------------------
 
-    const attemptReconnect = (session: StoredSession) => {
-      if (reconnectAttemptPending) return;
-      reconnectAttemptPending = true;
+    // Delai maximal d'attente d'un accuse de reception du serveur. Passe ce
+    // delai on RETENTE, on n'efface surtout pas : un silence reseau n'est pas
+    // un refus.
+    const RESUME_ACK_TIMEOUT_MS = 4000;
+    // Trois retentatives espacees apres l'essai initial : 1 s, 2 s, puis 4 s.
+    const RESUME_RETRY_DELAYS_MS = [1000, 2000, 4000];
 
-      // Set a timeout for the reconnection attempt
-      reconnectTimeout = setTimeout(() => {
-        console.log('Reconnection timeout - clearing session');
-        clearSession();
-        reconnectAttemptPending = false;
-      }, 10000); // 10 second timeout
+    // Generation courante de la sequence de reprise. Un socket qui se
+    // reconnecte relance une sequence ; ce jeton fait taire les callbacks de
+    // l'ancienne, sinon un ack tardif ecraserait l'etat de la nouvelle.
+    let resumeRun = 0;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let ackTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const clearResumeTimers = () => {
+      if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+      if (ackTimer) { clearTimeout(ackTimer); ackTimer = null; }
+    };
+
+    const settleLive = () => {
+      clearResumeTimers();
+      dispatch({ type: 'RESUME_PHASE', phase: 'live' });
+    };
+
+    const settleFailed = (reason: string) => {
+      clearResumeTimers();
+      console.log('[reprise] echec :', reason);
+      dispatch({ type: 'RESUME_PHASE', phase: 'failed', reason });
+    };
+
+    const runResumeAttempt = (session: StoredSession, retry: number, run: number) => {
+      if (run !== resumeRun) return;
+
+      // Un seul denouement par tentative : soit l'ack du serveur, soit le
+      // delai d'attente. Le premier arrive neutralise l'autre.
+      let settled = false;
+
+      ackTimer = setTimeout(() => {
+        if (settled || run !== resumeRun) return;
+        settled = true;
+        scheduleRetry(session, retry, run);
+      }, RESUME_ACK_TIMEOUT_MS);
 
       socket.emit('room:reconnect', {
         code: session.roomCode,
         playerId: session.playerId,
         sessionToken: session.sessionToken
       }, (response) => {
-        // Clear the timeout since we got a response
-        if (reconnectTimeout) {
-          clearTimeout(reconnectTimeout);
-          reconnectTimeout = null;
-        }
-        reconnectAttemptPending = false;
+        if (settled || run !== resumeRun) return;
+        settled = true;
+        clearResumeTimers();
 
         if (response.success && response.room && response.playerId) {
-          // Check if room is in a valid state (not finished)
           if (response.room.status === 'finished') {
-            console.log('Room is finished, clearing session');
-            clearSession();
+            // Verdict explicite du serveur : la partie est close.
+            forgetSession('le serveur declare la partie terminee');
+            settleFailed('Cette partie est deja terminee.');
             return;
           }
           dispatch({
@@ -593,49 +674,78 @@ export function GameProvider({ children }: { children: ReactNode }) {
             playerName: session.playerName
           });
           updateSessionTimestamp();
-        } else {
-          // Session invalid, clear it
-          console.log('Reconnection failed:', response.error);
-          clearSession();
+          settleLive();
+          return;
         }
+
+        // Le serveur a REPONDU non (salon introuvable, partie finie, jeton
+        // invalide). C'est le seul cas ou effacer la session est legitime.
+        forgetSession(response.error || 'refus du serveur');
+        dispatch({ type: 'RESET' });
+        settleFailed(response.error || 'Ce salon n\'existe plus.');
       });
     };
+
+    const scheduleRetry = (session: StoredSession, retry: number, run: number) => {
+      const delay = RESUME_RETRY_DELAYS_MS[retry];
+      if (delay === undefined) {
+        // Retentatives epuisees : on echoue VISIBLEMENT mais on garde la
+        // session intacte, le serveur n'ayant jamais dit non.
+        settleFailed('Le serveur ne repond pas. Verifie ta connexion.');
+        return;
+      }
+      console.log(`[reprise] pas de reponse, nouvelle tentative dans ${delay} ms`);
+      retryTimer = setTimeout(() => runResumeAttempt(session, retry + 1, run), delay);
+    };
+
+    // Point d'entree UNIQUE de la reprise : il n'est appelable que depuis
+    // l'evenement 'connect', jamais au montage.
+    const startResume = () => {
+      resumeRun += 1;
+      clearResumeTimers();
+
+      const session = getStoredSession();
+      if (!session) {
+        // Rien a restaurer : l'application est immediatement utilisable.
+        settleLive();
+        return;
+      }
+
+      dispatch({ type: 'RESUME_PHASE', phase: 'restoring' });
+      runResumeAttempt(session, 0, resumeRun);
+    };
+
+    dispatch({ type: 'RESUME_PHASE', phase: 'connecting' });
 
     socket.on('connect', () => {
       console.log('Connected to server');
       dispatch({ type: 'SET_CONNECTED', connected: true });
-
-      // Try to reconnect to existing session
-      const session = getStoredSession();
-      if (session) {
-        attemptReconnect(session);
-      }
+      // La reprise ne demarre QU'ICI : tant que le socket n'est pas connecte,
+      // aucune decision sur la session ne peut etre prise.
+      startResume();
     });
 
     socket.on('disconnect', (reason) => {
       console.log('Disconnected from server:', reason);
       dispatch({ type: 'SET_CONNECTED', connected: false });
-
-      // If server disconnected us, it might mean the room is invalid
-      if (reason === 'io server disconnect') {
-        console.log('Server disconnected us, clearing session');
-        clearSession();
-        dispatch({ type: 'RESET' });
-      }
+      // Une sequence de reprise en vol devient caduque : le prochain 'connect'
+      // en relancera une propre.
+      resumeRun += 1;
+      clearResumeTimers();
+      // Note : on n'efface plus la session sur 'io server disconnect'. Un
+      // redemarrage serveur n'est pas un refus ; si le salon a reellement
+      // disparu, le room:reconnect suivant le dira explicitement.
     });
 
     socket.on('connect_error', (error) => {
       console.log('Connection error:', error.message);
-      // Don't clear session immediately on connection errors - might be temporary
+      // Erreur potentiellement temporaire : socket.io retente seul, on ne
+      // touche ni a la session ni a l'etat de reprise.
     });
 
-    // Handle reconnection after socket reconnects
-    // Note: When socket.io reconnects, it will fire 'connect' again,
-    // which will trigger attemptReconnect. This io.on('reconnect') is for
-    // the socket.io manager level reconnect event.
     socket.io.on('reconnect', () => {
       console.log('Socket.io manager reconnected');
-      // The 'connect' event will be fired next, which handles the session reconnection
+      // 'connect' suit immediatement et relance startResume().
     });
 
     socket.on('room:player-joined', (data) => {
@@ -672,8 +782,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
 
     socket.on('game:finished', (data) => {
-      // Clear stale session so reconnect doesn't try to rejoin a finished game
-      clearSession();
+      // Verdict explicite du serveur : la partie est finie, la session n'a
+      // plus rien a restaurer.
+      forgetSession('partie terminee (game:finished)');
       dispatch({ type: 'GAME_FINISHED', data });
     });
 
@@ -768,32 +879,33 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     socket.on('error', (data) => {
       dispatch({ type: 'SET_ERROR', error: data.message });
-      // If error indicates room doesn't exist, clear session
+      // Refus explicite du serveur sur l'existence du salon : verdict, donc
+      // effacement legitime.
       if (data.message.toLowerCase().includes('room not found') ||
           data.message.toLowerCase().includes('invalid room') ||
           data.message.toLowerCase().includes('session expired')) {
-        clearSession();
+        forgetSession(`erreur serveur : ${data.message}`);
         dispatch({ type: 'RESET' });
+        settleFailed(data.message);
       }
     });
 
     // Handle room:kicked event (when server removes player from room)
     socket.on('room:kicked' as keyof ServerToClientEvents, () => {
-      console.log('Kicked from room by server');
-      clearSession();
+      // Verdict explicite : le serveur nous a sorti du salon.
+      forgetSession('exclu du salon par le serveur');
       dispatch({ type: 'RESET' });
+      settleFailed('Tu as ete retire de ce salon.');
     });
 
     dispatch({ type: 'SET_SOCKET', socket });
 
-    // Handle page visibility changes - validate session when becoming visible
+    // Retour d'onglet : on se contente de rafraichir l'horodatage pour que la
+    // session ne perime pas pendant une longue partie. Cette poignee ne juge
+    // plus la validite de la session (c'etait un des gardes concurrents).
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        const session = getStoredSession();
-        if (session && socket.connected && !reconnectAttemptPending) {
-          // Re-validate session when page becomes visible
-          updateSessionTimestamp();
-        }
+        updateSessionTimestamp();
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -811,65 +923,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
 
-    // Periodic session validation (every 5 minutes)
-    const sessionValidationInterval = setInterval(() => {
-      const session = getStoredSession();
-      if (!session) return;
-
-      // If we have a session but we're not in a room, something is wrong
-      if (session && socket.connected) {
-        // Ping the server to check if room still exists
-        socket.emit('room:reconnect', {
-          code: session.roomCode,
-          playerId: session.playerId,
-          sessionToken: session.sessionToken
-        }, (response) => {
-          if (!response.success) {
-            console.log('Session validation failed, clearing session');
-            clearSession();
-            dispatch({ type: 'RESET' });
-          } else if (response.room?.status === 'finished') {
-            console.log('Room is finished, clearing session');
-            clearSession();
-            dispatch({ type: 'RESET' });
-          } else {
-            updateSessionTimestamp();
-          }
-        });
-      }
-    }, 5 * 60 * 1000); // Every 5 minutes
+    // L'ancien intervalle de "validation de session" toutes les 5 minutes
+    // renvoyait un room:reconnect de controle et effacait la session au moindre
+    // refus, en concurrence avec la sequence de reprise. Il ne reste qu'un
+    // rafraichissement d'horodatage : il ne decide plus rien.
+    const sessionKeepAliveInterval = setInterval(updateSessionTimestamp, 5 * 60 * 1000);
 
     return () => {
       // Cleanup all listeners and timers
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
-      }
-      clearInterval(sessionValidationInterval);
+      resumeRun += 1;
+      clearResumeTimers();
+      clearInterval(sessionKeepAliveInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
       socket.disconnect();
     };
   }, []);
 
-  // Clean up session when phase returns to idle without a room
-  useEffect(() => {
-    if (state.phase === 'idle' && !state.room) {
-      // Clear any stale session when we're back to idle with no room
-      const session = getStoredSession();
-      if (session) {
-        console.log('Phase is idle with no room, clearing session');
-        clearSession();
-      }
-    }
-  }, [state.phase, state.room]);
-
-  // Clear session when game is finished and we go back to results
-  useEffect(() => {
-    if (state.phase === 'finished') {
-      // Session is cleared in game:finished handler, but double-check
-      clearSession();
-    }
-  }, [state.phase]);
+  // Les deux effets qui vivaient ici ont ete supprimes :
+  //  - "phase idle sans room => effacer la session" se declenchait au tout
+  //    premier rendu, donc AVANT 'connect', et detruisait la session qu'on
+  //    s'appretait justement a restaurer (c'est le bug de prod) ;
+  //  - "phase finished => effacer la session" doublonnait avec le handler
+  //    game:finished.
+  // L'effacement est desormais centralise dans forgetSession().
 
   const createRoom = useCallback(async (playerName: string, gender: Gender, questionCount?: number, categories?: string[], questionTypes?: string[], gameMode?: GameMode): Promise<string> => {
     if (!state.socket) throw new Error('No socket connection');
@@ -962,12 +1039,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (state.socket) {
       state.socket.emit('room:leave');
     }
-    clearSession();
+    // Geste volontaire du joueur : verdict aussi explicite qu'un refus serveur.
+    forgetSession('depart volontaire du salon');
     dispatch({ type: 'RESET' });
   }, [state.socket]);
 
   const resetGame = useCallback(() => {
-    clearSession();
+    forgetSession('remise a zero demandee par le joueur');
     dispatch({ type: 'RESET' });
   }, []);
 

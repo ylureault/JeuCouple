@@ -18,7 +18,13 @@ import * as roomModel from '../models/room.js';
 import * as gameModel from '../models/game.js';
 import * as questionModel from '../models/question.js';
 import * as categoryModel from '../models/category.js';
-import { getGameMode, listGameModes } from './gameModes.js';
+import {
+  getGameMode,
+  listGameModes,
+  QUIZ_EXPRESS_QUESTION_COUNT,
+  QUIZ_EXPRESS_REVEAL_SECONDS,
+  QUIZ_EXPRESS_ANSWER_SECONDS,
+} from './gameModes.js';
 import type { ModeDecision } from './gameModes.js';
 
 interface AnswerData {
@@ -156,6 +162,25 @@ const activeGames = new Map<string, GameState>();
 const playerConnections = new Map<string, PlayerConnection>();
 const roomSettings = new Map<string, { questionCount: number; categories: string[]; questionTypes: string[]; gameMode: string; settingsAccepted?: boolean }>();
 
+/**
+ * Certains modes imposent leur perimetre de questions et ne laissent donc pas
+ * le choix des themes/types a l'hote : le mix ouvre a TOUT (afficher "Mix" sur
+ * un sous-ensemble n'aurait pas de sens), le quiz express se limite a la
+ * culture generale en QCM (type H) puisque c'est sa definition meme.
+ * La regle est centralisee ici parce qu'elle s'applique a DEUX moments — la
+ * creation du salon et le changement de mode en cours de partie — et que ces
+ * deux chemins avaient deja diverge par le passe.
+ */
+function enforceModeScope(
+  gameMode: string,
+  categories: string[],
+  questionTypes: string[]
+): { categories: string[]; questionTypes: string[] } {
+  if (gameMode === 'mix') return { categories: [], questionTypes };
+  if (gameMode === 'quiz_express') return { categories: ['culture'], questionTypes: ['H'] };
+  return { categories, questionTypes };
+}
+
 // Changement de mode en cours de partie : proposition en attente de validation.
 // Un seul echange a la fois par salon, avec expiration pour ne pas laisser
 // l'autre joueur bloque sur une demande jamais tranchee.
@@ -269,24 +294,34 @@ export function setupSocketHandlers(
           playerId: 1
         });
 
-        // Store room settings (question count, categories, and question types)
-        const questionCount = data.questionCount && data.questionCount >= 5 && data.questionCount <= 50
-          ? data.questionCount
-          : DEFAULT_QUESTION_COUNT;
-        // If no categories specified or empty array, use all categories (auto mode)
-        const categories = data.categories && data.categories.length > 0 ? data.categories : [];
-        // If no question types specified or empty array, use all types (auto mode)
-        const questionTypes = data.questionTypes && data.questionTypes.length > 0 ? data.questionTypes : [];
         // Valide contre le registre, pas contre une liste en dur : l'ancienne
         // version (=== 'duel' ? 'duel' : 'classic') degradait silencieusement
         // 6 des 8 modes en "classic" — constat de l'audit d'architecture.
         const gameMode = listGameModes().some(m => m.id === data.gameMode)
           ? (data.gameMode as string)
           : 'classic';
-        // Le mix melange TOUT : une restriction de themes n'y a pas de sens,
-        // on l'efface plutot que d'afficher "Mix" sur un sous-ensemble.
-        const effectiveCategories = gameMode === 'mix' ? [] : categories;
-        roomSettings.set(room.code, { questionCount, categories: effectiveCategories, questionTypes, gameMode });
+        // Store room settings (question count, categories, and question types)
+        // Le quiz express est cale sur une partie courte : c'est sa longueur de
+        // reference, pas celle du jeu de couple. Un choix explicite de l'hote
+        // reste prioritaire.
+        const defaultCount = gameMode === 'quiz_express'
+          ? QUIZ_EXPRESS_QUESTION_COUNT
+          : DEFAULT_QUESTION_COUNT;
+        const questionCount = data.questionCount && data.questionCount >= 5 && data.questionCount <= 50
+          ? data.questionCount
+          : defaultCount;
+        // If no categories specified or empty array, use all categories (auto mode)
+        const categories = data.categories && data.categories.length > 0 ? data.categories : [];
+        // If no question types specified or empty array, use all types (auto mode)
+        const questionTypes = data.questionTypes && data.questionTypes.length > 0 ? data.questionTypes : [];
+        // Les modes a perimetre impose (mix, quiz express) reecrivent ces reglages.
+        const scope = enforceModeScope(gameMode, categories, questionTypes);
+        roomSettings.set(room.code, {
+          questionCount,
+          categories: scope.categories,
+          questionTypes: scope.questionTypes,
+          gameMode,
+        });
 
         // Jeton secret : seule preuve d'appartenance acceptee au reconnect.
         const sessionToken = roomModel.issueSessionToken(room.id, 1);
@@ -859,8 +894,12 @@ export function setupSocketHandlers(
       const settings = roomSettings.get(roomCode);
       if (!settings) return;
       settings.gameMode = pending.mode;
-      // Bascule vers le mix en cours de partie : on ouvre a tous les themes.
-      if (pending.mode === 'mix') settings.categories = [];
+      // Bascule en cours de partie : le nouveau mode peut imposer son perimetre
+      // (mix = tous les themes, quiz express = culture generale en QCM). Meme
+      // regle qu'a la creation du salon, pour que les deux chemins ne divergent pas.
+      const scope = enforceModeScope(pending.mode, settings.categories, settings.questionTypes);
+      settings.categories = scope.categories;
+      settings.questionTypes = scope.questionTypes;
       roomSettings.set(roomCode, settings);
 
       const def = listGameModes().find(m => m.id === pending.mode)!;
@@ -1278,7 +1317,18 @@ function sendQuestion(
     gameState.timer = null;
   }
 
-  const question = { ...gameState.questions[gameState.currentQuestionIndex] };
+  const source = gameState.questions[gameState.currentQuestionIndex];
+  // Quiz express : on plafonne le temps de reponse (les QCM de culture G sont
+  // ecrits avec 20 s, trop long pour un mode qui vend la vitesse). On ecrit sur
+  // la question STOCKEE et pas seulement sur la copie envoyee, parce que le
+  // bonus de rapidite est recalcule plus tard depuis gameState.questions : sans
+  // ca, le joueur aurait 12 s a l'ecran mais serait note sur 20 s.
+  if (roomSettings.get(roomCode)?.gameMode === 'quiz_express'
+      && source.timer > QUIZ_EXPRESS_ANSWER_SECONDS) {
+    source.timer = QUIZ_EXPRESS_ANSWER_SECONDS;
+  }
+
+  const question = { ...source };
   gameState.servedIds.add(question.id);
   gameState.phase = 'question';
   gameState.questionStartTime = Date.now();
@@ -1318,7 +1368,7 @@ function sendQuestion(
  * question de 15 s est rapide, alors que c'est lent sur une question de 35 s.
  * On raisonne donc en fraction du temps imparti.
  */
-function calculateSpeedBonus(
+export function calculateSpeedBonus(
   answerTimeMs: number,
   questionStartTime: number,
   questionTimer: number
@@ -1340,7 +1390,7 @@ function calculateSpeedBonus(
   return 0;
 }
 
-function getStreakMultiplier(streak: number): number {
+export function getStreakMultiplier(streak: number): number {
   if (streak >= 5) return STREAK_MULTIPLIERS[5];
   return STREAK_MULTIPLIERS[streak] || 1;
 }
@@ -1630,7 +1680,7 @@ function revealAnswers(
     correctAnswer: isTypeH ? question.correct_answer : undefined
   };
 
-  revealData.nextInSeconds = revealSeconds(question.type);
+  revealData.nextInSeconds = revealSeconds(question.type, roomSettings.get(roomCode)?.gameMode);
   io.to(roomCode).emit('game:reveal', revealData);
 
   // Send score update
@@ -1709,7 +1759,10 @@ function scheduleNextQuestion(
     });
 
     applyModeDecision(io, roomCode, gameState, decision);
-  }, revealSeconds(gameState.questions[gameState.currentQuestionIndex]?.type ?? 'A') * 1000);
+  }, revealSeconds(
+    gameState.questions[gameState.currentQuestionIndex]?.type ?? 'A',
+    roomSettings.get(roomCode)?.gameMode
+  ) * 1000);
 }
 
 const PALIER_CONSENT_TIMEOUT_SECONDS = 25;
@@ -1765,7 +1818,14 @@ function resolvePalierConsent(
 // et manquaient sur les reponses libres a comparer.
 const REVEAL_SECONDS_DEFAULT = 7;   // binaires, QCM, echelles : vite lu
 const REVEAL_SECONDS_TEXT = 14;     // type C : deux textes a lire et commenter
-function revealSeconds(type: QuestionType): number {
+/**
+ * La cadence n'est pas qu'une affaire de type de question : elle fait partie de
+ * l'identite de certains modes. Le quiz express perdrait son nerf avec 7 s de
+ * pause apres chaque QCM, la bonne reponse se lisant d'un coup d'oeil.
+ * Parametre optionnel : les 9 modes historiques gardent exactement leur rythme.
+ */
+export function revealSeconds(type: QuestionType, gameMode?: string): number {
+  if (gameMode === 'quiz_express') return QUIZ_EXPRESS_REVEAL_SECONDS;
   return type === 'C' ? REVEAL_SECONDS_TEXT : REVEAL_SECONDS_DEFAULT;
 }
 
@@ -2002,7 +2062,7 @@ function buildInvertedQuestion(categories: string[], questionTypes: string[]): Q
   return [created];
 }
 
-function calculateBasePoints(
+export function calculateBasePoints(
   type: QuestionType,
   answer1: string | undefined,
   answer2: string | undefined,

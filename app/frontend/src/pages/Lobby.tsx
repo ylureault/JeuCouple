@@ -12,6 +12,7 @@ import TextReactionOverlay from '../components/TextReactionOverlay';
 // les affichait ni ne permettait d'en envoyer.
 import LobbyChat from '../components/LobbyChat';
 import SoundReactionHandler from '../components/SoundReactionHandler';
+import ResumeGate from '../components/ResumeGate';
 import type { Gender } from '../../../shared/types';
 
 export default function Lobby() {
@@ -111,7 +112,9 @@ export default function Lobby() {
 
   const { theme } = useTheme();
 
-  if (!room) return null;
+  // Un `return null` laissait une page blanche quand la reprise de session
+  // echouait sur /salon/:code : on montre desormais l'attente ou le motif.
+  if (!room) return <ResumeGate />;
 
   const isHost = playerId === 1;
   const bothPlayersReady = room.player1_name && room.player2_name;
