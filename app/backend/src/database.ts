@@ -73,6 +73,10 @@ export function initDatabase() {
       emoji_a TEXT,
       emoji_b TEXT,
       correct_answer TEXT,
+      -- Type N (Plus/Moins) : le nombre auquel les joueurs se comparent.
+      -- Sans cette colonne, isPlayable() ecartait TOUTES les questions N et le
+      -- type entier ne sortait jamais au tirage.
+      reference_value INTEGER,
       timer INTEGER DEFAULT 20,
       active INTEGER DEFAULT 1
     );
@@ -128,6 +132,8 @@ export function initDatabase() {
   mergeLegacyCategories();
   purgeSyntheticQuestions();
   fixQuestionInputTypes();
+  fixMissingAccents();
+  fixTypeNReferenceValues();
 
   console.log('Database initialized successfully');
 }
@@ -160,6 +166,72 @@ export function initDatabase() {
  *  - enonce "sur 10 / a quel point / quel pourcentage"            => D (echelle)
  * Idempotent : peut tourner a chaque demarrage.
  */
+export /**
+ * Restaure les accents des enonces DEJA EN BASE.
+ *
+ * Meme piege que fixQuestionInputTypes : corriger les fichiers data/ ne touche
+ * pas une base deja peuplee, puisque l'import saute toute question dont
+ * (texte, categorie) existe deja. Une prod installee avant la correction
+ * gardait donc "Mon moment prefere de la journee c'est..." pour toujours.
+ * Idempotent : les mots deja accentues ne correspondent pas aux motifs.
+ */
+const ACCENTS_MANQUANTS: [RegExp, string][] = [
+  // "prefere" est ambigu : verbe ("tu preferes" -> preferes) ou adjectif
+  // ("moment prefere" -> prefere). On tranche sur le mot qui precede.
+  [/(\b(?:je|tu|il|elle|on|qui)\s+)preferes?\b/gi, '$1préfère'],
+  [/\bpreferees\b/g, 'préférées'], [/\bpreferee\b/g, 'préférée'],
+  [/\bpreferes\b/g, 'préférés'], [/\bprefere\b/g, 'préféré'],
+  [/\bactivite\b/g, 'activité'], [/\berogene\b/g, 'érogène'],
+  [/\bfidelite\b/g, 'fidélité'], [/\bcomplicite\b/g, 'complicité'],
+  [/\bintimite\b/g, 'intimité'], [/\bliberte\b/g, 'liberté'],
+  [/\brealite\b/g, 'réalité'], [/\bbeaute\b/g, 'beauté'],
+  [/\bsante\b/g, 'santé'], [/\bcote\b/g, 'côté'],
+  [/\bjournee\b/g, 'journée'], [/\bsoiree\b/g, 'soirée'],
+  [/\bmatinee\b/g, 'matinée'], [/\bannee\b/g, 'année'],
+  [/\bideal\b/g, 'idéal'], [/\bideale\b/g, 'idéale'],
+  [/\bapres\b/g, 'après'], [/\breve\b/g, 'rêve'], [/\breves\b/g, 'rêves'],
+  [/\bpremiere\b/g, 'première'], [/\bderniere\b/g, 'dernière'],
+  [/\bexperience\b/g, 'expérience'], [/\bexperiences\b/g, 'expériences'],
+  [/\bserieux\b/g, 'sérieux'], [/\bserieuse\b/g, 'sérieuse'],
+  [/\bdecris\b/g, 'décris'], [/\bdeja\b/g, 'déjà'], [/\btres\b/g, 'très'],
+  [/\bplutot\b/g, 'plutôt'], [/\bmeme\b/g, 'même'], [/\betre\b/g, 'être'],
+  [/\bdesir\b/g, 'désir'], [/\bdesirs\b/g, 'désirs'],
+  [/\bqualite\b/g, 'qualité'], [/\bverite\b/g, 'vérité'],
+  [/\bfierte\b/g, 'fierté'], [/\bsociete\b/g, 'société'],
+  [/\bserie\b/g, 'série'], [/\bidee\b/g, 'idée'], [/\bidees\b/g, 'idées'],
+  [/\bgout\b/g, 'goût'], [/\bgouts\b/g, 'goûts'], [/\bdiner\b/g, 'dîner'],
+  [/\bfrere\b/g, 'frère'], [/\bmere\b/g, 'mère'], [/\bpere\b/g, 'père'],
+  [/\brole\b/g, 'rôle'], [/\bmaniere\b/g, 'manière'],
+  [/\bl amour\b/gi, "l'amour"], [/\bL amour\b/g, "L'amour"],
+  [/\b([ldscjmnt]) ([aeiouéèêh])/g, "$1'$2"],  // elision generique : "l amour", "d abord", "s il"... [/\battentionne\b/g, 'attentionné'],
+  [/\battentionne\(e\)/g, 'attentionné(e)'], [/\bcelibataire\b/g, 'célibataire'],
+  [/\bfatigue\(e\)/g, 'fatigué(e)'], [/\benerve\(e\)/g, 'énervé(e)'],
+];
+
+export function fixMissingAccents() {
+  const rows = db.prepare('SELECT id, text, options, option_a, option_b FROM questions')
+    .all() as { id: number; text: string; options: string | null; option_a: string | null; option_b: string | null }[];
+
+  const repare = (v: string | null): string | null => {
+    if (!v) return v;
+    let out = v;
+    for (const [motif, remplacement] of ACCENTS_MANQUANTS) out = out.replace(motif, remplacement);
+    return out;
+  };
+
+  const update = db.prepare('UPDATE questions SET text = ?, options = ?, option_a = ?, option_b = ? WHERE id = ?');
+  let corrigees = 0;
+  for (const r of rows) {
+    const t = repare(r.text), o = repare(r.options);
+    const a = repare(r.option_a), b = repare(r.option_b);
+    if (t !== r.text || o !== r.options || a !== r.option_a || b !== r.option_b) {
+      update.run(t, o, a, b, r.id);
+      corrigees++;
+    }
+  }
+  if (corrigees > 0) console.log(`Accents restaures en base : ${corrigees} question(s)`);
+}
+
 export function fixQuestionInputTypes() {
   const descriptif = /^(décris|decris|quel mot|comment |qu'est-ce qui|qu'est-ce que|quel conseil|raconte|avoue|décrivez)/i;
   const echelle = /(sur 10|note sur 10|à quel point|a quel point|quel pourcentage|à quel pourcentage)/i;
@@ -212,6 +284,47 @@ export function mergeLegacyCategories() {
   }
 }
 
+/**
+ * Renseigne le nombre de reference des questions Plus/Moins DEJA EN BASE.
+ *
+ * Meme piege que fixQuestionInputTypes : la colonne vient d'apparaitre et
+ * l'import saute toute question dont (texte, categorie) existe deja. Sans
+ * cette passe, les questions N d'une base installee resteraient a NULL, donc
+ * injouables pour toujours.
+ * Le nombre est deja dans l'enonce ("plus ou moins de 2 ans ?") : c'est lui
+ * que le joueur lit et compare, on le recopie donc dans la colonne.
+ * Une question N sans aucun nombre est inrepondable : on la desactive plutot
+ * que de la laisser trainer dans le vivier.
+ * Idempotent : ne touche que les lignes encore a NULL.
+ */
+export function fixTypeNReferenceValues() {
+  const rows = db.prepare(
+    "SELECT id, text FROM questions WHERE type = 'N' AND reference_value IS NULL"
+  ).all() as { id: number; text: string }[];
+  if (rows.length === 0) return;
+
+  const setValue = db.prepare('UPDATE questions SET reference_value = ? WHERE id = ?');
+  const desactiver = db.prepare('UPDATE questions SET active = 0 WHERE id = ?');
+  let renseignees = 0;
+  let desactivees = 0;
+
+  for (const r of rows) {
+    // "plus ou moins de 5 pizzas" d'abord, sinon le premier nombre de l'enonce.
+    const cible = /plus ou moins de\s+(\d+(?:[.,]\d+)?)/i.exec(r.text || '')
+      ?? /(\d+(?:[.,]\d+)?)/.exec(r.text || '');
+    if (cible) {
+      setValue.run(Math.round(Number(cible[1].replace(',', '.'))), r.id);
+      renseignees++;
+    } else {
+      desactiver.run(r.id);
+      desactivees++;
+    }
+  }
+
+  if (renseignees > 0) console.log(`Type N : ${renseignees} question(s) dotees de leur nombre de reference`);
+  if (desactivees > 0) console.log(`Type N : ${desactivees} question(s) sans nombre desactivees`);
+}
+
 function runMigrations() {
   // Check if columns exist by querying table info
   const roomColumns = db.prepare("PRAGMA table_info(rooms)").all() as { name: string }[];
@@ -240,6 +353,14 @@ function runMigrations() {
   if (!questionColumnNames.includes('correct_answer')) {
     db.exec("ALTER TABLE questions ADD COLUMN correct_answer TEXT");
     console.log('Migration: Added correct_answer column to questions');
+  }
+
+  // Type N (Plus/Moins) : la colonne manquait alors que isPlayable() l'exige.
+  // Consequence : le type entier etait mort, aucune de ses questions ne sortait
+  // jamais au tirage. Une base deja installee ne se repare que par ici.
+  if (!questionColumnNames.includes('reference_value')) {
+    db.exec("ALTER TABLE questions ADD COLUMN reference_value INTEGER");
+    console.log('Migration: Added reference_value column to questions');
   }
 }
 
@@ -2657,8 +2778,9 @@ function addNewQuestionsV2() {
 
   const j = (...a: string[]) => JSON.stringify(a);
 
-  // type, category, text, timer, options_json, option_a, option_b, emoji_a, emoji_b, correct_answer
-  const rows: [string, string, string, number, string|null, string|null, string|null, string|null, string|null, string|null][] = [
+  // type, category, text, timer, options_json, option_a, option_b, emoji_a, emoji_b, correct_answer,
+  // reference_value (11e case, optionnelle : seul le type N s'en sert)
+  const rows: [string, string, string, number, string|null, string|null, string|null, string|null, string|null, string|null, number?][] = [
     // TYPE A: QCM
     ["A","couple","Quel emoji représente le mieux votre couple ?",15,j("❤️‍🔥","🥰","🤪","💪"),null,null,null,null,null],
     ["A","couple","Quelle chanson ton/ta partenaire choisirait pour votre mariage ?",20,j("Perfect - Ed Sheeran","All of Me - John Legend","Quelque chose de Tennessee","La vie en rose"),null,null,null,null,null],

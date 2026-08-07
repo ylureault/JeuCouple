@@ -16,6 +16,8 @@ export default {
   },
   testMatch: ['**/__tests__/**/*.test.ts'],
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
+  // Efface les bases SQLite jetables une fois toutes les suites terminees.
+  globalTeardown: '<rootDir>/src/__tests__/globalTeardown.ts',
   testTimeout: 60000,
   maxWorkers: 1,
   verbose: true
