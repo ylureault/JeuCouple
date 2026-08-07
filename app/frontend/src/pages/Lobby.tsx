@@ -162,7 +162,7 @@ export default function Lobby() {
                 transition={{ duration: 0.3 }}
                 style={{ transformOrigin: 'left' }}
               />
-              <p className="text-4xl md:text-5xl font-black tracking-[0.2em] text-[#46178f] relative z-10">
+              <p className="text-4xl md:text-5xl font-black tracking-[0.2em] text-[#a3235e] relative z-10">
                 {copied ? '✓' : room.code}
               </p>
             </div>

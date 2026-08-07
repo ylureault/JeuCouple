@@ -775,7 +775,7 @@ function AnswerBlock({
         style={{
           background: highlighted
             ? 'linear-gradient(135deg, #26890c 0%, #4ade80 100%)'
-            : 'linear-gradient(135deg, #46178f 0%, #7c3aed 100%)'
+            : 'linear-gradient(135deg, #a3235e 0%, #7c5cd6 100%)'
         }}
         animate={highlighted ? {
           opacity: [0.1, 0.2, 0.1]
@@ -820,7 +820,7 @@ function AnswerBlock({
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: delay + 0.1, type: 'spring' }}
-          className="w-6 h-6 rounded-full bg-gradient-to-br from-[#46178f] to-[#7c3aed] flex items-center justify-center text-sm shadow"
+          className="w-6 h-6 rounded-full bg-gradient-to-br from-[#a3235e] to-[#7c5cd6] flex items-center justify-center text-sm shadow"
         >
           {emoji}
         </motion.div>
@@ -833,7 +833,7 @@ function AnswerBlock({
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: delay + 0.2 }}
-              className="inline-block text-[10px] bg-[#46178f] text-white px-1.5 py-0.5 rounded-full font-bold"
+              className="inline-block text-[10px] bg-[#a3235e] text-white px-1.5 py-0.5 rounded-full font-bold"
             >
               Toi
             </motion.span>
@@ -848,7 +848,7 @@ function AnswerBlock({
         transition={{ delay: delay + 0.2, type: 'spring', stiffness: 150 }}
         className={`
           rounded-md p-3 text-center relative overflow-hidden
-          ${displayAnswer ? 'bg-gradient-to-br from-[#46178f]/10 to-[#7c3aed]/10' : 'bg-gray-100'}
+          ${displayAnswer ? 'bg-gradient-to-br from-[#a3235e]/10 to-[#7c5cd6]/10' : 'bg-gray-100'}
         `}
       >
         {/* Shine effect on answer */}
@@ -866,7 +866,7 @@ function AnswerBlock({
           transition={{ delay: delay + 0.3 }}
           className={`
             font-bold relative z-10 break-words
-            ${questionType === 'D' ? 'text-4xl text-[#46178f]' : 'text-base sm:text-lg text-gray-900'}
+            ${questionType === 'D' ? 'text-4xl text-[#a3235e]' : 'text-base sm:text-lg text-gray-900'}
             ${questionType === 'C' ? 'text-sm text-gray-800 whitespace-pre-wrap' : ''}
             ${!displayAnswer ? 'text-gray-400 italic text-sm' : ''}
           `}

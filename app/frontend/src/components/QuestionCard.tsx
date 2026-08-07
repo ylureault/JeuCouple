@@ -12,26 +12,33 @@ interface QuestionCardProps {
   playerId?: 1 | 2;
 }
 
+// Quatuor de reponses. Les formes geometriques et le rouge/bleu/jaune/vert
+// d'origine venaient de Kahoot et donnaient un rendu de jeu televise ;
+// on garde un repere visuel distinct par reponse (utile pour se designer une
+// reponse a voix haute) mais avec des glyphes et une palette de jeu de couple.
 const buttonStyles = [
-  { bg: 'bg-[#e21b3c]', shape: 'triangle' },
-  { bg: 'bg-[#1368ce]', shape: 'diamond' },
-  { bg: 'bg-[#d89e00]', shape: 'circle', textColor: 'text-gray-900' },
-  { bg: 'bg-[#26890c]', shape: 'square' },
+  { bg: 'btn-answer-red', shape: 'heart' },
+  { bg: 'btn-answer-blue', shape: 'moon' },
+  { bg: 'btn-answer-yellow', shape: 'spark', textColor: 'text-[#2b1508]' },
+  { bg: 'btn-answer-green', shape: 'flame' },
 ];
 
+const SHAPE_PATHS: Record<string, string> = {
+  heart: 'M12 21s-7.5-4.9-9.6-9.2C.7 8.4 2.4 4.6 5.9 4c2-.35 3.9.6 4.9 2.2h2.4c1-1.6 2.9-2.55 4.9-2.2 3.5.6 5.2 4.4 3.5 7.8C19.5 16.1 12 21 12 21z',
+  moon: 'M20.7 14.6A8.6 8.6 0 0 1 9.4 3.3a8.7 8.7 0 1 0 11.3 11.3z',
+  spark: 'M12 2l2.3 6.4L21 10.7l-6.7 2.3L12 19.4l-2.3-6.4L3 10.7l6.7-2.3L12 2z',
+  flame: 'M12 22c3.9 0 6.6-2.4 6.6-6 0-3.9-3.2-6.4-4.3-9.7-.2-.6-1-.7-1.3-.1-.9 1.6-1.6 2.6-2.7 3.9-1.6 1.9-2.9 3.4-2.9 5.9 0 3.6 2.7 6 6.6 6z',
+};
+
 function Shape({ type, className = '' }: { type: string; className?: string }) {
-  switch (type) {
-    case 'triangle':
-      return <div className={`shape-triangle ${className}`} />;
-    case 'diamond':
-      return <div className={`shape-diamond ${className}`} />;
-    case 'circle':
-      return <div className={`shape-circle ${className}`} />;
-    case 'square':
-      return <div className={`shape-square ${className}`} />;
-    default:
-      return null;
-  }
+  const d = SHAPE_PATHS[type];
+  if (!d) return null;
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
+         className={`w-5 h-5 shrink-0 opacity-90 ${className}`}>
+      <path d={d} />
+    </svg>
+  );
 }
 
 export default function QuestionCard({
@@ -66,15 +73,17 @@ export default function QuestionCard({
             onClick={() => !disabled && onAnswer(option)}
             disabled={disabled}
             className={`
-              btn-answer ${style.bg} ${style.textColor || 'text-white'} py-3
+              ${style.bg} ${style.textColor || 'text-white'}
               ${disabled && !isSelected ? 'btn-answer-disabled' : ''}
               ${isSelected ? 'btn-answer-selected' : ''}
             `}
             whileHover={disabled ? {} : { scale: 1.02, y: -2 }}
             whileTap={disabled ? {} : { scale: 0.98 }}
           >
-            <Shape type={style.shape} className={style.textColor ? 'text-gray-900' : 'text-white'} />
-            <span className="flex-1 text-left font-bold text-base">
+            <Shape type={style.shape} />
+            {/* break-words : sans lui, une option longue etait rognee par
+                l'overflow-hidden du bouton au lieu de passer a la ligne */}
+            <span className="flex-1 text-left font-bold text-base break-words">
               {option}
             </span>
             {isSelected && (

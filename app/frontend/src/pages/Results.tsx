@@ -102,7 +102,7 @@ function CategoryBar({ category, delay = 0 }: { category: CategoryScore; delay?:
       <div className="flex-1">
         <div className="flex justify-between items-center mb-1">
           <span className="text-sm font-semibold text-gray-700 capitalize">{category.category}</span>
-          <span className="text-sm font-bold text-[#46178f]">{category.compatibility}%</span>
+          <span className="text-sm font-bold text-[#a3235e]">{category.compatibility}%</span>
         </div>
         <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
           <motion.div
@@ -438,10 +438,10 @@ export default function Results() {
                 transition={{ delay: 0.2 }}
                 className="text-center mb-4"
               >
-                <div className="inline-flex items-center gap-3 bg-[#46178f]/10 rounded-full px-5 py-2">
+                <div className="inline-flex items-center gap-3 bg-[#a3235e]/10 rounded-full px-5 py-2">
                   <span className="text-2xl">{compatMessage.emoji}</span>
                   <div className="text-left">
-                    <p className="text-[#46178f] font-black text-2xl">
+                    <p className="text-[#a3235e] font-black text-2xl">
                       {compatibility}%
                     </p>
                     <p className="text-gray-600 font-semibold text-xs">
@@ -521,7 +521,7 @@ export default function Results() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.8 }}
-                      className="text-center mt-3 text-sm text-[#46178f] font-semibold"
+                      className="text-center mt-3 text-sm text-[#a3235e] font-semibold"
                     >
                       {CATEGORY_ICONS[bestCategory.category] || '💡'} Votre force : <span className="capitalize">{bestCategory.category}</span> ({bestCategory.compatibility}%)
                     </motion.p>
@@ -536,7 +536,7 @@ export default function Results() {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.6 }}
                   onClick={() => setShowHistory(!showHistory)}
-                  className="w-full mb-4 py-3 bg-[#46178f]/10 hover:bg-[#46178f]/20 rounded-xl text-[#46178f] font-bold transition-colors"
+                  className="w-full mb-4 py-3 bg-[#a3235e]/10 hover:bg-[#a3235e]/20 rounded-xl text-[#a3235e] font-bold transition-colors"
                 >
                   <span className="flex items-center justify-center gap-2">
                     <span>📋</span>
@@ -708,12 +708,12 @@ function QuestionHistoryItem({
         <div className="bg-white/50 rounded p-2">
           <p className="text-gray-500 font-medium">{player1Name}</p>
           <p className="text-gray-800 font-semibold truncate">{getDisplayAnswer(answer1)}</p>
-          <p className="text-[#46178f] font-bold">+{points1} pts</p>
+          <p className="text-[#a3235e] font-bold">+{points1} pts</p>
         </div>
         <div className="bg-white/50 rounded p-2">
           <p className="text-gray-500 font-medium">{player2Name}</p>
           <p className="text-gray-800 font-semibold truncate">{getDisplayAnswer(answer2)}</p>
-          <p className="text-[#46178f] font-bold">+{points2} pts</p>
+          <p className="text-[#a3235e] font-bold">+{points2} pts</p>
         </div>
       </div>
     </motion.div>
@@ -967,7 +967,7 @@ function StatBox({ value, label, emoji, delay = 0 }: StatBoxProps) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: delay + 0.2 }}
-        className="text-2xl font-black text-[#46178f] mt-1"
+        className="text-2xl font-black text-[#a3235e] mt-1"
       >
         <AnimatedCounter value={value} duration={1200} />
       </motion.p>

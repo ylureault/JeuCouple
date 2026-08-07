@@ -4,6 +4,53 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =========================================================================
+   Jetons de design — ambiance "nuit intime" plutot que plateau de quiz.
+   Le violet electrique d'origine (#46178f) faisait jeu televise ; on part
+   sur une nuit chaude prune/vin, ponctuee de rose et d'or.
+   ========================================================================= */
+:root {
+  /* Fonds : profondeur chaude, du plus sombre au plus tiede */
+  --c-night-900: #180512;
+  --c-night-800: #24091d;
+  --c-night-700: #351029;
+  --c-night-600: #4a1838;
+
+  /* Accents : rose chair, corail, or bougie */
+  --c-rose-500: #e8557f;
+  --c-rose-400: #f2789a;
+  --c-coral-500: #f2704e;
+  --c-gold-400: #f0b755;
+  --c-plum-400: #a878d8;
+
+  /* Quatuor des boutons de reponse — remplace le rouge/bleu/jaune/vert Kahoot */
+  --c-ans-1: #e8557f;  /* rose */
+  --c-ans-2: #7c5cd6;  /* violet doux */
+  --c-ans-3: #f0a642;  /* ambre */
+  --c-ans-4: #3fae8f;  /* vert d'eau */
+
+  /* Surfaces vitrees */
+  --s-glass: rgba(255, 255, 255, 0.07);
+  --s-glass-strong: rgba(255, 255, 255, 0.12);
+  --s-border: rgba(255, 255, 255, 0.14);
+
+  /* Elevation : ombres diffuses et teintees, jamais d'ombre dure decalee */
+  --e-1: 0 1px 2px rgba(0,0,0,.28), 0 2px 8px rgba(0,0,0,.18);
+  --e-2: 0 2px 6px rgba(0,0,0,.30), 0 8px 24px rgba(0,0,0,.24);
+  --e-3: 0 8px 20px rgba(0,0,0,.34), 0 24px 56px rgba(0,0,0,.30);
+  --e-glow-rose: 0 6px 26px rgba(232, 85, 127, .42);
+
+  /* Courbes d'animation facon iOS/Material : sortie rapide, arrivee amortie */
+  --ease-spring: cubic-bezier(.22, 1, .36, 1);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+
+  /* Encoches et barre d'accueil (viewport-fit=cover) */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -14,22 +61,73 @@ html, body {
   padding: 0;
   height: 100%;
   overflow-x: hidden;
-  overscroll-behavior: none;
+  overscroll-behavior-y: none;   /* pas de rebond "page web" en haut/bas */
   -webkit-overflow-scrolling: touch;
 }
 
 body {
   font-family: 'Nunito', 'Inter', sans-serif;
-  background: #46178f;
+  /* Deux halos chauds sur une nuit prune : donne une profondeur de bougie
+     que le degrade lineaire d'origine n'avait pas. */
+  background:
+    radial-gradient(120% 80% at 15% 0%, rgba(232, 85, 127, .20) 0%, transparent 55%),
+    radial-gradient(110% 75% at 85% 100%, rgba(240, 166, 66, .14) 0%, transparent 55%),
+    linear-gradient(170deg, var(--c-night-800) 0%, var(--c-night-900) 100%);
   background-attachment: fixed;
   color: white;
-  min-height: 100vh;
+  min-height: 100dvh;
+  /* Confort de lecture sur fond sombre */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 #root {
-  min-height: 100vh;
+  min-height: 100dvh;   /* dvh : suit la barre d'adresse mobile, contrairement a vh */
   display: flex;
   flex-direction: column;
+}
+
+/* --- Primitives d'application native ------------------------------------ */
+
+/* Le texte d'interface ne se selectionne pas au appui long, comme dans une
+   app native. Les zones de saisie et les reponses libres restent selectionnables. */
+button, [role="button"], nav, header, .no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+input, textarea, [contenteditable], .selectable { -webkit-user-select: text; user-select: text; }
+
+/* Anneau de focus visible au clavier uniquement : l'app n'en avait aucun,
+   la navigation au clavier etait totalement invisible. */
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--c-night-900), 0 0 0 6px var(--c-rose-400);
+  border-radius: 12px;
+}
+
+/* Toute cible tactile respecte le minimum de 44px recommande */
+button, [role="button"], a[href] { min-height: 44px; min-width: 44px; }
+.tap-sm { min-height: 44px; min-width: 44px; }
+
+/* Retraits d'encoche reutilisables */
+.safe-top    { padding-top: var(--safe-t); }
+.safe-bottom { padding-bottom: var(--safe-b); }
+.safe-x      { padding-left: var(--safe-l); padding-right: var(--safe-r); }
+
+/* Surface vitree standard */
+.surface {
+  background: var(--s-glass);
+  border: 1px solid var(--s-border);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }
 
 /* Kahoot purple gradient backgrounds */
@@ -47,59 +145,73 @@ body {
 
 @layer components {
   /* Main action buttons */
+  /* Bouton principal. L'ombre portee dure (0_4px_0_0) donnait un rendu
+     "bouton de jeu televise" ; on passe a une elevation diffuse et a un
+     enfoncement par l'echelle, comme sur iOS. */
   .btn-kahoot-main {
-    @apply font-extrabold text-xl py-5 px-10 rounded-lg
-           transition-all duration-100 transform
-           shadow-[0_4px_0_0_rgba(0,0,0,0.3)]
-           hover:translate-y-[-2px] hover:shadow-[0_6px_0_0_rgba(0,0,0,0.3)]
-           active:translate-y-[2px] active:shadow-[0_2px_0_0_rgba(0,0,0,0.3)];
+    @apply font-extrabold text-lg py-4 px-8 rounded-[18px]
+           transform-gpu will-change-transform;
+    min-height: 56px;
+    box-shadow: var(--e-2);
+    transition: transform .34s var(--ease-spring),
+                box-shadow .34s var(--ease-spring),
+                filter .2s ease;
   }
+  .btn-kahoot-main:hover  { transform: translateY(-1px); box-shadow: var(--e-3); }
+  .btn-kahoot-main:active { transform: scale(.965); box-shadow: var(--e-1); }
 
   .btn-create {
-    @apply btn-kahoot-main bg-[#26890c] text-white;
+    @apply btn-kahoot-main text-white;
+    background: linear-gradient(145deg, var(--c-rose-400), var(--c-rose-500));
+    box-shadow: var(--e-glow-rose);
   }
 
   .btn-join {
-    @apply btn-kahoot-main bg-[#0542b9] text-white;
+    @apply btn-kahoot-main text-white;
+    background: linear-gradient(145deg, #8b6ae0, #6b46c1);
   }
 
   .btn-start {
-    @apply btn-kahoot-main bg-[#26890c] text-white text-2xl py-6;
+    @apply btn-kahoot-main text-white text-xl;
+    min-height: 62px;
+    background: linear-gradient(145deg, var(--c-rose-400), var(--c-coral-500));
+    box-shadow: var(--e-glow-rose);
   }
 
-  /* Answer buttons - Kahoot style */
+  /* Boutons de reponse. Les libelles longs etaient tronques par overflow-hidden :
+     break-words + leading-snug les font desormais passer a la ligne. */
   .btn-answer {
-    @apply relative font-bold text-lg md:text-xl py-6 md:py-8 px-4 rounded-lg
-           transition-all duration-75 transform
-           flex items-center justify-center gap-3
-           shadow-[0_6px_0_0_rgba(0,0,0,0.25),inset_0_-2px_0_0_rgba(0,0,0,0.1)]
-           hover:brightness-110 hover:translate-y-[-2px]
-           active:translate-y-[4px] active:shadow-[0_2px_0_0_rgba(0,0,0,0.25)];
+    @apply relative font-bold text-base md:text-lg py-5 md:py-6 px-5 rounded-[20px]
+           flex items-center justify-center gap-3 text-left
+           transform-gpu will-change-transform;
+    min-height: 68px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.3;
+    box-shadow: var(--e-2);
+    transition: transform .34s var(--ease-spring),
+                box-shadow .34s var(--ease-spring),
+                filter .2s ease;
   }
+  .btn-answer:hover  { filter: brightness(1.07); transform: translateY(-1px); box-shadow: var(--e-3); }
+  .btn-answer:active { transform: scale(.97); box-shadow: var(--e-1); }
 
-  .btn-answer-red {
-    @apply btn-answer bg-[#e21b3c];
-  }
-
-  .btn-answer-blue {
-    @apply btn-answer bg-[#1368ce];
-  }
-
-  .btn-answer-yellow {
-    @apply btn-answer bg-[#d89e00] text-gray-900;
-  }
-
-  .btn-answer-green {
-    @apply btn-answer bg-[#26890c];
-  }
+  .btn-answer-red    { @apply btn-answer; background: linear-gradient(145deg, #ef6f93, var(--c-ans-1)); }
+  .btn-answer-blue   { @apply btn-answer; background: linear-gradient(145deg, #9179e2, var(--c-ans-2)); }
+  .btn-answer-yellow { @apply btn-answer; background: linear-gradient(145deg, #f5bc68, var(--c-ans-3)); color: #2b1508; }
+  .btn-answer-green  { @apply btn-answer; background: linear-gradient(145deg, #5cc2a6, var(--c-ans-4)); }
 
   .btn-answer-selected {
-    @apply ring-4 ring-white ring-offset-2 ring-offset-transparent scale-[1.02];
+    @apply scale-[1.015];
+    box-shadow: 0 0 0 3px rgba(255,255,255,.92), var(--e-3);
   }
 
   .btn-answer-disabled {
-    @apply opacity-60 cursor-not-allowed hover:brightness-100 hover:translate-y-0;
+    @apply opacity-50 cursor-not-allowed;
+    filter: saturate(.6);
   }
+  .btn-answer-disabled:hover  { filter: saturate(.6); transform: none; box-shadow: var(--e-2); }
+  .btn-answer-disabled:active { transform: none; }
 
   /* Cards */
   .card-glass {
@@ -117,12 +229,26 @@ body {
            text-center font-bold text-xl md:text-2xl;
   }
 
-  /* Input fields */
+  /* Champs de saisie : surface vitree sombre plutot qu'un bloc blanc opaque,
+     pour rester dans l'ambiance nocturne. font-size 16px minimum, sinon iOS
+     zoome automatiquement a la mise au point. */
   .input-kahoot {
-    @apply w-full bg-white/95 border-4 border-transparent rounded-lg px-5 py-4
-           text-gray-900 text-lg font-semibold placeholder-gray-400
-           focus:outline-none focus:border-[#46178f] focus:ring-4 focus:ring-[#46178f]/30
-           transition-all duration-200;
+    @apply w-full rounded-[16px] px-5 py-4 text-white font-semibold
+           placeholder-white/40 transition-all;
+    font-size: 16px;
+    min-height: 56px;
+    background: rgba(255, 255, 255, .09);
+    border: 1.5px solid var(--s-border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    transition: border-color .24s var(--ease-out), box-shadow .24s var(--ease-out), background .24s ease;
+  }
+  .input-kahoot::placeholder { color: rgba(255,255,255,.42); }
+  .input-kahoot:focus {
+    outline: none;
+    background: rgba(255, 255, 255, .13);
+    border-color: var(--c-rose-400);
+    box-shadow: 0 0 0 4px rgba(232, 85, 127, .22);
   }
 
   /* Room code display */
@@ -148,11 +274,12 @@ body {
   }
 }
 
-/* Countdown circle - Kahoot style */
+/* Minuteur circulaire. La taille etait figee a 100px sans variante
+   responsive : il devenait envahissant sur petit ecran. */
 .countdown-container {
   position: relative;
-  width: 100px;
-  height: 100px;
+  width: clamp(72px, 20vw, 104px);
+  height: clamp(72px, 20vw, 104px);
   margin: 0 auto;
 }
 

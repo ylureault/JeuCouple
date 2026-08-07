@@ -45,7 +45,7 @@ export default function TextReactionBar() {
           className={`
             relative px-2 py-1 rounded-full text-xs font-semibold transition-all
             ${lastClicked === reaction.id
-              ? 'bg-white text-[#46178f] scale-105'
+              ? 'bg-white text-[#a3235e] scale-105'
               : 'bg-white/15 text-white hover:bg-white/25'
             }
           `}

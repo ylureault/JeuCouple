@@ -124,7 +124,7 @@ export default function Game() {
   // No room - redirect to home
   if (!room) {
     return (
-      <div className="min-h-[100dvh] bg-[#46178f] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[#180512] flex items-center justify-center">
         <div className="spinner w-16 h-16" />
       </div>
     );
@@ -138,7 +138,7 @@ export default function Game() {
   // Game started but no question yet - loading
   if (!currentQuestion) {
     return (
-      <div className="min-h-[100dvh] bg-[#46178f] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[#180512] flex items-center justify-center">
         <div className="spinner w-16 h-16" />
       </div>
     );

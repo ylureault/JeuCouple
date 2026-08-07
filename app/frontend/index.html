@@ -3,8 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/heart.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#46178f" />
+    <!-- maximum-scale=1 / user-scalable=no bloquaient le zoom a deux doigts
+         (echec WCAG 1.4.4). Le zoom iOS a la mise au point est evite en
+         donnant 16px minimum aux champs, pas en desactivant le zoom. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#180512" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="description" content="Jeu de questions pour couples - Découvrez à quel point vous vous connaissez !" />
