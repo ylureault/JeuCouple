@@ -265,6 +265,10 @@ export interface ServerToClientEvents {
   // Player connection status
   'game:paused': (data: { disconnectedPlayer: 1 | 2; playerName: string }) => void;
   'game:resumed': (data: { reconnectedPlayer: 1 | 2; playerName: string }) => void;
+  // Mode duel : le gagnant de la manche choisit le theme suivant
+  'duel:choose-theme': (data: ThemeChoiceRequest) => void;      // -> au gagnant
+  'duel:awaiting-theme': (data: ThemeChoiceWaiting) => void;    // -> a l'autre joueur
+  'duel:theme-selected': (data: { category: string; name: string; icon: string; chooserPlayerId: 1 | 2; autoPicked: boolean }) => void;
   // Voice chat
   'voice:offer': (data: VoiceOffer) => void;
   'voice:answer': (data: VoiceAnswer) => void;
@@ -311,13 +315,15 @@ export const QUESTION_TYPE_CONFIG = [
 ] as const;
 
 export interface ClientToServerEvents {
-  'room:create': (data: { playerName: string; gender: Gender; questionCount?: number; categories?: string[]; questionTypes?: string[] }, callback: (response: RoomResponse) => void) => void;
+  'room:create': (data: { playerName: string; gender: Gender; questionCount?: number; categories?: string[]; questionTypes?: string[]; gameMode?: GameMode }, callback: (response: RoomResponse) => void) => void;
   'room:join': (data: { code: string; playerName: string; gender: Gender }, callback: (response: RoomResponse) => void) => void;
   'room:leave': () => void;
   'game:start': (callback: (response: { success: boolean; error?: string }) => void) => void;
   'game:answer': (data: { answer: string }) => void;
   'game:restart': (callback: (response: { success: boolean; error?: string }) => void) => void;
   'game:request-pause': (callback: (response: { success: boolean; paused?: boolean }) => void) => void;
+  // Mode duel : theme choisi par le gagnant de la manche
+  'duel:choose-theme': (data: { category: string }) => void;
   'room:reconnect': (data: { code: string; playerId: 1 | 2 }, callback: (response: RoomResponse) => void) => void;
   'game:reaction': (data: { emoji: ReactionEmoji }) => void;
   'game:text-reaction': (data: { reactionId: TextReactionId }) => void;
@@ -333,6 +339,34 @@ export interface ClientToServerEvents {
   'voice:answer': (data: VoiceAnswer) => void;
   'voice:ice-candidate': (data: IceCandidate) => void;
   'voice:toggle': (data: { enabled: boolean }) => void;
+}
+
+// Modes de jeu.
+// 'classic' : liste de questions fixee au demarrage, la partie se termine.
+// 'duel'    : boucle sans fin. A chaque manche, le gagnant (ou le plus rapide
+//             en cas d'egalite) choisit le theme de la question suivante.
+export type GameMode = 'classic' | 'duel';
+
+// Theme propose au gagnant d'une manche en mode duel.
+export interface ThemeChoiceOption {
+  code: string;
+  name: string;
+  icon: string;
+  color: string;
+  questionCount: number;
+}
+
+export interface ThemeChoiceRequest {
+  options: ThemeChoiceOption[];
+  timeoutSeconds: number;   // au-dela, le serveur tire un theme au hasard
+  roundNumber: number;
+}
+
+export interface ThemeChoiceWaiting {
+  chooserPlayerId: 1 | 2;
+  chooserName: string;
+  reason: 'winner' | 'faster' | 'tiebreak';
+  timeoutSeconds: number;
 }
 
 export interface RoomResponse {

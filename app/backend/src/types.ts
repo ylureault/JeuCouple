@@ -84,10 +84,27 @@ export interface Room {
   player2_name: string | null;
   player1_gender: Gender | null;
   player2_gender: Gender | null;
+  player1_avatar?: string;  // Base64 or URL
+  player2_avatar?: string;
+  player1_theme?: ThemeColor;
+  player2_theme?: ThemeColor;
   status: 'waiting' | 'playing' | 'finished';
   created_at: string;
   last_activity: string;
 }
+
+// Theme colors available
+export const THEME_COLORS = [
+  { id: 'purple', name: 'Violet', primary: '#46178f', secondary: '#6b3fa0' },
+  { id: 'pink', name: 'Rose', primary: '#e91e63', secondary: '#f06292' },
+  { id: 'blue', name: 'Bleu', primary: '#2196f3', secondary: '#64b5f6' },
+  { id: 'green', name: 'Vert', primary: '#4caf50', secondary: '#81c784' },
+  { id: 'orange', name: 'Orange', primary: '#ff9800', secondary: '#ffb74d' },
+  { id: 'red', name: 'Rouge', primary: '#f44336', secondary: '#e57373' },
+  { id: 'teal', name: 'Turquoise', primary: '#009688', secondary: '#4db6ac' },
+  { id: 'indigo', name: 'Indigo', primary: '#3f51b5', secondary: '#7986cb' },
+] as const;
+export type ThemeColor = typeof THEME_COLORS[number]['id'];
 
 export interface Game {
   id: number;
@@ -178,16 +195,19 @@ export interface QuickMessageData {
   timestamp: number;
 }
 
+// Buzz/vibration data
 export interface BuzzData {
   fromPlayerId: 1 | 2;
   timestamp: number;
 }
 
+// Hesitation indicator (player is thinking)
 export interface HesitationData {
   playerId: 1 | 2;
   isHesitating: boolean;
 }
 
+// Kiss counter
 export interface KissData {
   fromPlayerId: 1 | 2;
   totalKisses: number;
@@ -245,6 +265,10 @@ export interface ServerToClientEvents {
   // Player connection status
   'game:paused': (data: { disconnectedPlayer: 1 | 2; playerName: string }) => void;
   'game:resumed': (data: { reconnectedPlayer: 1 | 2; playerName: string }) => void;
+  // Mode duel : le gagnant de la manche choisit le theme suivant
+  'duel:choose-theme': (data: ThemeChoiceRequest) => void;      // -> au gagnant
+  'duel:awaiting-theme': (data: ThemeChoiceWaiting) => void;    // -> a l'autre joueur
+  'duel:theme-selected': (data: { category: string; name: string; icon: string; chooserPlayerId: 1 | 2; autoPicked: boolean }) => void;
   // Voice chat
   'voice:offer': (data: VoiceOffer) => void;
   'voice:answer': (data: VoiceAnswer) => void;
@@ -253,14 +277,53 @@ export interface ServerToClientEvents {
   'error': (data: { message: string }) => void;
 }
 
+// Available question categories
+export const QUESTION_CATEGORIES = [
+  'couple',
+  'sexy',
+  'coquin',
+  'habitudes',
+  'souvenirs',
+  'projets',
+  'intime',
+  'fun',
+  'preferences',
+  'communication'
+] as const;
+export type QuestionCategory = typeof QUESTION_CATEGORIES[number];
+
+// Question type configuration for room creation
+export const QUESTION_TYPE_CONFIG = [
+  { id: 'A', label: 'QCM Partenaire', emoji: '🎯', description: 'Deviner la réponse de ton partenaire' },
+  { id: 'B', label: 'QCM Commun', emoji: '🤝', description: 'Répondre ensemble à la même question' },
+  { id: 'C', label: 'Texte libre', emoji: '✍️', description: 'Écrire une réponse personnalisée' },
+  { id: 'D', label: 'Échelle 1-10', emoji: '📊', description: 'Noter sur une échelle de 1 à 10' },
+  { id: 'E', label: 'Choix binaire', emoji: '⚖️', description: 'Choisir entre deux options' },
+  { id: 'F', label: 'Qui de nous', emoji: '👫', description: 'Désigner toi, ton partenaire ou les deux' },
+  { id: 'G', label: 'Vrai ou Faux', emoji: '✅', description: 'Deviner si c\'est vrai ou faux' },
+  { id: 'H', label: 'Culture G.', emoji: '🧠', description: 'Questions de culture générale' },
+  { id: 'J', label: 'Date exacte', emoji: '📅', description: 'Deviner la date d\'un souvenir' },
+  { id: 'K', label: 'Il y a combien?', emoji: '⏰', description: 'Estimer le temps écoulé' },
+  { id: 'L', label: 'Avant/Après', emoji: '↔️', description: 'Ordre chronologique de 2 événements' },
+  { id: 'M', label: 'Top 3', emoji: '🏆', description: 'Classer 3 éléments par préférence' },
+  { id: 'N', label: 'Plus ou Moins', emoji: '🔢', description: 'Deviner si c\'est plus ou moins' },
+  { id: 'O', label: 'Scénario', emoji: '🎭', description: 'Que ferait ton partenaire si...' },
+  { id: 'P', label: 'Superpouvoir', emoji: '🦸', description: 'Quel pouvoir choisirait-il/elle?' },
+  { id: 'Q', label: 'Humeur', emoji: '😊', description: 'Deviner l\'humeur de l\'autre' },
+  { id: 'R', label: 'Pet Peeves', emoji: '😤', description: 'Ce qui agace ton partenaire' },
+  { id: 'S', label: 'Hot Take', emoji: '🔥', description: 'Opinion controversée à deviner' },
+] as const;
+
 export interface ClientToServerEvents {
-  'room:create': (data: { playerName: string; gender: Gender; questionCount?: number; categories?: string[]; questionTypes?: string[] }, callback: (response: RoomResponse) => void) => void;
+  'room:create': (data: { playerName: string; gender: Gender; questionCount?: number; categories?: string[]; questionTypes?: string[]; gameMode?: GameMode }, callback: (response: RoomResponse) => void) => void;
   'room:join': (data: { code: string; playerName: string; gender: Gender }, callback: (response: RoomResponse) => void) => void;
   'room:leave': () => void;
   'game:start': (callback: (response: { success: boolean; error?: string }) => void) => void;
   'game:answer': (data: { answer: string }) => void;
   'game:restart': (callback: (response: { success: boolean; error?: string }) => void) => void;
   'game:request-pause': (callback: (response: { success: boolean; paused?: boolean }) => void) => void;
+  // Mode duel : theme choisi par le gagnant de la manche
+  'duel:choose-theme': (data: { category: string }) => void;
   'room:reconnect': (data: { code: string; playerId: 1 | 2 }, callback: (response: RoomResponse) => void) => void;
   'game:reaction': (data: { emoji: ReactionEmoji }) => void;
   'game:text-reaction': (data: { reactionId: TextReactionId }) => void;
@@ -276,6 +339,34 @@ export interface ClientToServerEvents {
   'voice:answer': (data: VoiceAnswer) => void;
   'voice:ice-candidate': (data: IceCandidate) => void;
   'voice:toggle': (data: { enabled: boolean }) => void;
+}
+
+// Modes de jeu.
+// 'classic' : liste de questions fixee au demarrage, la partie se termine.
+// 'duel'    : boucle sans fin. A chaque manche, le gagnant (ou le plus rapide
+//             en cas d'egalite) choisit le theme de la question suivante.
+export type GameMode = 'classic' | 'duel';
+
+// Theme propose au gagnant d'une manche en mode duel.
+export interface ThemeChoiceOption {
+  code: string;
+  name: string;
+  icon: string;
+  color: string;
+  questionCount: number;
+}
+
+export interface ThemeChoiceRequest {
+  options: ThemeChoiceOption[];
+  timeoutSeconds: number;   // au-dela, le serveur tire un theme au hasard
+  roundNumber: number;
+}
+
+export interface ThemeChoiceWaiting {
+  chooserPlayerId: 1 | 2;
+  chooserName: string;
+  reason: 'winner' | 'faster' | 'tiebreak';
+  timeoutSeconds: number;
 }
 
 export interface RoomResponse {

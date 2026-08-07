@@ -17,6 +17,9 @@ import { REACTION_EMOJIS, TEXT_REACTIONS, SOUND_REACTIONS, QUICK_MESSAGES } from
 import * as roomModel from '../models/room.js';
 import * as gameModel from '../models/game.js';
 import * as questionModel from '../models/question.js';
+import * as categoryModel from '../models/category.js';
+import { getGameMode } from './gameModes.js';
+import type { ModeDecision } from './gameModes.js';
 
 interface AnswerData {
   answer1?: string;
@@ -71,6 +74,15 @@ interface GameState {
   nextQuestionTimer: ReturnType<typeof setTimeout> | null;
   // Kiss counter for the game
   kissCount?: { player1: number; player2: number };
+  // --- Mode duel ---
+  // Gagnant de la manche qui vient de s'achever (null si egalite parfaite).
+  roundWinner: 1 | 2 | null;
+  roundWinners: (1 | 2 | null)[];
+  roundAgreements: boolean[];
+  // Joueur a qui l'on a rendu la main pour choisir le theme suivant.
+  awaitingThemeFrom: 1 | 2 | null;
+  // Filet de securite : si le joueur ne choisit pas, on tire un theme au sort.
+  themeChoiceTimer: ReturnType<typeof setTimeout> | null;
 }
 
 interface PlayerConnection {
@@ -81,7 +93,7 @@ interface PlayerConnection {
 
 const activeGames = new Map<string, GameState>();
 const playerConnections = new Map<string, PlayerConnection>();
-const roomSettings = new Map<string, { questionCount: number; categories: string[]; questionTypes: string[] }>();
+const roomSettings = new Map<string, { questionCount: number; categories: string[]; questionTypes: string[]; gameMode: string }>();
 
 const DEFAULT_QUESTION_COUNT = 10;
 
@@ -154,7 +166,8 @@ export function setupSocketHandlers(
         const categories = data.categories && data.categories.length > 0 ? data.categories : [];
         // If no question types specified or empty array, use all types (auto mode)
         const questionTypes = data.questionTypes && data.questionTypes.length > 0 ? data.questionTypes : [];
-        roomSettings.set(room.code, { questionCount, categories, questionTypes });
+        const gameMode = data.gameMode === 'duel' ? 'duel' : 'classic';
+        roomSettings.set(room.code, { questionCount, categories, questionTypes, gameMode });
 
         callback({ success: true, room, playerId: 1 });
       } catch (error) {
@@ -414,7 +427,11 @@ export function setupSocketHandlers(
       const questionCount = settings?.questionCount || DEFAULT_QUESTION_COUNT;
       const categories = settings?.categories || [];
       const questionTypes = settings?.questionTypes || [];
-      const questions = questionModel.getMixedQuestions(questionCount, categories, questionTypes);
+      // Chaque mode decide de son amorcage : le classique charge toute la liste,
+      // les modes en boucle n'en chargent qu'une et tirent la suite au fil des manches.
+      const startMode = getGameMode(settings?.gameMode);
+      const initialCount = startMode.initialQuestionCount({ questionCount, categories, questionTypes });
+      const questions = questionModel.getMixedQuestions(initialCount, categories, questionTypes);
       if (questions.length === 0) {
         callback({ success: false, error: 'No questions available' });
         return;
@@ -447,6 +464,12 @@ export function setupSocketHandlers(
           perfectMatches: 0
         },
         questionHistory: [],
+        // Etat consomme par le registre de modes (gameModes.ts)
+        roundWinner: null,
+        roundWinners: [],
+        roundAgreements: [],
+        awaitingThemeFrom: null,
+        themeChoiceTimer: null,
         // Pause/resume state - both players connected at start
         paused: false,
         manualPause: false,
@@ -581,6 +604,19 @@ export function setupSocketHandlers(
 
     // Send reaction emoji to partner
     // Manual pause/resume requested by a player
+    // Mode duel : le gagnant de la manche choisit le theme suivant.
+    socket.on('duel:choose-theme', (data: { category: string }) => {
+      const connection = playerConnections.get(socket.id);
+      if (!connection) return;
+      const gameState = activeGames.get(connection.roomCode);
+      if (!gameState) return;
+      // Seul le joueur a qui l'on a rendu la main peut choisir, et une seule fois.
+      if (gameState.awaitingThemeFrom !== connection.playerId) return;
+      if (!data || typeof data.category !== 'string') return;
+      if (!categoryModel.getCategoryByCode(data.category)) return;
+      resolveThemeChoice(io, connection.roomCode, gameState, data.category, false);
+    });
+
     socket.on('game:request-pause', (callback) => {
       const connection = playerConnections.get(socket.id);
       if (!connection) { callback?.({ success: false }); return; }
@@ -1183,6 +1219,22 @@ function revealAnswers(
     gamification.streak2 = 0;
   }
 
+  // --- Resultat de la manche, consomme par le registre de modes -------------
+  // Le gagnant est celui qui marque le plus ; a egalite de points, le plus
+  // rapide l'emporte. Si aucun des deux ne se detache, la manche est nulle et
+  // le mode decidera quoi faire (le duel alterne alors la main).
+  let roundWinner: 1 | 2 | null = null;
+  if (points1 > points2) {
+    roundWinner = 1;
+  } else if (points2 > points1) {
+    roundWinner = 2;
+  } else if (answers.time1 && answers.time2 && answers.time1 !== answers.time2) {
+    roundWinner = answers.time1 < answers.time2 ? 1 : 2;
+  }
+  gameState.roundWinner = roundWinner;
+  gameState.roundWinners.push(roundWinner);
+  gameState.roundAgreements.push(correct);
+
   // Apply joker penalty (overrides no answer if both)
   if (isJoker1) {
     points1 = JOKER_PENALTY;
@@ -1318,31 +1370,181 @@ function scheduleNextQuestion(
 
     // Check if unlimited mode (question count = 50)
     const settings = roomSettings.get(roomCode);
-    const isUnlimitedMode = settings?.questionCount === UNLIMITED_MODE_QUESTION_COUNT;
-    const pointGap = Math.abs(gameState.scores.player1 - gameState.scores.player2);
+    // L'enchainement n'est plus decide ici : chaque mode de jeu exprime sa
+    // regle dans gameModes.ts, le moteur se contente d'executer la decision.
+    // Ajouter un nouveau jeu de couple ne demande donc pas de toucher a la boucle.
+    const mode = getGameMode(settings?.gameMode);
+    const decision = mode.afterRound({
+      roomCode,
+      questionIndex: gameState.currentQuestionIndex,
+      loadedQuestions: gameState.questions.length,
+      scores: gameState.scores,
+      roundWinner: gameState.roundWinner,
+      roundWinners: gameState.roundWinners,
+      roundAgreements: gameState.roundAgreements,
+      settings: {
+        questionCount: settings?.questionCount ?? DEFAULT_QUESTION_COUNT,
+        categories: settings?.categories ?? [],
+        questionTypes: settings?.questionTypes ?? [],
+      },
+    });
 
-    // In unlimited mode, check for 200 point gap
-    if (isUnlimitedMode && pointGap >= UNLIMITED_MODE_GAP_TO_WIN) {
-      finishGame(io, roomCode, gameState);
-    } else if (gameState.currentQuestionIndex >= gameState.questions.length) {
-      // If we ran out of questions in unlimited mode, load more
-      if (isUnlimitedMode) {
-        const categories = settings?.categories || [];
-        const questionTypes = settings?.questionTypes || [];
-        const moreQuestions = questionModel.getMixedQuestions(20, categories, questionTypes);
-        if (moreQuestions.length > 0) {
-          gameState.questions = gameState.questions.concat(moreQuestions);
-          sendQuestion(io, roomCode, gameState);
-        } else {
-          finishGame(io, roomCode, gameState);
-        }
-      } else {
-        finishGame(io, roomCode, gameState);
-      }
-    } else {
-      sendQuestion(io, roomCode, gameState);
-    }
+    applyModeDecision(io, roomCode, gameState, decision);
   }, 10000); // 10 seconds to view results
+}
+
+const THEME_CHOICE_TIMEOUT_SECONDS = 20;
+const THEME_CHOICE_OPTIONS = 4;
+
+/**
+ * Rend la main a un joueur pour qu'il choisisse le theme de la manche suivante.
+ * Un minuteur garantit que la partie repart meme si le joueur ne repond pas :
+ * sans ce filet, une deconnexion au mauvais moment figerait le duel.
+ */
+function requestThemeChoice(
+  io: Server,
+  roomCode: string,
+  gameState: GameState,
+  chooser: 1 | 2
+): void {
+  const settings = roomSettings.get(roomCode);
+  const allowed = settings?.categories ?? [];
+
+  // On ne propose que des themes qui contiennent effectivement des questions.
+  const stats = categoryModel.getCategoryStats();
+  let pool = categoryModel.getActiveCategories()
+    .filter(c => (stats[c.code] ?? 0) > 0)
+    .filter(c => allowed.length === 0 || allowed.includes(c.code));
+
+  if (pool.length === 0) {
+    // Aucun theme exploitable : on enchaine sans choix plutot que de bloquer.
+    applyModeDecision(io, roomCode, gameState, { action: 'load-more', count: 5 });
+    return;
+  }
+
+  // Tirage sans remise pour varier les propositions d'une manche a l'autre.
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  const options = shuffled.slice(0, THEME_CHOICE_OPTIONS).map(c => ({
+    code: c.code,
+    name: c.name,
+    icon: c.icon,
+    color: c.color,
+    questionCount: stats[c.code] ?? 0,
+  }));
+
+  gameState.awaitingThemeFrom = chooser;
+
+  const room = roomModel.getRoomByCode(roomCode);
+  const chooserName = (chooser === 1 ? room?.player1_name : room?.player2_name) || `Joueur ${chooser}`;
+  const reason: 'winner' | 'faster' | 'tiebreak' =
+    gameState.roundWinner === chooser ? 'winner' : 'tiebreak';
+
+  for (const [, conn] of playerConnections) {
+    if (conn.roomCode !== roomCode) continue;
+    if (conn.playerId === chooser) {
+      conn.socket.emit('duel:choose-theme', {
+        options,
+        timeoutSeconds: THEME_CHOICE_TIMEOUT_SECONDS,
+        roundNumber: gameState.currentQuestionIndex + 1,
+      });
+    } else {
+      conn.socket.emit('duel:awaiting-theme', {
+        chooserPlayerId: chooser,
+        chooserName,
+        reason,
+        timeoutSeconds: THEME_CHOICE_TIMEOUT_SECONDS,
+      });
+    }
+  }
+
+  if (gameState.themeChoiceTimer) clearTimeout(gameState.themeChoiceTimer);
+  gameState.themeChoiceTimer = setTimeout(() => {
+    if (gameState.awaitingThemeFrom === null) return;   // deja choisi entre-temps
+    const auto = options[Math.floor(Math.random() * options.length)];
+    resolveThemeChoice(io, roomCode, gameState, auto.code, true);
+  }, THEME_CHOICE_TIMEOUT_SECONDS * 1000);
+}
+
+/** Applique le theme retenu (choisi par le joueur ou tire au sort) et relance. */
+function resolveThemeChoice(
+  io: Server,
+  roomCode: string,
+  gameState: GameState,
+  category: string,
+  autoPicked: boolean
+): void {
+  const chooser = gameState.awaitingThemeFrom;
+  if (chooser === null) return;   // garde-fou contre un double declenchement
+
+  gameState.awaitingThemeFrom = null;
+  if (gameState.themeChoiceTimer) {
+    clearTimeout(gameState.themeChoiceTimer);
+    gameState.themeChoiceTimer = null;
+  }
+
+  const info = categoryModel.getCategoryByCode(category);
+  io.to(roomCode).emit('duel:theme-selected', {
+    category,
+    name: info?.name ?? category,
+    icon: info?.icon ?? '❓',
+    chooserPlayerId: chooser,
+    autoPicked,
+  });
+
+  applyModeDecision(io, roomCode, gameState, { action: 'next-from-category', category });
+}
+
+/** Execute la decision prise par le mode de jeu apres une manche. */
+function applyModeDecision(
+  io: Server,
+  roomCode: string,
+  gameState: GameState,
+  decision: ModeDecision
+): void {
+  const settings = roomSettings.get(roomCode);
+  const categories = settings?.categories ?? [];
+  const questionTypes = settings?.questionTypes ?? [];
+
+  switch (decision.action) {
+    case 'finish':
+      finishGame(io, roomCode, gameState);
+      return;
+
+    case 'next-question':
+      sendQuestion(io, roomCode, gameState);
+      return;
+
+    case 'load-more': {
+      const more = questionModel.getMixedQuestions(decision.count, categories, questionTypes);
+      if (more.length === 0) {
+        finishGame(io, roomCode, gameState);
+        return;
+      }
+      gameState.questions = gameState.questions.concat(more);
+      sendQuestion(io, roomCode, gameState);
+      return;
+    }
+
+    case 'next-from-category': {
+      // Le mode impose le theme (escalade). On retombe sur les themes du salon
+      // si la categorie demandee est epuisee, pour ne jamais bloquer la partie.
+      const picked = questionModel.getMixedQuestions(1, [decision.category], questionTypes);
+      const fallback = picked.length > 0
+        ? picked
+        : questionModel.getMixedQuestions(1, categories, questionTypes);
+      if (fallback.length === 0) {
+        finishGame(io, roomCode, gameState);
+        return;
+      }
+      gameState.questions = gameState.questions.concat(fallback);
+      sendQuestion(io, roomCode, gameState);
+      return;
+    }
+
+    case 'await-theme-choice':
+      requestThemeChoice(io, roomCode, gameState, decision.chooser);
+      return;
+  }
 }
 
 function calculateBasePoints(
