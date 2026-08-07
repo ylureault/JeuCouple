@@ -1,0 +1,43 @@
+/**
+ * Reglage de table par mode de jeu.
+ *
+ * Les types de questions sont restreints volontairement pour que chaque session
+ * soit deterministe (meme bareme, meme cadence) et pour tenir la duree totale :
+ * le type E (choix binaire) revele en 7 s, le type C (reponse libre) en 14 s.
+ */
+export interface ModeCfg {
+  id: string;
+  /** Libelle attendu cote serveur (registre gameModes.ts). */
+  label: string;
+  questionTypes: string[];
+  categories?: string[];
+  questionCount?: number;
+  /** Delai attendu entre la revelation et la manche suivante, en secondes. */
+  revealSeconds: number;
+}
+
+export const MODES: ModeCfg[] = [
+  { id: 'classic', label: 'Partie classique', questionTypes: ['E'], questionCount: 8, revealSeconds: 7 },
+  { id: 'duel', label: 'Duel sans fin', questionTypes: ['E'], revealSeconds: 7 },
+  { id: 'escalade', label: 'Escalade', questionTypes: ['E'], revealSeconds: 7 },
+  { id: 'complices', label: 'Complices', questionTypes: ['E'], revealSeconds: 7 },
+  { id: 'sudden_death', label: 'Mort subite', questionTypes: ['E'], revealSeconds: 7 },
+  // Le mode "a l'envers" fabrique ses manches a partir de questions a options :
+  // seuls les types A et B en portent, d'ou la restriction.
+  { id: 'inverse', label: "A l'envers", questionTypes: ['A', 'B'], revealSeconds: 7 },
+  { id: 'envies', label: 'Envies express', questionTypes: ['S'], revealSeconds: 7 },
+  // Les 20 questions "petits noms" sont toutes de type C : revelation a 14 s.
+  { id: 'petits_noms', label: 'Petits noms', questionTypes: ['C'], revealSeconds: 14 },
+  { id: 'mix', label: 'Mix total', questionTypes: ['E'], revealSeconds: 7 },
+];
+
+export function cfg(id: string): ModeCfg {
+  const m = MODES.find((x) => x.id === id);
+  if (!m) throw new Error(`mode inconnu dans la configuration de test : ${id}`);
+  return m;
+}
+
+/** Prefixe de scenario, pour un rapport lisible mode par mode. */
+export function P(m: ModeCfg): string {
+  return `[${m.label}]`;
+}
