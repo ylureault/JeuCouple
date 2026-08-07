@@ -350,7 +350,7 @@ export interface ClientToServerEvents {
 // 'classic' : liste de questions fixee au demarrage, la partie se termine.
 // 'duel'    : boucle sans fin. A chaque manche, le gagnant (ou le plus rapide
 //             en cas d'egalite) choisit le theme de la question suivante.
-export type GameMode = 'classic' | 'duel' | 'escalade' | 'complices' | 'sudden_death';
+export type GameMode = 'classic' | 'duel' | 'escalade' | 'complices' | 'sudden_death' | 'inverse';
 
 // Catalogue affiche au joueur. Doit rester aligne avec le registre serveur
 // (backend/src/services/gameModes.ts), qui reste la source de verite des regles.
@@ -392,6 +392,14 @@ export const GAME_MODES: {
     tagline: 'Vous contre le jeu',
     description: "Aucun adversaire : enchainez les accords. Un seul desaccord remet la serie a zero.",
     icon: '🤝',
+    endless: true,
+  },
+  {
+    id: 'inverse',
+    label: "A l'envers",
+    tagline: 'La reponse avant la question',
+    description: "On vous montre une reponse : retrouvez de quelle question elle vient.",
+    icon: '🔄',
     endless: true,
   },
   {

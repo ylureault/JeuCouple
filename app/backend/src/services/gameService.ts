@@ -1626,7 +1626,66 @@ function applyModeDecision(
     case 'await-theme-choice':
       requestThemeChoice(io, roomCode, gameState, decision.chooser);
       return;
+
+    case 'next-inverted': {
+      const inverted = buildInvertedQuestion(categories, questionTypes);
+      if (!inverted) {
+        // Pas assez de matiere pour fabriquer une manche a l'envers :
+        // on enchaine normalement plutot que d'interrompre la partie.
+        applyModeDecision(io, roomCode, gameState, { action: 'load-more', count: 5 });
+        return;
+      }
+      gameState.questions = gameState.questions.concat(inverted);
+      sendQuestion(io, roomCode, gameState);
+      return;
+    }
   }
+}
+
+const INVERTED_CHOICES = 4;
+
+/**
+ * Fabrique une manche "a l'envers" : on affiche une reponse possible et les
+ * joueurs doivent retrouver de quelle question elle provient.
+ *
+ * La manche est produite comme une question de type H (QCM avec bonne reponse),
+ * ce qui la rend jouable avec l'interface existante sans ecran dedie.
+ * Les leurres sont d'autres intitules du catalogue, pour que le choix demande
+ * une vraie lecture et pas une elimination par le style.
+ */
+function buildInvertedQuestion(categories: string[], questionTypes: string[]): Question[] | null {
+  // On tire large puis on filtre : seules les questions a options portent une
+  // reponse affichable telle quelle.
+  const pool = questionModel
+    .getMixedQuestions(40, categories, questionTypes)
+    .filter(q => Array.isArray(q.options) && q.options.length >= 2);
+
+  // Il faut la question source plus INVERTED_CHOICES-1 leurres, tous distincts.
+  const distinct = new Map<string, Question>();
+  for (const q of pool) distinct.set(q.text, q);
+  const usable = [...distinct.values()];
+  if (usable.length < INVERTED_CHOICES) return null;
+
+  const shuffled = usable.sort(() => Math.random() - 0.5);
+  const source = shuffled[0];
+  const answer = source.options![Math.floor(Math.random() * source.options!.length)];
+
+  const decoys = shuffled.slice(1, INVERTED_CHOICES).map(q => q.text);
+  const options = [source.text, ...decoys].sort(() => Math.random() - 0.5);
+
+  // La manche est persistee (inactive) : answers.question_id porte une cle
+  // etrangere vers questions(id), un identifiant fabrique ferait echouer
+  // l'enregistrement de chaque reponse.
+  const created = questionModel.createSyntheticQuestion({
+    type: 'H',
+    category: source.category,
+    text: `« ${answer} »\n\nDe quelle question cette réponse vient-elle ?`,
+    options,
+    correct_answer: source.text,
+    timer: 30,
+  });
+
+  return [created];
 }
 
 function calculateBasePoints(

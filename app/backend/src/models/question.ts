@@ -170,6 +170,32 @@ export function createQuestion(question: Omit<Question, 'id' | 'active'>): Quest
   return getQuestionById(result.lastInsertRowid as number)!;
 }
 
+/**
+ * Enregistre une question fabriquee a la volee (mode "A l'envers").
+ *
+ * Elle doit exister en base : answers.question_id porte une cle etrangere vers
+ * questions(id) et les cles etrangeres sont actives, donc un identifiant
+ * synthetique ferait echouer l'enregistrement de chaque reponse.
+ * Elle est inserte inactive pour ne jamais ressortir dans un tirage normal.
+ */
+export function createSyntheticQuestion(question: Omit<Question, 'id' | 'active'>): Question {
+  const result = db.prepare(`
+    INSERT INTO questions (type, category, text, options, correct_answer, timer, active)
+    VALUES (?, ?, ?, ?, ?, ?, 0)
+  `).run(
+    question.type,
+    question.category,
+    question.text,
+    question.options ? JSON.stringify(question.options) : null,
+    question.correct_answer ?? null,
+    question.timer || 30
+  );
+
+  const created = getQuestionById(result.lastInsertRowid as number)!;
+  // getQuestionById renvoie active=false ; le moteur doit pouvoir la jouer.
+  return { ...created, active: true };
+}
+
 export function updateQuestion(id: number, question: Partial<Omit<Question, 'id'>>): Question | null {
   const existing = getQuestionById(id);
   if (!existing) return null;

@@ -40,7 +40,8 @@ export type ModeDecision =
   | { action: 'load-more'; count: number }               // recharger puis enchainer
   | { action: 'finish'; reason?: string }                // terminer la partie
   | { action: 'await-theme-choice'; chooser: 1 | 2 }     // rendre la main a un joueur
-  | { action: 'next-from-category'; category: string };  // imposer le theme suivant
+  | { action: 'next-from-category'; category: string }   // imposer le theme suivant
+  | { action: 'next-inverted' };                         // manche a l'envers
 
 export interface GameModeDefinition {
   id: string;
@@ -201,12 +202,30 @@ const suddenDeath: GameModeDefinition = {
   },
 };
 
+/**
+ * Mode inverse : on montre la reponse, il faut retrouver la question.
+ * Le moteur fabrique la manche a partir d'une vraie question du catalogue :
+ * une de ses reponses possibles devient l'enonce, et les propositions sont
+ * quatre intitules de questions dont un seul est le bon.
+ * Mecanique propre : le sens de lecture du jeu est retourne.
+ */
+const inverse: GameModeDefinition = {
+  id: 'inverse',
+  label: 'A l\'envers',
+  description: "On vous montre une reponse : retrouvez de quelle question elle vient.",
+  icon: '🔄',
+  endless: true,
+  initialQuestionCount: () => 1,
+  afterRound: () => ({ action: 'next-inverted' }),
+};
+
 const MODES: Record<string, GameModeDefinition> = {
   [classic.id]: classic,
   [duel.id]: duel,
   [escalade.id]: escalade,
   [complices.id]: complices,
   [suddenDeath.id]: suddenDeath,
+  [inverse.id]: inverse,
 };
 
 export function getGameMode(id: string | undefined): GameModeDefinition {

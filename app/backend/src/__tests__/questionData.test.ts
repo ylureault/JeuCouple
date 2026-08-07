@@ -116,6 +116,37 @@ describe('Contenu des questions', () => {
     expect(broken).toEqual([]);
   });
 
+  it('ne repete pas le meme enonce dans une meme categorie', () => {
+    // Un enonce generique repete donne au joueur l'impression de retomber
+    // toujours sur la meme question : "Tu preferes..." apparaissait 155 fois,
+    // seules les deux options changeant.
+    const seen = new Map<string, number>();
+    for (const { q } of questions) {
+      const key = `${q.category}::${q.text}`;
+      seen.set(key, (seen.get(key) ?? 0) + 1);
+    }
+    const repeated = [...seen.entries()].filter(([, n]) => n > 1).map(([k]) => k);
+    expect(repeated).toEqual([]);
+  });
+
+  it('donne deux emojis aux choix visuels (type I)', () => {
+    const broken = questions
+      .filter(({ q }) => q.type === 'I')
+      .filter(({ q }) => !(q as { emoji_a?: string }).emoji_a || !(q as { emoji_b?: string }).emoji_b)
+      .map(({ file, q }) => `${file}: ${q.text}`);
+    expect(broken).toEqual([]);
+  });
+
+  it('ne laisse aucune coquille d\'accent dans les enonces', () => {
+    // 405 enonces du seed etaient ecrits sans accents ("ideal", "apres",
+    // "preferes"), ce qui se voyait immediatement en jeu.
+    const missing = /\b(ideal|ideale|apres|preferes?|reve|experience|premiere|serieux|decris|societe|serie)\b/i;
+    const broken = questions
+      .filter(({ q }) => missing.test(q.text))
+      .map(({ file, q }) => `${file}: ${q.text}`);
+    expect(broken).toEqual([]);
+  });
+
   it('donne un minuteur exploitable a chaque question', () => {
     const broken = questions
       .filter(({ q }) => typeof q.timer !== 'number' || q.timer < 5 || q.timer > 120)
