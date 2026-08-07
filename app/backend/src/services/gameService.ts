@@ -91,6 +91,28 @@ interface PlayerConnection {
   playerId: 1 | 2;
 }
 
+/**
+ * Rate-limiting (audit securite, style impose par le coach : limites
+ * genereuses, drop silencieux, jamais de message punitif en pleine partie).
+ * Fenetre glissante par cle ip|evenement.
+ */
+const rateBuckets = new Map<string, { count: number; resetAt: number }>();
+function rateAllow(key: string, limit: number, windowMs: number): boolean {
+  const now = Date.now();
+  const b = rateBuckets.get(key);
+  if (!b || now >= b.resetAt) {
+    rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  b.count++;
+  return b.count <= limit;
+}
+// Purge periodique pour ne pas accumuler les cles mortes.
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, b] of rateBuckets) if (now >= b.resetAt) rateBuckets.delete(k);
+}, 60_000).unref();
+
 const activeGames = new Map<string, GameState>();
 const playerConnections = new Map<string, PlayerConnection>();
 const roomSettings = new Map<string, { questionCount: number; categories: string[]; questionTypes: string[]; gameMode: string }>();
@@ -184,7 +206,9 @@ export function setupSocketHandlers(
           : 'classic';
         roomSettings.set(room.code, { questionCount, categories, questionTypes, gameMode });
 
-        callback({ success: true, room, playerId: 1 });
+        // Jeton secret : seule preuve d'appartenance acceptee au reconnect.
+        const sessionToken = roomModel.issueSessionToken(room.id, 1);
+        callback({ success: true, room, playerId: 1, sessionToken });
       } catch (error) {
         callback({ success: false, error: 'Failed to create room' });
       }
@@ -193,6 +217,13 @@ export function setupSocketHandlers(
     // Join room
     socket.on('room:join', (data, callback) => {
       try {
+        // Frein a l'enumeration des codes de salon (audit securite) :
+        // 15 tentatives/minute par IP suffisent tres largement a un humain.
+        const ip = socket.handshake.address || 'unknown';
+        if (!rateAllow(`${ip}|join`, 15, 60_000)) {
+          callback({ success: false, error: 'Trop de tentatives, reessaie dans une minute' });
+          return;
+        }
         const room = roomModel.joinRoom(data.code, data.playerName, data.gender);
 
         if (!room) {
@@ -215,7 +246,8 @@ export function setupSocketHandlers(
           gender: data.gender
         });
 
-        callback({ success: true, room, playerId: 2 });
+        const sessionToken = roomModel.issueSessionToken(room.id, 2);
+        callback({ success: true, room, playerId: 2, sessionToken });
       } catch (error) {
         callback({ success: false, error: 'Failed to join room' });
       }
@@ -230,10 +262,23 @@ export function setupSocketHandlers(
           return;
         }
 
+        const ip = socket.handshake.address || 'unknown';
+        if (!rateAllow(`${ip}|reconnect`, 20, 60_000)) {
+          callback({ success: false, error: 'Trop de tentatives, reessaie dans une minute' });
+          return;
+        }
+
         const room = roomModel.getRoomByCode(data.code);
 
         if (!room) {
           callback({ success: false, error: 'Room not found' });
+          return;
+        }
+
+        // Le jeton remis au join est la seule preuve d'appartenance : sans
+        // lui, connaitre un code suffisait a voler la place d'un joueur.
+        if (!roomModel.verifySessionToken(room.id, data.playerId, data.sessionToken)) {
+          callback({ success: false, error: 'Session invalide pour ce salon' });
           return;
         }
 
@@ -510,24 +555,41 @@ export function setupSocketHandlers(
     });
 
     // Answer question
-    socket.on('game:answer', (data) => {
+    socket.on('game:answer', (data, callback) => {
+      // Ack explicite (arbitrage TL-3 + Secu 7 + coach) : une reponse refusee
+      // est DITE au joueur — on ne tronque jamais une confession en silence.
+      const ack = (accepted: boolean, error?: string) => {
+        if (typeof callback === 'function') callback({ accepted, error });
+      };
+
       const connection = playerConnections.get(socket.id);
-      if (!connection) return;
+      if (!connection) { ack(false, 'Connexion au salon perdue'); return; }
+
+      if (typeof data?.answer !== 'string' || data.answer.length === 0) {
+        ack(false, 'Reponse vide ou invalide');
+        return;
+      }
+      if (data.answer.length > 500) {
+        ack(false, 'Reponse trop longue (500 caracteres maximum)');
+        return;
+      }
 
       const gameState = activeGames.get(connection.roomCode);
-      if (!gameState) return;
+      if (!gameState) { ack(false, 'Aucune partie en cours'); return; }
 
       console.log(`[ANSWER] Player ${connection.playerId} answering - Room: ${connection.roomCode}, Phase: ${gameState.phase}, Question: ${gameState.currentQuestionIndex + 1}`);
 
       // Only accept answers in question phase
       if (gameState.phase !== 'question') {
         console.log(`[ANSWER] REJECTED - Phase is ${gameState.phase}, not question`);
+        ack(false, 'La question est deja terminee');
         return;
       }
 
       // Don't accept answers if game is paused
       if (gameState.paused) {
         console.log('[ANSWER] REJECTED - Game paused');
+        ack(false, 'La partie est en pause');
         return;
       }
 
@@ -540,13 +602,16 @@ export function setupSocketHandlers(
       // Prevent duplicate answers from same player
       if (connection.playerId === 1 && questionAnswers.answer1 !== undefined) {
         console.log('[ANSWER] REJECTED - Duplicate from player 1');
+        ack(false, 'Reponse deja enregistree');
         return;
       }
       if (connection.playerId === 2 && questionAnswers.answer2 !== undefined) {
         console.log('[ANSWER] REJECTED - Duplicate from player 2');
+        ack(false, 'Reponse deja enregistree');
         return;
       }
-      console.log(`[ANSWER] ACCEPTED - Player ${connection.playerId}, answer: ${data.answer?.substring(0, 20)}...`);
+      console.log(`[ANSWER] ACCEPTED - Player ${connection.playerId}`);
+      ack(true);
 
       if (connection.playerId === 1) {
         questionAnswers.answer1 = data.answer;
@@ -765,6 +830,7 @@ export function setupSocketHandlers(
     });
 
     socket.on('game:reaction', (data) => {
+      if (!rateAllow(`${socket.id}|reaction`, 30, 10_000)) return;  // drop silencieux (audit securite)
       const connection = playerConnections.get(socket.id);
       if (!connection) return;
 
@@ -781,6 +847,7 @@ export function setupSocketHandlers(
 
     // Send text reaction to partner
     socket.on('game:text-reaction', (data) => {
+      if (!rateAllow(`${socket.id}|textreact`, 20, 10_000)) return;  // drop silencieux (audit securite)
       const connection = playerConnections.get(socket.id);
       if (!connection) return;
 
@@ -800,6 +867,7 @@ export function setupSocketHandlers(
 
     // Sound reactions (klaxon, applause, etc.)
     socket.on('game:sound-reaction', (data) => {
+      if (!rateAllow(`${socket.id}|soundreact`, 15, 10_000)) return;  // drop silencieux (audit securite)
       const connection = playerConnections.get(socket.id);
       if (!connection) return;
 
@@ -817,6 +885,7 @@ export function setupSocketHandlers(
 
     // Quick predefined messages
     socket.on('game:quick-message', (data) => {
+      if (!rateAllow(`${socket.id}|quickmsg`, 20, 10_000)) return;  // drop silencieux (audit securite)
       const connection = playerConnections.get(socket.id);
       if (!connection) return;
 
@@ -834,6 +903,7 @@ export function setupSocketHandlers(
 
     // Buzz - vibrate partner's phone
     socket.on('game:buzz', () => {
+      if (!rateAllow(`${socket.id}|buzz`, 10, 10_000)) return;  // drop silencieux (audit securite)
       const connection = playerConnections.get(socket.id);
       if (!connection) return;
 
@@ -856,6 +926,7 @@ export function setupSocketHandlers(
 
     // Kiss with counter
     socket.on('game:kiss', () => {
+      if (!rateAllow(`${socket.id}|kiss`, 20, 10_000)) return;  // drop silencieux (audit securite)
       const connection = playerConnections.get(socket.id);
       if (!connection) return;
 
@@ -885,6 +956,7 @@ export function setupSocketHandlers(
 
     // Lobby chat
     socket.on('lobby:chat', (data) => {
+      if (!rateAllow(`${socket.id}|chat`, 20, 10_000)) return;  // drop silencieux (audit securite)
       const connection = playerConnections.get(socket.id);
       if (!connection) return;
 
@@ -933,6 +1005,7 @@ export function setupSocketHandlers(
     // Le flux audio lui-meme passe par WebRTC en pair a pair ; le serveur ne
     // transporte que l'indication "je parle", pour l'affichage et le bip.
     socket.on('voice:ptt', (data: { speaking: boolean }) => {
+      if (!rateAllow(`${socket.id}|ptt`, 40, 10_000)) return;  // drop silencieux (audit securite)
       const connection = playerConnections.get(socket.id);
       if (!connection) return;
       socket.to(connection.roomCode).emit('voice:peer-ptt', {

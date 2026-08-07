@@ -1,10 +1,35 @@
 import { db } from '../database.js';
+import crypto from 'crypto';
 import type { Room, Gender } from '../types.js';
 
 function generateCode(): string {
-  // Generate 4-digit code (0000-9999)
-  const code = Math.floor(Math.random() * 10000);
-  return code.toString().padStart(4, '0');
+  // 6 chiffres tires de crypto (Math.random n'est pas un generateur sur).
+  // Arbitrage de l'audit : le code reste numerique et dictable a voix haute,
+  // l'authentification reelle repose sur le jeton de session, pas sur le code.
+  const code = crypto.randomInt(0, 1_000_000);
+  return code.toString().padStart(6, '0');
+}
+
+/**
+ * Jeton de session secret remis a chaque joueur a la creation/au join, exige
+ * au room:reconnect. Sans lui, n'importe qui connaissant un code de salon
+ * pouvait s'asseoir dans le fauteuil d'un joueur (constat Secu 4).
+ */
+export function issueSessionToken(roomId: number, playerId: 1 | 2): string {
+  const token = crypto.randomBytes(24).toString('base64url');
+  const col = playerId === 1 ? 'player1_token' : 'player2_token';
+  db.prepare(`UPDATE rooms SET ${col} = ? WHERE id = ?`).run(token, roomId);
+  return token;
+}
+
+export function verifySessionToken(roomId: number, playerId: 1 | 2, token: string | undefined): boolean {
+  if (!token) return false;
+  const col = playerId === 1 ? 'player1_token' : 'player2_token';
+  const row = db.prepare(`SELECT ${col} as t FROM rooms WHERE id = ?`).get(roomId) as { t: string | null } | undefined;
+  if (!row?.t) return false;
+  const a = Buffer.from(row.t);
+  const b = Buffer.from(token);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
 export function createRoom(player1Name: string, player1Gender: Gender): Room {

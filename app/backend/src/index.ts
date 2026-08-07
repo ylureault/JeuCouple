@@ -28,6 +28,7 @@ const httpServer = createServer(app);
 
 // Initialize Socket.IO
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
+  maxHttpBufferSize: 100_000,  // audit securite : 100 Ko couvrent large (SDP ~10 Ko)
   cors: {
     origin: NODE_ENV === 'development'
       ? ['http://localhost:5174', 'http://localhost:3004']

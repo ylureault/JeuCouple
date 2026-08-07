@@ -186,6 +186,12 @@ function runMigrations() {
     db.exec("ALTER TABLE rooms ADD COLUMN player1_gender TEXT CHECK(player1_gender IN ('M', 'F'))");
     console.log('Migration: Added player1_gender column to rooms');
   }
+  // Jetons de session (audit securite) : authentifient room:reconnect.
+  if (!roomColumnNames.includes('player1_token')) {
+    db.exec("ALTER TABLE rooms ADD COLUMN player1_token TEXT");
+    db.exec("ALTER TABLE rooms ADD COLUMN player2_token TEXT");
+    console.log('Migration: Added session token columns to rooms');
+  }
   if (!roomColumnNames.includes('player2_gender')) {
     db.exec("ALTER TABLE rooms ADD COLUMN player2_gender TEXT CHECK(player2_gender IN ('M', 'F'))");
     console.log('Migration: Added player2_gender column to rooms');

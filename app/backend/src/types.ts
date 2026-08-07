@@ -323,7 +323,7 @@ export interface ClientToServerEvents {
   'room:join': (data: { code: string; playerName: string; gender: Gender }, callback: (response: RoomResponse) => void) => void;
   'room:leave': () => void;
   'game:start': (callback: (response: { success: boolean; error?: string }) => void) => void;
-  'game:answer': (data: { answer: string }) => void;
+  'game:answer': (data: { answer: string }, callback?: (response: { accepted: boolean; error?: string }) => void) => void;
   'game:restart': (callback: (response: { success: boolean; error?: string }) => void) => void;
   'game:request-pause': (callback: (response: { success: boolean; paused?: boolean }) => void) => void;
   // Mode duel : theme choisi par le gagnant de la manche
@@ -331,7 +331,7 @@ export interface ClientToServerEvents {
   // Changement de mode en cours de partie
   'mode:propose': (data: { mode: GameMode }) => void;
   'mode:respond': (data: { accept: boolean }) => void;
-  'room:reconnect': (data: { code: string; playerId: 1 | 2 }, callback: (response: RoomResponse) => void) => void;
+  'room:reconnect': (data: { code: string; playerId: 1 | 2; sessionToken?: string }, callback: (response: RoomResponse) => void) => void;
   'game:reaction': (data: { emoji: ReactionEmoji }) => void;
   'game:text-reaction': (data: { reactionId: TextReactionId }) => void;
   'game:sound-reaction': (data: { reactionId: SoundReactionId }) => void;
@@ -468,6 +468,9 @@ export interface RoomResponse {
   success: boolean;
   room?: Room;
   playerId?: 1 | 2;
+  /** Jeton secret remis au create/join, exige au room:reconnect.
+      C'est lui qui authentifie le joueur, pas le code de salon. */
+  sessionToken?: string;
   error?: string;
 }
 

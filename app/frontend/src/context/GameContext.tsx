@@ -440,11 +440,14 @@ interface StoredSession {
   roomCode: string;
   playerId: 1 | 2;
   playerName: string;
+  // Jeton secret remis par le serveur : seule preuve d'appartenance acceptee
+  // au room:reconnect (audit securite, P0-1).
+  sessionToken?: string;
 }
 
-function saveSession(roomCode: string, playerId: 1 | 2, playerName: string) {
+function saveSession(roomCode: string, playerId: 1 | 2, playerName: string, sessionToken?: string) {
   try {
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode, playerId, playerName }));
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ roomCode, playerId, playerName, sessionToken }));
     localStorage.setItem(SESSION_TIMESTAMP_KEY, Date.now().toString());
   } catch (e) {
     console.warn('Failed to save session:', e);
@@ -535,7 +538,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       socket.emit('room:reconnect', {
         code: session.roomCode,
-        playerId: session.playerId
+        playerId: session.playerId,
+        sessionToken: session.sessionToken
       }, (response) => {
         // Clear the timeout since we got a response
         if (reconnectTimeout) {
@@ -771,7 +775,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         // Ping the server to check if room still exists
         socket.emit('room:reconnect', {
           code: session.roomCode,
-          playerId: session.playerId
+          playerId: session.playerId,
+          sessionToken: session.sessionToken
         }, (response) => {
           if (!response.success) {
             console.log('Session validation failed, clearing session');
@@ -832,7 +837,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             playerId: response.playerId,
             playerName
           });
-          saveSession(response.room.code, response.playerId, playerName);
+          saveSession(response.room.code, response.playerId, playerName, response.sessionToken);
           resolve(response.room.code); // Return the room code
         } else {
           dispatch({ type: 'SET_ERROR', error: response.error || 'Failed to create room' });
@@ -854,7 +859,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             playerId: response.playerId,
             playerName
           });
-          saveSession(response.room.code, response.playerId, playerName);
+          saveSession(response.room.code, response.playerId, playerName, response.sessionToken);
           resolve(response.room.code); // Return the room code
         } else {
           dispatch({ type: 'SET_ERROR', error: response.error || 'Failed to join room' });
@@ -883,8 +888,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // Prevent submitting if no socket, already answered, or not in question phase
     if (!state.socket || state.myAnswer || state.phase !== 'question') return;
 
-    state.socket.emit('game:answer', { answer });
-    dispatch({ type: 'SET_MY_ANSWER', answer });
+    // Ack serveur (P0-2 du plan d'audit) : la reponse n'est consideree comme
+    // posee que si le serveur l'accepte ; un refus est affiche, jamais une
+    // troncature silencieuse. Filet : sans ack sous 3 s (vieux serveur),
+    // on retombe sur l'ancien comportement optimiste.
+    let settled = false;
+    const fallback = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        dispatch({ type: 'SET_MY_ANSWER', answer });
+      }
+    }, 3000);
+
+    state.socket.emit('game:answer', { answer }, (res) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(fallback);
+      if (res?.accepted) {
+        dispatch({ type: 'SET_MY_ANSWER', answer });
+      } else {
+        dispatch({ type: 'SET_ERROR', error: res?.error || 'Reponse refusee, reessaie' });
+      }
+    });
   }, [state.socket, state.myAnswer, state.phase]);
 
   const leaveRoom = useCallback(() => {
