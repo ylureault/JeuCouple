@@ -65,6 +65,14 @@ export function joinRoom(code: string, player2Name: string, player2Gender: Gende
   const room = getRoomByCode(code);
 
   if (!room) return null;
+  // SALON FANTOME (bug B6) : quand l'hote quittait le lobby, son slot etait
+  // vide mais la ligne restait en statut 'waiting'. Le suivant a taper ce code
+  // s'y asseyait en JOUEUR 2, face a un JOUEUR 1 vide, et attendait un
+  // partenaire qui ne viendrait jamais — pendant que le vrai 2e joueur se
+  // voyait refuser l'entree (salon desormais complet). Un salon sans hote
+  // n'est plus un salon : on refuse, et le joueur cree sa propre partie ou il
+  // sera JOUEUR 1.
+  if (!room.player1_name) return null;
   if (room.player2_name) return null; // Room is full
   if (room.status !== 'waiting') return null;
 

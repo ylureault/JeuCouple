@@ -248,6 +248,8 @@ export interface ServerToClientEvents {
   'room:settings-accepted': (data: { playerId: 1 | 2 }) => void;
   'game:started': (data: { gameId: number; gameMode?: GameMode }) => void;
   'game:question': (data: { question: Question; questionNumber: number; totalQuestions: number }) => void;
+  /** Etat complet de la manche : ce que les deux clients doivent afficher. */
+  'game:round-state': (data: RoundState) => void;
   'game:player-answered': (data: { playerId: 1 | 2 }) => void;
   'game:reveal': (data: GameRevealData) => void;
   'game:score-update': (data: { score1: number; score2: number }) => void;
@@ -507,6 +509,37 @@ export interface RoomSettingsInfo {
   /** Vide = tous les themes (mode auto). */
   categories: { code: string; name: string; icon: string }[];
   settingsAccepted: boolean;
+}
+
+/**
+ * Etat COMPLET d'une manche, seule source de verite pour les deux clients.
+ *
+ * Pourquoi : en production les deux joueurs pouvaient afficher deux manches
+ * differentes, deux questions differentes et QUATRE scores differents. L'etat
+ * etait reconstitue cote client a partir d'evenements partiels (game:question,
+ * game:score-update) qui pouvaient manquer a l'un des deux, et le decompte
+ * tournait sur un setInterval local qui derivait a chaque onglet endormi.
+ * Ici, le serveur envoie tout d'un bloc et les clients se contentent
+ * d'afficher. Le temps restant se deduit de `deadline`, un instant ABSOLU
+ * dans l'horloge du serveur : il ne peut pas deriver.
+ */
+export interface RoundState {
+  /** Numero de manche monotone. Un etat plus ancien est ignore par le client. */
+  roundId: number;
+  /** Numero affiche au joueur (1-based). */
+  roundNumber: number;
+  totalQuestions: number;
+  question: Question | null;
+  scores: { player1: number; player2: number };
+  phase: 'question' | 'reveal';
+  /** Instant de fin de la question, en ms epoch SERVEUR. null hors question. */
+  deadline: number | null;
+  /** Horloge du serveur a l'emission : permet au client de corriger la sienne. */
+  serverNow: number;
+  paused: boolean;
+  /** Nom du joueur absent quand la partie est en pause (B4). */
+  pausedReason: string | null;
+  gameMode: string;
 }
 
 export interface RoomResponse {

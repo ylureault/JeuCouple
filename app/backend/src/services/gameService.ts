@@ -8,6 +8,7 @@ import type {
   GameRevealData,
   GameFinishedData,
   CategoryScore,
+  RoundState,
   ReactionEmoji,
   TextReactionId,
   SoundReactionId,
@@ -166,6 +167,69 @@ setInterval(() => {
 const activeGames = new Map<string, GameState>();
 const playerConnections = new Map<string, PlayerConnection>();
 const roomSettings = new Map<string, { questionCount: number; categories: string[]; questionTypes: string[]; gameMode: string; settingsAccepted?: boolean }>();
+
+/**
+ * Sockets VIVANTS d'un joueur dans un salon.
+ *
+ * Un joueur peut en avoir plusieurs : deux onglets sur le meme ordinateur
+ * (cas reel d'un couple qui joue a deux sur une seule machine), ou un ancien
+ * socket pas encore expire pendant une reconnexion. L'ancienne version gardait
+ * une seule entree par joueur et EJECTAIT la precedente du salon socket.io :
+ * l'onglet evince restait "connecte" pour le navigateur mais ne recevait plus
+ * rien et ses clics partaient dans le vide (B5), tout en continuant d'afficher
+ * une manche figee (B3). Pire : sa deconnexion reelle n'etait plus reconnue,
+ * donc la partie ne se mettait jamais en pause (B4).
+ */
+function playerSockets(roomCode: string, playerId: 1 | 2): Socket[] {
+  const live: Socket[] = [];
+  for (const conn of playerConnections.values()) {
+    if (conn.roomCode === roomCode && conn.playerId === playerId && conn.socket.connected) {
+      live.push(conn.socket);
+    }
+  }
+  return live;
+}
+
+function isPlayerConnected(roomCode: string, playerId: 1 | 2): boolean {
+  return playerSockets(roomCode, playerId).length > 0;
+}
+
+/**
+ * Etat COMPLET de la manche : le serveur est seule source de verite, les
+ * clients ne font qu'afficher. Tout y est (manche, question, LES DEUX scores,
+ * pause) et le temps restant se deduit de `deadline`, un instant absolu dans
+ * l'horloge du serveur. Un decompte local qui s'auto-decremente derive des que
+ * l'onglet passe en arriere-plan ; une soustraction depuis une echeance
+ * absolue, non.
+ */
+function buildRoundState(roomCode: string, gameState: GameState): RoundState {
+  const question = gameState.currentQuestion;
+  // Pas d'echeance hors phase de question ni en pause : le client fige alors
+  // son affichage au lieu de continuer a decompter dans le vide.
+  const deadline =
+    gameState.phase === 'question' && !gameState.paused && question
+      ? gameState.questionStartTime + question.timer * 1000
+      : null;
+
+  return {
+    roundId: gameState.roundSeq,
+    roundNumber: gameState.currentQuestionIndex + 1,
+    totalQuestions: gameState.questions.length,
+    question,
+    scores: { player1: gameState.scores.player1, player2: gameState.scores.player2 },
+    phase: gameState.phase === 'reveal' ? 'reveal' : 'question',
+    deadline,
+    serverNow: Date.now(),
+    paused: gameState.paused,
+    pausedReason: gameState.disconnectedPlayerName,
+    gameMode: roomSettings.get(roomCode)?.gameMode ?? 'classic',
+  };
+}
+
+/** Diffuse l'etat de manche aux DEUX joueurs. A appeler a CHAQUE changement. */
+function emitRoundState(io: Server, roomCode: string, gameState: GameState): void {
+  io.to(roomCode).emit('game:round-state', buildRoundState(roomCode, gameState));
+}
 
 /**
  * Certains modes imposent leur perimetre de questions et ne laissent donc pas
@@ -435,15 +499,18 @@ export function setupSocketHandlers(
 
         socket.join(room.code);
 
-        // Clean up stale connections for the same player in the same room
+        // On ne purge QUE les entrees dont le socket est reellement mort.
+        // Avant, toute connexion precedente du meme joueur etait sortie du
+        // salon socket.io (oldSocket.leave) et retiree de la table : l'onglet
+        // evince gardait un socket ouvert mais ne recevait plus aucun
+        // evenement et tous ses envois etaient ignores — le "2e onglet qui
+        // meurt" et les boutons muets de la recette. Deux onglets du meme
+        // appareil coexistent desormais sans s'entretuer.
         for (const [oldSocketId, conn] of playerConnections.entries()) {
-          if (conn.roomCode === room.code && conn.playerId === data.playerId && oldSocketId !== socket.id) {
-            console.log('Cleaning up stale connection for player', data.playerId, 'socket', oldSocketId);
-            // Also leave the socket room for the old connection
-            const oldSocket = conn.socket;
-            if (oldSocket) {
-              oldSocket.leave(room.code);
-            }
+          if (oldSocketId === socket.id) continue;
+          if (conn.roomCode !== room.code || conn.playerId !== data.playerId) continue;
+          if (!conn.socket.connected) {
+            console.log('Purge d\'une connexion morte du joueur', data.playerId, ':', oldSocketId);
             playerConnections.delete(oldSocketId);
           }
         }
@@ -537,8 +604,12 @@ export function setupSocketHandlers(
             console.log('Player', playerName, 'reconnected within grace period - no pause needed');
           }
 
-          // Resume if game was paused due to disconnect (not manual pause)
-          if (gameState.paused && !gameState.manualPause) {
+          // Resume if game was paused due to disconnect (not manual pause).
+          // On exige que les DEUX joueurs soient de nouveau la : si l'on
+          // reprenait des le retour du premier, la partie recommencerait a
+          // tourner a vide pour l'autre — exactement le bug B4.
+          const bothBack = isPlayerConnected(room.code, 1) && isPlayerConnected(room.code, 2);
+          if (gameState.paused && !gameState.manualPause && bothBack) {
             console.log('Player', playerName, 'reconnected to room', room.code, '- resuming game');
 
             gameState.paused = false;
@@ -574,14 +645,22 @@ export function setupSocketHandlers(
               console.log('Resuming from reveal phase - scheduling next question');
               scheduleNextQuestion(io, room.code, gameState);
             }
-          } else if (gameState.paused && gameState.manualPause) {
-            // Game is manually paused - inform the reconnecting player
-            console.log('Player', playerName, 'reconnected but game is manually paused');
+          } else if (gameState.paused) {
+            // Partie toujours en pause (pause volontaire, ou partenaire encore
+            // absent) : on le dit au joueur qui revient plutot que de le
+            // laisser devant un ecran de jeu inerte.
+            console.log('Player', playerName, 'reconnected but game is still paused');
             socket.emit('game:paused', {
               disconnectedPlayer: data.playerId,
               playerName: (gameState.disconnectedPlayerName || 'Pause')
             });
           }
+
+          // Ré-émission de l'etat complet a la reconnexion (B3) : le joueur qui
+          // revient repart EXACTEMENT du meme etat que son partenaire, y compris
+          // l'echeance absolue du minuteur. On diffuse aux deux pour qu'un
+          // resume eventuel soit vu des deux cotes dans le meme paquet.
+          emitRoundState(io, room.code, gameState);
         }
       } catch (error) {
         callback({ success: false, error: 'Failed to reconnect' });
@@ -664,6 +743,7 @@ export function setupSocketHandlers(
         gameId: game.id,
         roomId: room.id,
         questions,
+        roundSeq: 0,
         currentQuestionIndex: 0,
         currentQuestion: null,
         answers: new Map(),
@@ -981,6 +1061,14 @@ export function setupSocketHandlers(
       if (!gameState) { callback?.({ success: false }); return; }
 
       if (gameState.paused) {
+        // B4 : on ne peut pas "reprendre" une pause causee par une absence.
+        // Sans ce garde, un joueur reste seul devant l'ecran de pause, appuie
+        // sur reprendre, et la partie repart a vide comme avant le correctif.
+        if (!gameState.manualPause
+            && !(isPlayerConnected(connection.roomCode, 1) && isPlayerConnected(connection.roomCode, 2))) {
+          callback?.({ success: false, paused: true });
+          return;
+        }
         // Resume the game
         gameState.paused = false;
         gameState.disconnectedPlayerName = null;
@@ -1003,6 +1091,9 @@ export function setupSocketHandlers(
           reconnectedPlayer: connection.playerId,
           playerName: 'le jeu'
         });
+        // Nouvelle echeance absolue apres la pause : sans cette rediffusion,
+        // les clients repartiraient d'une deadline perimee.
+        emitRoundState(io, connection.roomCode, gameState);
         callback?.({ success: true, paused: false });
       } else {
         // Pause the game
@@ -1025,10 +1116,12 @@ export function setupSocketHandlers(
           ? (connection.playerId === 1 ? room.player1_name : room.player2_name) || 'Joueur'
           : 'Joueur';
 
+        gameState.disconnectedPlayerName = playerName + ' a mis en pause';
         io.to(connection.roomCode).emit('game:paused', {
           disconnectedPlayer: connection.playerId,
           playerName: playerName + ' a mis en pause'
         });
+        emitRoundState(io, connection.roomCode, gameState);
         callback?.({ success: true, paused: true });
       }
     });
@@ -1238,6 +1331,57 @@ export function setupSocketHandlers(
 // Grace period before pausing (5 seconds)
 const DISCONNECT_GRACE_PERIOD = 5000;
 
+/**
+ * B4 : met la partie en pause parce qu'un joueur n'est plus la.
+ *
+ * Un seul endroit fige les minuteurs, retient le temps restant et previent le
+ * partenaire — la logique existait en double (deconnexion / pause manuelle) et
+ * un des deux chemins oubliait de couper le minuteur de la question suivante,
+ * d'ou une partie qui continuait a enchainer les manches dans le vide.
+ */
+function pauseGameForDisconnect(
+  io: Server<ClientToServerEvents, ServerToClientEvents>,
+  roomCode: string,
+  gameState: GameState,
+  playerId: 1 | 2,
+  playerName: string
+): void {
+  if (gameState.paused) return;
+
+  gameState.paused = true;
+  gameState.pausedAt = Date.now();
+  gameState.disconnectedPlayerName = playerName;
+  gameState.connectedPlayers.delete(playerId);
+
+  // TOUS les minuteurs sautent : celui de la question ET celui qui enchaine la
+  // manche suivante. C'est ce dernier, laisse actif, qui faisait defiler les
+  // manches 6 -> 11 devant un partenaire seul.
+  if (gameState.timer) {
+    clearTimeout(gameState.timer);
+    gameState.timer = null;
+  }
+  if (gameState.nextQuestionTimer) {
+    clearTimeout(gameState.nextQuestionTimer);
+    gameState.nextQuestionTimer = null;
+  }
+
+  // Temps restant fige : la reprise repartira de la, pas de zero.
+  if (gameState.phase === 'question' && gameState.currentQuestion) {
+    const elapsed = (Date.now() - gameState.questionStartTime) / 1000;
+    gameState.remainingTime = Math.max(0, gameState.currentQuestion.timer - elapsed);
+  }
+
+  console.log('Partie en pause dans le salon', roomCode, '- en attente de', playerName);
+
+  io.to(roomCode).emit('game:paused', {
+    disconnectedPlayer: playerId,
+    playerName
+  });
+  // L'etat complet suit la pause : le partenaire voit un ecran coherent
+  // (meme manche, memes scores, minuteur fige) et non un jeu qui avance seul.
+  emitRoundState(io, roomCode, gameState);
+}
+
 function handleDisconnect(
   socket: Socket,
   io: Server<ClientToServerEvents, ServerToClientEvents>
@@ -1247,12 +1391,18 @@ function handleDisconnect(
 
   console.log('Player disconnected:', socket.id, 'from room:', connection.roomCode);
 
-  // Handle game pause with grace period
+  // On retire l'entree AVANT tout diagnostic : playerSockets() doit refleter
+  // la realite pour repondre a la seule question qui compte — reste-t-il un
+  // socket vivant a ce joueur (autre onglet du meme appareil) ?
+  playerConnections.delete(socket.id);
+  socket.leave(connection.roomCode);
+
+  const stillHere = isPlayerConnected(connection.roomCode, connection.playerId);
   const gameState = activeGames.get(connection.roomCode);
 
   // Only notify room:player-left when NOT in an active game
   // During a game, the pause/resume system handles disconnect display
-  if (!gameState) {
+  if (!gameState && !stillHere) {
     // Get the room to check if it's in lobby state
     const room = roomModel.getRoomByCode(connection.roomCode);
     if (room && room.status === 'waiting') {
@@ -1264,8 +1414,14 @@ function handleDisconnect(
       playerId: connection.playerId
     });
   }
+
+  // Un autre onglet du meme joueur tient encore la connexion : rien a signaler.
+  if (stillHere) {
+    console.log('Joueur', connection.playerId, 'toujours present via un autre onglet, aucune pause');
+    return;
+  }
+
   if (gameState && !gameState.paused) {
-    // Mark player as temporarily disconnected
     gameState.connectedPlayers.delete(connection.playerId);
 
     // Get room to find player name
@@ -1282,50 +1438,18 @@ function handleDisconnect(
 
     console.log('Player', playerName, 'disconnected, starting grace period...');
 
-    // Start grace period - only pause if they don't reconnect within 5 seconds
+    // Delai de grace : une micro-coupure reseau ne doit pas interrompre la
+    // partie. Passe ce delai, la pause est ferme.
     const graceTimer = setTimeout(() => {
-      // Check if game still exists and player still disconnected
       const currentGameState = activeGames.get(connection.roomCode);
-      if (!currentGameState || currentGameState.paused) return;
-      if (currentGameState.connectedPlayers.has(connection.playerId)) return;
-
-      // Grace period expired - now actually pause
-      currentGameState.paused = true;
-      currentGameState.pausedAt = Date.now();
-      currentGameState.disconnectedPlayerName = playerName;
+      if (!currentGameState) return;
       currentGameState.disconnectGraceTimers.delete(connection.playerId);
-
-      // Clear ALL timers when pausing
-      if (currentGameState.timer) {
-        clearTimeout(currentGameState.timer);
-        currentGameState.timer = null;
-      }
-      if (currentGameState.nextQuestionTimer) {
-        clearTimeout(currentGameState.nextQuestionTimer);
-        currentGameState.nextQuestionTimer = null;
-      }
-
-      // Calculate remaining time if in question phase
-      if (currentGameState.phase === 'question') {
-        const currentQuestion = currentGameState.questions[currentGameState.currentQuestionIndex];
-        const elapsed = (Date.now() - currentGameState.questionStartTime) / 1000;
-        currentGameState.remainingTime = Math.max(0, currentQuestion.timer - elapsed);
-      }
-
-      console.log('Game FULLY paused in room', connection.roomCode, '- all timers cleared, waiting for', playerName);
-
-      // Notify the other player that the game is paused
-      io.to(connection.roomCode).emit('game:paused', {
-        disconnectedPlayer: connection.playerId,
-        playerName
-      });
+      // Revenu entre-temps (n'importe quel onglet) : on ne coupe rien.
+      if (isPlayerConnected(connection.roomCode, connection.playerId)) return;
+      pauseGameForDisconnect(io, connection.roomCode, currentGameState, connection.playerId, playerName);
     }, DISCONNECT_GRACE_PERIOD);
     gameState.disconnectGraceTimers.set(connection.playerId, graceTimer);
   }
-
-  // Clean up connection
-  playerConnections.delete(socket.id);
-  socket.leave(connection.roomCode);
 }
 
 function sendQuestion(
@@ -1338,6 +1462,19 @@ function sendQuestion(
   // Don't send question if game is paused
   if (gameState.paused) {
     console.log('[SEND_QUESTION] Game paused, skipping');
+    return;
+  }
+
+  // B4 — filet de securite : on ne SERT JAMAIS une manche a un joueur absent.
+  // Le delai de grace et l'evenement 'disconnect' peuvent tous deux etre
+  // manques (socket zombie, evenement perdu au redemarrage) ; ce controle, lui,
+  // est fait juste avant d'engager la manche, donc il ne peut pas etre contourne.
+  for (const pid of [1, 2] as const) {
+    if (isPlayerConnected(roomCode, pid)) continue;
+    const room = roomModel.getRoomByCode(roomCode);
+    const absentName = (pid === 1 ? room?.player1_name : room?.player2_name) || 'Ton partenaire';
+    console.log('[SEND_QUESTION] Joueur', pid, 'absent : pause au lieu d\'enchainer');
+    pauseGameForDisconnect(io, roomCode, gameState, pid, absentName);
     return;
   }
 
@@ -1363,6 +1500,7 @@ function sendQuestion(
   gameState.servedIds.add(question.id);
   gameState.phase = 'question';
   gameState.questionStartTime = Date.now();
+  gameState.roundSeq++;   // nouvelle manche : nouvel identifiant d'etat
   console.log(`[SEND_QUESTION] Sending question ID ${question.id}, type ${question.type}`);
 
   // For Type G, assign a random target player and substitute {player} in the text
@@ -1385,6 +1523,10 @@ function sendQuestion(
     questionNumber: gameState.currentQuestionIndex + 1,
     totalQuestions: gameState.questions.length
   });
+  // L'etat complet part dans la foulee, aux DEUX joueurs, avec l'echeance
+  // absolue. C'est lui qui fait foi : question, manche, scores et minuteur
+  // proviennent tous du meme paquet, ils ne peuvent donc plus diverger.
+  emitRoundState(io, roomCode, gameState);
 
   // Set timer
   gameState.timer = setTimeout(() => {
@@ -1720,6 +1862,10 @@ function revealAnswers(
     score1: gameState.scores.player1,
     score2: gameState.scores.player2
   });
+  // Les scores viennent de changer : on rediffuse l'etat complet. Les deux
+  // joueurs affichent donc TOUJOURS le meme couple de scores — la recette en
+  // relevait quatre valeurs differentes pour deux joueurs.
+  emitRoundState(io, roomCode, gameState);
 
   // Add to question history
   gameState.questionHistory.push({

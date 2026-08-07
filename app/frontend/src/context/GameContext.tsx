@@ -30,7 +30,8 @@ import type {
   ThemeChoiceRequest,
   ThemeChoiceWaiting,
   ModeProposal,
-  RoomSettingsInfo
+  RoomSettingsInfo,
+  RoundState
 } from '../../../shared/types';
 
 /**
@@ -50,6 +51,11 @@ export type ResumePhase =
 interface GameState {
   socket: Socket<ServerToClientEvents, ClientToServerEvents> | null;
   connected: boolean;
+  // B5 : le socket a saute et socket.io retente. Sert a afficher le bandeau
+  // "Connexion perdue" et a desactiver les boutons plutot que de les laisser
+  // cliquables et morts.
+  reconnecting: boolean;
+  reconnectAttempts: number;
   // Etape courante de la reprise + motif lisible en cas d'echec.
   resumePhase: ResumePhase;
   resumeError: string | null;
@@ -60,6 +66,15 @@ interface GameState {
   currentQuestion: Question | null;
   questionNumber: number;
   totalQuestions: number;
+  // --- B3 : etat de manche recu du serveur, seule source de verite ----------
+  // Identifiant de la manche affichee : tout roundState plus ancien est jete.
+  roundId: number | null;
+  // Fin de la question, en ms epoch SERVEUR. Le decompte se calcule par
+  // soustraction (deadline - maintenant) et ne peut donc pas deriver.
+  deadline: number | null;
+  // Ecart mesure entre l'horloge du serveur et celle du navigateur : sans lui,
+  // une machine mal reglee afficherait un decompte faux ou negatif.
+  serverClockOffset: number;
   phase: 'idle' | 'lobby' | 'question' | 'waiting' | 'reveal' | 'finished';
   myAnswer: string | null;
   otherAnswered: boolean;
@@ -99,6 +114,8 @@ interface GameState {
 type GameAction =
   | { type: 'SET_SOCKET'; socket: Socket<ServerToClientEvents, ClientToServerEvents> }
   | { type: 'SET_CONNECTED'; connected: boolean }
+  | { type: 'SET_RECONNECTING'; reconnecting: boolean; attempts?: number }
+  | { type: 'ROUND_STATE'; state: RoundState }
   | { type: 'RESUME_PHASE'; phase: ResumePhase; reason?: string | null }
   | { type: 'JOIN_ROOM'; room: Room; playerId: 1 | 2; playerName: string }
   | { type: 'PLAYER_JOINED'; playerName: string; playerId: 1 | 2; gender: Gender }
@@ -146,6 +163,8 @@ type GameAction =
 const initialState: GameState = {
   socket: null,
   connected: false,
+  reconnecting: false,
+  reconnectAttempts: 0,
   resumePhase: 'booting',
   resumeError: null,
   room: null,
@@ -155,6 +174,9 @@ const initialState: GameState = {
   currentQuestion: null,
   questionNumber: 0,
   totalQuestions: 0,
+  roundId: null,
+  deadline: null,
+  serverClockOffset: 0,
   phase: 'idle',
   myAnswer: null,
   otherAnswered: false,
@@ -190,7 +212,61 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, socket: action.socket };
 
     case 'SET_CONNECTED':
-      return { ...state, connected: action.connected };
+      return {
+        ...state,
+        connected: action.connected,
+        reconnecting: action.connected ? false : state.reconnecting,
+        reconnectAttempts: action.connected ? 0 : state.reconnectAttempts
+      };
+
+    case 'SET_RECONNECTING':
+      return {
+        ...state,
+        reconnecting: action.reconnecting,
+        reconnectAttempts: action.attempts ?? state.reconnectAttempts
+      };
+
+    /**
+     * B3 — le serveur dicte, le client affiche.
+     *
+     * Manche, question, scores des DEUX joueurs et echeance du minuteur
+     * arrivent dans un seul paquet : il devient impossible d'afficher la
+     * question d'une manche avec le score d'une autre. Les etats en retard
+     * (roundId inferieur) sont jetes, donc l'ordre d'arrivee n'importe pas.
+     */
+    case 'ROUND_STATE': {
+      const rs = action.state;
+      if (state.roundId !== null && rs.roundId < state.roundId) return state;
+      const newRound = rs.roundId !== state.roundId;
+
+      return {
+        ...state,
+        roundId: rs.roundId,
+        currentQuestion: rs.question ?? state.currentQuestion,
+        questionNumber: rs.roundNumber,
+        totalQuestions: rs.totalQuestions,
+        scores: { player1: rs.scores.player1, player2: rs.scores.player2 },
+        deadline: rs.deadline,
+        // Mesure de l'ecart d'horloge a chaque paquet : le trajet reseau
+        // (quelques dizaines de ms) est negligeable devant une question.
+        serverClockOffset: rs.serverNow - Date.now(),
+        gamePaused: rs.paused,
+        disconnectedPlayerName: rs.paused
+          ? (rs.pausedReason ?? state.disconnectedPlayerName)
+          : null,
+        // Une nouvelle manche remet a zero ce qui est propre a la manche.
+        // Sur une simple rediffusion (score, pause, reconnexion) on ne touche
+        // a rien : effacer la reponse deja posee la ferait ressaisir.
+        myAnswer: newRound ? null : state.myAnswer,
+        otherAnswered: newRound ? false : state.otherAnswered,
+        revealData: newRound ? null : state.revealData,
+        // 'waiting' est un etat purement local (j'ai repondu, j'attends
+        // l'autre) : le serveur ne le connait pas, on ne l'ecrase donc pas.
+        phase: rs.phase === 'reveal'
+          ? 'reveal'
+          : newRound ? 'question' : (state.phase === 'lobby' ? 'question' : state.phase)
+      };
+    }
 
     case 'RESUME_PHASE':
       return {
@@ -247,17 +323,24 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         scores: { player1: 0, player2: 0 }
       };
 
-    case 'SET_QUESTION':
+    case 'SET_QUESTION': {
+      // Le serveur renvoie la question courante a chaque reconnexion. Traiter
+      // ce rappel comme une nouvelle manche effacait la reponse deja posee et
+      // la faisait ressaisir : on ne remet a zero que sur un VRAI changement.
+      const sameRound =
+        state.currentQuestion?.id === action.question.id &&
+        state.questionNumber === action.questionNumber;
       return {
         ...state,
         currentQuestion: action.question,
         questionNumber: action.questionNumber,
         totalQuestions: action.totalQuestions,
-        phase: 'question',
-        myAnswer: null,
-        otherAnswered: false,
-        revealData: null
+        phase: sameRound ? state.phase : 'question',
+        myAnswer: sameRound ? state.myAnswer : null,
+        otherAnswered: sameRound ? state.otherAnswered : false,
+        revealData: sameRound ? state.revealData : null
       };
+    }
 
     case 'SET_MY_ANSWER':
       return {
@@ -300,6 +383,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         currentQuestion: null,
         questionNumber: 0,
         totalQuestions: 0,
+        roundId: null,
+        deadline: null,
         phase: 'lobby',
         myAnswer: null,
         otherAnswered: false,
@@ -458,6 +543,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...initialState,
         socket: state.socket,
         connected: state.connected,
+        reconnecting: state.reconnecting,
+        reconnectAttempts: state.reconnectAttempts,
         // Apres un reset il n'y a plus rien a restaurer : repartir de 'booting'
         // relancerait un ecran d'attente sans raison. Un echec eventuel est
         // repositionne juste apres par un RESUME_PHASE explicite.
