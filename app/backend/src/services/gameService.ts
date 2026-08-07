@@ -58,6 +58,11 @@ interface GameState {
   gameId: number;
   roomId: number;
   questions: Question[];
+  // Numero de manche monotone, incremente a chaque question envoyee. Il sert
+  // d'identifiant d'etat : un client qui recoit un roundState plus vieux que
+  // celui qu'il affiche deja le jette, ce qui rend l'ordre d'arrivee des
+  // paquets sans importance (B3 : les deux clients divergeaient).
+  roundSeq: number;
   currentQuestionIndex: number;
   currentQuestion: Question | null; // The prepared question currently being played (with substitutions done)
   answers: Map<number, AnswerData>;
@@ -175,10 +180,14 @@ function enforceModeScope(
   gameMode: string,
   categories: string[],
   questionTypes: string[]
-): { categories: string[]; questionTypes: string[] } {
-  if (gameMode === 'mix') return { categories: [], questionTypes };
-  if (gameMode === 'quiz_express') return { categories: ['culture'], questionTypes: ['H'] };
-  return { categories, questionTypes };
+): { categories: string[]; questionTypes: string[]; restricted: boolean } {
+  // Le mix elargit : il n'y a rien a re-tirer, les questions deja chargees
+  // restent valables. Il n'est donc pas marque "restricted".
+  if (gameMode === 'mix') return { categories: [], questionTypes, restricted: false };
+  if (gameMode === 'quiz_express') {
+    return { categories: ['culture'], questionTypes: ['H'], restricted: true };
+  }
+  return { categories, questionTypes, restricted: false };
 }
 
 // Changement de mode en cours de partie : proposition en attente de validation.
@@ -232,7 +241,10 @@ const PARTIAL_AGREEMENT_POINTS = 40;  // "Nous deux" face a une personne precise
 // Type C : les questions ouvertes n'ont pas de bonne reponse, mais y repondre
 // tous les deux vaut mieux que zero point.
 const OPEN_ANSWER_POINTS = 25;
-const NO_ANSWER_PENALTY = -50;  // Penalty for not answering
+// Ne pas repondre ne coute RIEN. La penalite de -50 transformait chaque
+// manche non jouee (question injouable, hesitation, deconnexion) en sanction,
+// et les scores plongeaient a -600. Le joker, lui, reste volontaire et payant.
+const NO_ANSWER_PENALTY = 0;
 const UNLIMITED_MODE_QUESTION_COUNT = 50;  // When set to 50, it's unlimited
 const UNLIMITED_MODE_GAP_TO_WIN = 200;  // 200 point gap to win in unlimited
 
@@ -901,6 +913,25 @@ export function setupSocketHandlers(
       settings.categories = scope.categories;
       settings.questionTypes = scope.questionTypes;
       roomSettings.set(roomCode, settings);
+
+      // Un mode qui RETRECIT le perimetre (quiz express) ne peut pas se contenter
+      // de changer les reglages : la file deja chargee par le mode precedent
+      // contient des questions hors sujet, et le moteur les servirait telles
+      // quelles. Le joueur a accepte "culture generale en QCM", pas la fin du
+      // stock du mode d'avant. On remplace donc la portion NON ENCORE JOUEE par
+      // un tirage dans le nouveau perimetre, a longueur identique pour ne pas
+      // raccourcir ni rallonger la partie annoncee.
+      const runningGame = activeGames.get(roomCode);
+      if (scope.restricted && runningGame) {
+        const played = runningGame.currentQuestionIndex + 1;   // la question en cours reste valable
+        const remaining = runningGame.questions.length - played;
+        if (remaining > 0) {
+          const fresh = drawFresh(runningGame, remaining, scope.categories, scope.questionTypes);
+          if (fresh.length > 0) {
+            runningGame.questions = [...runningGame.questions.slice(0, played), ...fresh];
+          }
+        }
+      }
 
       const def = listGameModes().find(m => m.id === pending.mode)!;
       io.to(roomCode).emit('mode:changed', {
@@ -1647,9 +1678,10 @@ function revealAnswers(
   catStats.questions++;
   gamification.categoryStats.set(category, catStats);
 
-  // Update scores
-  gameState.scores.player1 += points1;
-  gameState.scores.player2 += points2;
+  // Update scores. Plancher a 0 : le score peut stagner, jamais devenir une
+  // humiliation. Le joker garde son cout, mais ne creuse pas indefiniment.
+  gameState.scores.player1 = Math.max(0, gameState.scores.player1 + points1);
+  gameState.scores.player2 = Math.max(0, gameState.scores.player2 + points2);
 
   // Update scores in database
   gameModel.updateGameScore(

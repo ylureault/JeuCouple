@@ -9,6 +9,8 @@ interface QuestionRow {
   options: string | null;
   option_a: string | null;
   option_b: string | null;
+  emoji_a: string | null;
+  emoji_b: string | null;
   target_player: number | null;
   correct_answer: string | null;
   timer: number;
@@ -24,6 +26,10 @@ function rowToQuestion(row: QuestionRow): Question {
     options: row.options ? JSON.parse(row.options) : undefined,
     option_a: row.option_a || undefined,
     option_b: row.option_b || undefined,
+    // Sans ces deux lignes, les questions "choix visuel" (type I) arrivaient
+    // au client sans emoji : l'ecran affichait le texte et AUCUN bouton.
+    emoji_a: row.emoji_a || undefined,
+    emoji_b: row.emoji_b || undefined,
     target_player: row.target_player as (1 | 2) || undefined,
     correct_answer: row.correct_answer || undefined,
     timer: row.timer,
@@ -63,6 +69,32 @@ export function getRandomQuestions(count: number): Question[] {
  * @param categories Optional array of categories to filter by (empty = all categories)
  * @param questionTypes Optional array of question types to filter by (empty = all types)
  */
+/**
+ * Une question est jouable si elle porte de quoi repondre pour SON type.
+ * Recette utilisateur : des manches entieres affichaient le texte et zero
+ * bouton. On ne sert plus jamais une question injouable — on en tire une autre.
+ */
+export function isPlayable(q: Question): boolean {
+  const opts = Array.isArray(q.options) ? q.options : [];
+  switch (q.type) {
+    case 'A': case 'B': case 'M': case 'O': case 'P': case 'R':
+      return opts.length >= 2;
+    case 'H':
+      return opts.length >= 2 && !!q.correct_answer && opts.includes(q.correct_answer);
+    case 'E': case 'L':
+      return !!q.option_a && !!q.option_b;
+    case 'I':
+      return !!q.option_a && !!q.option_b && !!q.emoji_a && !!q.emoji_b;
+    case 'N':
+      // Plus/Moins : sans nombre de reference, la question n'a pas de sens.
+      return typeof q.reference_value === 'number';
+    // C (texte), D/Q/K (echelle), F (qui de nous), G (vrai/faux), S (accord)
+    // n'ont besoin d'aucun champ supplementaire : l'interface est fixe.
+    default:
+      return true;
+  }
+}
+
 export function getMixedQuestions(count: number, categories: string[] = [], questionTypes: string[] = [], excludeIds: number[] = []): Question[] {
   // Build filters
   const hasCategories = categories.length > 0;
@@ -160,7 +192,8 @@ export function getMixedQuestions(count: number, categories: string[] = [], ques
     [selectedQuestions[i], selectedQuestions[j]] = [selectedQuestions[j], selectedQuestions[i]];
   }
 
-  return selectedQuestions.slice(0, count);
+  // Filet final : aucune question injouable ne sort d'ici.
+  return selectedQuestions.filter(isPlayable).slice(0, count);
 }
 
 export function createQuestion(question: Omit<Question, 'id' | 'active'>): Question {
