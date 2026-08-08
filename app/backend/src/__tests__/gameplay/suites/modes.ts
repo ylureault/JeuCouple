@@ -19,18 +19,18 @@ export interface ModeCfg {
 }
 
 export const MODES: ModeCfg[] = [
-  { id: 'classic', label: 'Partie classique', questionTypes: ['E'], questionCount: 8, revealSeconds: 7 },
-  { id: 'duel', label: 'Duel sans fin', questionTypes: ['E'], revealSeconds: 7 },
-  { id: 'escalade', label: 'Escalade', questionTypes: ['E'], revealSeconds: 7 },
-  { id: 'complices', label: 'Complices', questionTypes: ['E'], revealSeconds: 7 },
-  { id: 'sudden_death', label: 'Mort subite', questionTypes: ['E'], revealSeconds: 7 },
+  { id: 'classic', label: 'Partie classique', questionTypes: ['E'], questionCount: 8, revealSeconds: 9 },
+  { id: 'duel', label: 'Duel sans fin', questionTypes: ['E'], revealSeconds: 9 },
+  { id: 'escalade', label: 'Escalade', questionTypes: ['E'], revealSeconds: 9 },
+  { id: 'complices', label: 'Complices', questionTypes: ['E'], revealSeconds: 9 },
+  { id: 'sudden_death', label: 'Mort subite', questionTypes: ['E'], revealSeconds: 9 },
   // Le mode "a l'envers" fabrique ses manches a partir de questions a options :
   // seuls les types A et B en portent, d'ou la restriction.
-  { id: 'inverse', label: "A l'envers", questionTypes: ['A', 'B'], revealSeconds: 7 },
-  { id: 'envies', label: 'Envies express', questionTypes: ['S'], revealSeconds: 7 },
+  { id: 'inverse', label: "A l'envers", questionTypes: ['A', 'B'], revealSeconds: 9 },
+  { id: 'envies', label: 'Envies express', questionTypes: ['S'], revealSeconds: 9 },
   // Les 20 questions "petits noms" sont toutes de type C : revelation a 14 s.
-  { id: 'petits_noms', label: 'Petits noms', questionTypes: ['C'], revealSeconds: 14 },
-  { id: 'mix', label: 'Mix total', questionTypes: ['E'], revealSeconds: 7 },
+  { id: 'petits_noms', label: 'Petits noms', questionTypes: ['C'], revealSeconds: 16 },
+  { id: 'mix', label: 'Mix total', questionTypes: ['E'], revealSeconds: 9 },
   // Le quiz express impose lui-meme son perimetre (culture / type H) et
   // raccourcit la revelation a 4 s : c'est son identite.
   { id: 'quiz_express', label: 'Quiz Express', questionTypes: ['H'], categories: ['culture'], questionCount: 8, revealSeconds: 4 },

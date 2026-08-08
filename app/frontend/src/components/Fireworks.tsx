@@ -86,30 +86,14 @@ export default function Fireworks({ show = true, onComplete }: FireworksProps) {
               transition={{ duration: 2, ease: 'easeOut' }}
             />
           ))}
-          <motion.div
-            className="absolute inset-0 flex items-center justify-center"
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.5 }}
-            transition={{ delay: 0.3 }}
-          >
-            <div className="text-center">
-              <motion.span
-                className="text-6xl md:text-8xl block"
-                animate={{ rotate: [0, -5, 5, 0], scale: [1, 1.1, 1] }}
-                transition={{ duration: 0.5, repeat: 3 }}
-              >
-                🎆
-              </motion.span>
-              <motion.p
-                className="text-white font-black text-3xl md:text-5xl mt-4 text-shadow-strong"
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 0.5, repeat: Infinity }}
-              >
-                PARFAIT !
-              </motion.p>
-            </div>
-          </motion.div>
+          {/*
+            Le bandeau « 🎆 PARFAIT ! » s'affichait au centre de l'ecran en
+            text-5xl pendant 2,5 s des 5 s de revelation — pile par-dessus les
+            deux reponses, la seule chose que le couple vient lire. Il ne
+            disait rien de plus que la banniere verte juste en dessous
+            (« Vous pensez pareil ! »). Les particules restent, elles passent
+            sans rien cacher ; le pave de texte part.
+          */}
         </div>
       )}
     </AnimatePresence>

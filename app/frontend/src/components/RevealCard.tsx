@@ -334,11 +334,329 @@ export default function RevealCard({
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-white/10 backdrop-blur rounded-lg p-2 mb-1"
+        className="bg-white/10 backdrop-blur rounded-lg px-2 py-1.5 mb-1.5"
       >
         <p className="text-white/90 text-sm text-center font-medium leading-tight">
           {question.text}
         </p>
+      </motion.div>
+
+      {/*
+         LES DEUX REPONSES, TOUT EN HAUT.
+         Elles etaient en bas de l'ecran, sous la banniere de resultat, ses
+         confettis, son compteur de points et ses badges de bonus : sur un
+         telephone de 667 px, elles tombaient a 718 px — derriere la barre de
+         chat, invisibles, pour une revelation qui ne dure que 5 s. Or c'est
+         la seule chose que le couple vient lire. Elles passent donc avant
+         tout le reste, et le decor descend.
+      */}
+      {/* Answers comparison */}
+      <div className="grid grid-cols-2 gap-2">
+        <AnswerBlock
+          name={player1Name}
+          answer={answer1}
+          isYou={playerId === 1}
+          highlighted={highlightAnswers}
+          questionType={questionType}
+          delay={0.4}
+          emoji={player1Gender === 'M' ? '👨' : '👩'}
+          answerTime={answerTime1}
+          speedBonus={speedBonus1}
+          question={question}
+          player1Name={player1Name}
+          player2Name={player2Name}
+        />
+        <AnswerBlock
+          name={player2Name}
+          answer={answer2}
+          isYou={playerId === 2}
+          highlighted={highlightAnswers}
+          questionType={questionType}
+          delay={0.5}
+          emoji={player2Gender === 'F' ? '👩' : '👨'}
+          answerTime={answerTime2}
+          speedBonus={speedBonus2}
+          question={question}
+          player1Name={player1Name}
+          player2Name={player2Name}
+        />
+      </div>
+
+      {/* Scale visualization for type D */}
+      {questionType === 'D' && answer1 && answer2 && (
+        <ScaleComparison
+          value1={parseInt(answer1, 10)}
+          value2={parseInt(answer2, 10)}
+          player1Name={player1Name}
+          player2Name={player2Name}
+        />
+      )}
+
+
+      {/* Streak badge */}
+      {myStreak >= 2 && outcome === 'match' && (
+        <div className="flex justify-center mb-2">
+          <StreakBadge streak={myStreak} />
+        </div>
+      )}
+
+      {/* Animator message */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg px-3 py-1.5 text-center"
+      >
+        <p className="text-white font-bold text-sm sm:text-base" data-test="commentaire">
+          {animatorMessage}
+        </p>
+      </motion.div>
+
+      {/* Secousse du desaccord. Une manche blanche ne secoue rien : personne
+          n'a rate quoi que ce soit. */}
+      <motion.div
+        animate={outcome === 'no-match' && questionType !== 'C' ? {
+          x: [0, -15, 15, -10, 10, -5, 5, 0],
+          transition: { duration: 0.5 }
+        } : {}}
+      >
+        {/* Result banner */}
+        <motion.div
+          initial={{ scale: 0, rotate: -180, y: -50 }}
+          animate={{ scale: 1, rotate: 0, y: 0 }}
+          transition={{ type: 'spring', damping: 12, stiffness: 100 }}
+          className={`
+            rounded-xl p-2.5 text-center shadow-xl relative overflow-hidden
+            ${questionType !== 'C' && questionType !== 'H' ? verdict.banner : ''}
+            ${questionType === 'C' ? 'bg-gradient-to-br from-[#9c27b0] to-[#6a1b7a]' : ''}
+            ${questionType === 'H' ? 'bg-gradient-to-br from-[#673ab7] to-[#512da8]' : ''}
+          `}
+        >
+          {/* Animated background shimmer */}
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+            animate={{ x: ['-200%', '200%'] }}
+            transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
+          />
+
+          {questionType !== 'C' && questionType !== 'H' && (
+            <div className="relative z-10">
+              {/* Main emoji with dramatic entrance */}
+              <motion.div
+                initial={{ scale: 0, rotate: -360 }}
+                animate={{
+                  scale: [0, 1.3, 1],
+                  rotate: [0, 180, 0]
+                }}
+                transition={{
+                  duration: 0.6,
+                  times: [0, 0.6, 1],
+                  type: 'spring',
+                  damping: 10
+                }}
+                className="text-3xl mb-0.5"
+                data-test="verdict-emoji"
+              >
+                <motion.span
+                  animate={verdict.celebrate ? {
+                    scale: [1, 1.15, 1],
+                    rotate: [0, 8, -8, 0]
+                  } : {}}
+                  transition={{ duration: 0.5, repeat: verdict.celebrate ? Infinity : 0, repeatDelay: 1 }}
+                >
+                  {verdict.emoji}
+                </motion.span>
+              </motion.div>
+
+              {/* Title with typing effect */}
+              <motion.h2
+                initial={{ y: 30, opacity: 0, scale: 0.5 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3, type: 'spring', damping: 15 }}
+                className="text-lg sm:text-xl font-black text-white mb-1 text-shadow-strong"
+                data-test="verdict-titre"
+              >
+                {/* Meme source que l'emoji et que la couleur du bandeau : ils
+                    ne peuvent plus se contredire. */}
+                {verdict.title}
+              </motion.h2>
+
+              {/* Manche blanche : on explique, sans reproche ni celebration. */}
+              {outcome === 'no-answer' && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-white/75 text-sm"
+                >
+                  Aucune réponse des deux côtés — pas de verdict pour cette manche.
+                </motion.p>
+              )}
+
+              {/* Points counter with dramatic animation */}
+              {myPoints > 0 && (
+                <motion.div
+                  initial={{ scale: 0, y: 30 }}
+                  animate={{ scale: 1, y: 0 }}
+                  transition={{ delay: 0.5, type: 'spring', stiffness: 200 }}
+                  className="inline-block relative"
+                >
+                  <motion.div
+                    className="bg-white/20 backdrop-blur rounded-full px-3 py-0.5 relative overflow-hidden"
+                    animate={{
+                      boxShadow: [
+                        '0 0 0 0 rgba(255,255,255,0.4)',
+                        '0 0 0 15px rgba(255,255,255,0)',
+                      ]
+                    }}
+                    transition={{ duration: 1, repeat: 2 }}
+                  >
+                    <motion.span
+                      className="text-lg font-black text-white"
+                      key={countedPoints}
+                      animate={{ scale: [1, 1.15, 1] }}
+                      transition={{ duration: 0.1 }}
+                    >
+                      +{countedPoints} pts
+                    </motion.span>
+                  </motion.div>
+
+                  {/* Sparkle effects around points */}
+                  {[...Array(4)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute text-lg"
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{
+                        opacity: [0, 1, 0],
+                        scale: [0, 1, 0],
+                        x: [0, (i % 2 ? 1 : -1) * 30],
+                        y: [0, (i < 2 ? -1 : 1) * 20]
+                      }}
+                      transition={{ delay: 0.7 + i * 0.1, duration: 0.5 }}
+                      style={{
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)'
+                      }}
+                    >
+                      ✨
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+
+              {/* Bonus breakdown */}
+              {hasBonus && myPoints > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 }}
+                  className="flex flex-wrap justify-center gap-1 mt-2"
+                >
+                  <span className="bg-white/20 rounded-full px-2 py-0.5 text-white/80 text-xs font-semibold">
+                    Base: {basePoints}
+                  </span>
+                  {mySpeedBonus > 0 && (
+                    <SpeedBonusBadge bonus={mySpeedBonus} time={myAnswerTime} />
+                  )}
+                  {myStreakBonus > 0 && (
+                    <span className="bg-orange-500/80 rounded-full px-2 py-0.5 text-white text-xs font-bold">
+                      🔥 +{myStreakBonus}
+                    </span>
+                  )}
+                </motion.div>
+              )}
+            </div>
+          )}
+
+          {questionType === 'C' && (
+            <div className="relative z-10">
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', damping: 10 }}
+                className="text-3xl mb-1"
+              >
+                💬
+              </motion.div>
+              <motion.h2
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-xl font-black text-white"
+              >
+                Comparez vos réponses !
+              </motion.h2>
+              {basePoints > 0 && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-white/80 mt-1 text-sm"
+                >
+                  +{basePoints} points pour vos réponses !
+                </motion.p>
+              )}
+            </div>
+          )}
+
+          {questionType === 'H' && (
+            <div className="relative z-10">
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', damping: 10 }}
+                className="text-3xl mb-1"
+              >
+                🧠
+              </motion.div>
+              <motion.h2
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-xl font-black text-white mb-2"
+              >
+                Culture Générale
+              </motion.h2>
+
+              {/* Correct answer */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.4 }}
+                className="bg-white/20 backdrop-blur rounded-lg p-2 mb-2"
+              >
+                <p className="text-white/70 text-xs">Bonne réponse :</p>
+                <p className="text-white font-bold text-base">{correctAnswer}</p>
+              </motion.div>
+
+              {/* Individual results */}
+              <div className="grid grid-cols-2 gap-2">
+                <motion.div
+                  initial={{ opacity: 0, x: -15 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className={`rounded-lg p-2 ${answer1 === correctAnswer ? 'bg-green-500/30' : 'bg-red-500/30'}`}
+                >
+                  <p className="text-white/70 text-xs">{player1Name}</p>
+                  <p className="text-xl">{answer1 === correctAnswer ? '✅' : '❌'}</p>
+                  <p className="text-white font-bold text-sm">+{points1} pts</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: 15 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className={`rounded-lg p-2 ${answer2 === correctAnswer ? 'bg-green-500/30' : 'bg-red-500/30'}`}
+                >
+                  <p className="text-white/70 text-xs">{player2Name}</p>
+                  <p className="text-xl">{answer2 === correctAnswer ? '✅' : '❌'}</p>
+                  <p className="text-white font-bold text-sm">+{points2} pts</p>
+                </motion.div>
+              </div>
+            </div>
+          )}
+        </motion.div>
       </motion.div>
 
       {/* Kahoot-style Scoreboard */}
@@ -432,320 +750,12 @@ export default function RevealCard({
         </div>
       </motion.div>
 
-      {/* Streak badge */}
-      {myStreak >= 2 && outcome === 'match' && (
-        <div className="flex justify-center mb-2">
-          <StreakBadge streak={myStreak} />
-        </div>
-      )}
-
-      {/* Animator message */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg p-3 text-center"
-      >
-        <p className="text-white font-bold text-sm sm:text-base" data-test="commentaire">
-          {animatorMessage}
-        </p>
-      </motion.div>
-
-      {/* Secousse du desaccord. Une manche blanche ne secoue rien : personne
-          n'a rate quoi que ce soit. */}
-      <motion.div
-        animate={outcome === 'no-match' && questionType !== 'C' ? {
-          x: [0, -15, 15, -10, 10, -5, 5, 0],
-          transition: { duration: 0.5 }
-        } : {}}
-      >
-        {/* Result banner */}
-        <motion.div
-          initial={{ scale: 0, rotate: -180, y: -50 }}
-          animate={{ scale: 1, rotate: 0, y: 0 }}
-          transition={{ type: 'spring', damping: 12, stiffness: 100 }}
-          className={`
-            rounded-xl p-3 sm:p-4 text-center shadow-xl relative overflow-hidden
-            ${questionType !== 'C' && questionType !== 'H' ? verdict.banner : ''}
-            ${questionType === 'C' ? 'bg-gradient-to-br from-[#9c27b0] to-[#6a1b7a]' : ''}
-            ${questionType === 'H' ? 'bg-gradient-to-br from-[#673ab7] to-[#512da8]' : ''}
-          `}
-        >
-          {/* Animated background shimmer */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-            animate={{ x: ['-200%', '200%'] }}
-            transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
-          />
-
-          {questionType !== 'C' && questionType !== 'H' && (
-            <div className="relative z-10">
-              {/* Main emoji with dramatic entrance */}
-              <motion.div
-                initial={{ scale: 0, rotate: -360 }}
-                animate={{
-                  scale: [0, 1.3, 1],
-                  rotate: [0, 180, 0]
-                }}
-                transition={{
-                  duration: 0.6,
-                  times: [0, 0.6, 1],
-                  type: 'spring',
-                  damping: 10
-                }}
-                className="text-4xl mb-1"
-                data-test="verdict-emoji"
-              >
-                <motion.span
-                  animate={verdict.celebrate ? {
-                    scale: [1, 1.15, 1],
-                    rotate: [0, 8, -8, 0]
-                  } : {}}
-                  transition={{ duration: 0.5, repeat: verdict.celebrate ? Infinity : 0, repeatDelay: 1 }}
-                >
-                  {verdict.emoji}
-                </motion.span>
-              </motion.div>
-
-              {/* Title with typing effect */}
-              <motion.h2
-                initial={{ y: 30, opacity: 0, scale: 0.5 }}
-                animate={{ y: 0, opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3, type: 'spring', damping: 15 }}
-                className="text-xl sm:text-2xl font-black text-white mb-2 text-shadow-strong"
-                data-test="verdict-titre"
-              >
-                {/* Meme source que l'emoji et que la couleur du bandeau : ils
-                    ne peuvent plus se contredire. */}
-                {verdict.title}
-              </motion.h2>
-
-              {/* Manche blanche : on explique, sans reproche ni celebration. */}
-              {outcome === 'no-answer' && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="text-white/75 text-sm"
-                >
-                  Aucune réponse des deux côtés — pas de verdict pour cette manche.
-                </motion.p>
-              )}
-
-              {/* Points counter with dramatic animation */}
-              {myPoints > 0 && (
-                <motion.div
-                  initial={{ scale: 0, y: 30 }}
-                  animate={{ scale: 1, y: 0 }}
-                  transition={{ delay: 0.5, type: 'spring', stiffness: 200 }}
-                  className="inline-block relative"
-                >
-                  <motion.div
-                    className="bg-white/20 backdrop-blur rounded-full px-4 py-1 relative overflow-hidden"
-                    animate={{
-                      boxShadow: [
-                        '0 0 0 0 rgba(255,255,255,0.4)',
-                        '0 0 0 15px rgba(255,255,255,0)',
-                      ]
-                    }}
-                    transition={{ duration: 1, repeat: 2 }}
-                  >
-                    <motion.span
-                      className="text-xl font-black text-white"
-                      key={countedPoints}
-                      animate={{ scale: [1, 1.15, 1] }}
-                      transition={{ duration: 0.1 }}
-                    >
-                      +{countedPoints} pts
-                    </motion.span>
-                  </motion.div>
-
-                  {/* Sparkle effects around points */}
-                  {[...Array(4)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      className="absolute text-lg"
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{
-                        opacity: [0, 1, 0],
-                        scale: [0, 1, 0],
-                        x: [0, (i % 2 ? 1 : -1) * 30],
-                        y: [0, (i < 2 ? -1 : 1) * 20]
-                      }}
-                      transition={{ delay: 0.7 + i * 0.1, duration: 0.5 }}
-                      style={{
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)'
-                      }}
-                    >
-                      ✨
-                    </motion.div>
-                  ))}
-                </motion.div>
-              )}
-
-              {/* Bonus breakdown */}
-              {hasBonus && myPoints > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8 }}
-                  className="flex flex-wrap justify-center gap-1 mt-2"
-                >
-                  <span className="bg-white/20 rounded-full px-2 py-0.5 text-white/80 text-xs font-semibold">
-                    Base: {basePoints}
-                  </span>
-                  {mySpeedBonus > 0 && (
-                    <SpeedBonusBadge bonus={mySpeedBonus} time={myAnswerTime} />
-                  )}
-                  {myStreakBonus > 0 && (
-                    <span className="bg-orange-500/80 rounded-full px-2 py-0.5 text-white text-xs font-bold">
-                      🔥 +{myStreakBonus}
-                    </span>
-                  )}
-                </motion.div>
-              )}
-            </div>
-          )}
-
-          {questionType === 'C' && (
-            <div className="relative z-10">
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', damping: 10 }}
-                className="text-4xl mb-2"
-              >
-                💬
-              </motion.div>
-              <motion.h2
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-xl font-black text-white"
-              >
-                Comparez vos réponses !
-              </motion.h2>
-              {basePoints > 0 && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                  className="text-white/80 mt-1 text-sm"
-                >
-                  +{basePoints} points pour vos réponses !
-                </motion.p>
-              )}
-            </div>
-          )}
-
-          {questionType === 'H' && (
-            <div className="relative z-10">
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', damping: 10 }}
-                className="text-4xl mb-2"
-              >
-                🧠
-              </motion.div>
-              <motion.h2
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-xl font-black text-white mb-2"
-              >
-                Culture Générale
-              </motion.h2>
-
-              {/* Correct answer */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.4 }}
-                className="bg-white/20 backdrop-blur rounded-lg p-2 mb-2"
-              >
-                <p className="text-white/70 text-xs">Bonne réponse :</p>
-                <p className="text-white font-bold text-base">{correctAnswer}</p>
-              </motion.div>
-
-              {/* Individual results */}
-              <div className="grid grid-cols-2 gap-2">
-                <motion.div
-                  initial={{ opacity: 0, x: -15 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className={`rounded-lg p-2 ${answer1 === correctAnswer ? 'bg-green-500/30' : 'bg-red-500/30'}`}
-                >
-                  <p className="text-white/70 text-xs">{player1Name}</p>
-                  <p className="text-xl">{answer1 === correctAnswer ? '✅' : '❌'}</p>
-                  <p className="text-white font-bold text-sm">+{points1} pts</p>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, x: 15 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 }}
-                  className={`rounded-lg p-2 ${answer2 === correctAnswer ? 'bg-green-500/30' : 'bg-red-500/30'}`}
-                >
-                  <p className="text-white/70 text-xs">{player2Name}</p>
-                  <p className="text-xl">{answer2 === correctAnswer ? '✅' : '❌'}</p>
-                  <p className="text-white font-bold text-sm">+{points2} pts</p>
-                </motion.div>
-              </div>
-            </div>
-          )}
-        </motion.div>
-      </motion.div>
-
-      {/* Answers comparison */}
-      <div className="grid grid-cols-2 gap-2">
-        <AnswerBlock
-          name={player1Name}
-          answer={answer1}
-          isYou={playerId === 1}
-          highlighted={highlightAnswers}
-          questionType={questionType}
-          delay={0.4}
-          emoji={player1Gender === 'M' ? '👨' : '👩'}
-          answerTime={answerTime1}
-          speedBonus={speedBonus1}
-          question={question}
-          player1Name={player1Name}
-          player2Name={player2Name}
-        />
-        <AnswerBlock
-          name={player2Name}
-          answer={answer2}
-          isYou={playerId === 2}
-          highlighted={highlightAnswers}
-          questionType={questionType}
-          delay={0.5}
-          emoji={player2Gender === 'F' ? '👩' : '👨'}
-          answerTime={answerTime2}
-          speedBonus={speedBonus2}
-          question={question}
-          player1Name={player1Name}
-          player2Name={player2Name}
-        />
-      </div>
-
-      {/* Scale visualization for type D */}
-      {questionType === 'D' && answer1 && answer2 && (
-        <ScaleComparison
-          value1={parseInt(answer1, 10)}
-          value2={parseInt(answer2, 10)}
-          player1Name={player1Name}
-          player2Name={player2Name}
-        />
-      )}
-
       {/* Fake quote */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.5 }}
-        className="bg-white/5 rounded-lg p-3 text-center"
+        className="bg-white/5 rounded-lg px-3 py-1.5 text-center"
       >
         <p className="text-white/70 text-sm italic" data-test="citation">
           "{fakeQuote.text}"
@@ -853,7 +863,7 @@ function AnswerBlock({
       animate={{ x: 0, opacity: 1, scale: 1 }}
       transition={{ delay, type: 'spring', damping: 15, stiffness: 100 }}
       className={`
-        bg-white rounded-lg p-2 shadow-lg relative overflow-hidden
+        bg-white rounded-xl p-2.5 shadow-xl relative overflow-hidden
         ${highlighted ? 'ring-2 ring-[#26890c]' : ''}
       `}
     >

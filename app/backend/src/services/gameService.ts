@@ -2085,8 +2085,14 @@ function resolvePalierConsent(
 // Cadence (demande utilisateur : "faut que ca cadence bien").
 // 10 s figees apres CHAQUE revelation trainaient sur les questions binaires
 // et manquaient sur les reponses libres a comparer.
-const REVEAL_SECONDS_DEFAULT = 7;   // binaires, QCM, echelles : vite lu
-const REVEAL_SECONDS_TEXT = 14;     // type C : deux textes a lire et commenter
+// Ces durees sont du TEMPS DE LECTURE, pas du remplissage : c'est la seule
+// fenetre ou le couple compare ce que chacun a repondu. Sept secondes
+// paraissaient suffisantes sur le papier ; en partie reelle, la banniere de
+// celebration en mangeait deja deux et demie, et il fallait faire defiler pour
+// atteindre les reponses. Les deux defauts sont corriges, et la fenetre est
+// elargie : mieux vaut une seconde de trop que la manche suivante par-dessus.
+const REVEAL_SECONDS_DEFAULT = 9;   // binaires, QCM, echelles : deux mots a lire
+const REVEAL_SECONDS_TEXT = 16;     // type C : deux textes a lire et commenter
 /**
  * La cadence n'est pas qu'une affaire de type de question : elle fait partie de
  * l'identite de certains modes. Le quiz express perdrait son nerf avec 7 s de

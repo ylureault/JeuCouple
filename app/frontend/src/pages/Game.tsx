@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '../context/GameContext';
@@ -64,6 +64,29 @@ export default function Game() {
   const [showIntro, setShowIntro] = useState(true);
   const [introStep, setIntroStep] = useState<'number' | 'category' | 'question'>('number');
 
+  /**
+   * Hauteur reelle de la barre du bas (chat + reactions), mesuree.
+   *
+   * Elle est en `position: fixed`, donc elle ne pousse rien : le contenu passe
+   * DESSOUS. La zone de jeu se contentait d'un `pb-16` (64 px) pour une barre
+   * qui en fait une centaine, et qui grandit encore quand le chat se deplie.
+   * Resultat constate a la revelation sur un telephone de 667 px : les deux
+   * reponses tombaient a 718 px, cachees derriere la barre, pour un ecran qui
+   * ne dure que 5 s. On mesure au lieu de deviner.
+   */
+  const barreRef = useRef<HTMLDivElement>(null);
+  const [hauteurBarre, setHauteurBarre] = useState(112);
+
+  useEffect(() => {
+    const el = barreRef.current;
+    if (!el) return;
+    const observateur = new ResizeObserver(([entree]) => {
+      setHauteurBarre(Math.ceil(entree.target.getBoundingClientRect().height));
+    });
+    observateur.observe(el);
+    return () => observateur.disconnect();
+  }, []);
+
   // Ambiance de partie. Le generateur existait deja mais n'etait branche
   // nulle part : les parties se deroulaient en silence complet.
   useEffect(() => {
@@ -92,29 +115,45 @@ export default function Game() {
     }
   }, [phase, finalResults, navigate, room?.code]);
 
+  /**
+   * Ceremonie d'ouverture — reservee a la phase de question.
+   *
+   * Elle se declenchait sur l'IDENTITE de l'objet question. Or la revelation
+   * reconstruit cet objet : la ceremonie repartait donc PAR-DESSUS le
+   * resultat. Mesure en partie reelle : une bande « Préparez-vous… » de 102 px
+   * en tete de la zone de jeu pendant la revelation, qui poussait les deux
+   * reponses vers le bas — le joueur voyait un grand vide, puis la question
+   * suivante arrivait sans qu'il ait rien pu comparer.
+   *
+   * On se declenche donc sur le NUMERO de manche, et jamais hors de la phase
+   * de question.
+   */
   useEffect(() => {
-    if (currentQuestion) {
-      setShowIntro(true);
-      setIntroStep('number');
-      playSound('reveal');
-
-      // Cadence : une seule duree de ceremonie, celle que le serveur connait
-      // (OUVERTURE_MANCHE_MS). Elle valait 3 s a la premiere question et 1,7 s
-      // ensuite, pendant que le chrono tournait deja : le joueur perdait ce
-      // temps-la sans avoir vu la question. Le serveur decale maintenant le
-      // depart du chrono d'exactement cette valeur — la changer ici sans la
-      // changer la-bas remettrait le decalage.
-      const step1 = setTimeout(() => setIntroStep('category'), OUVERTURE_MANCHE_MS * 0.26);
-      const step2 = setTimeout(() => setIntroStep('question'), OUVERTURE_MANCHE_MS * 0.53);
-      const step3 = setTimeout(() => setShowIntro(false), OUVERTURE_MANCHE_MS);
-
-      return () => {
-        clearTimeout(step1);
-        clearTimeout(step2);
-        clearTimeout(step3);
-      };
+    if (!currentQuestion || phase !== 'question') {
+      setShowIntro(false);
+      return;
     }
-  }, [currentQuestion, playSound]);
+
+    setShowIntro(true);
+    setIntroStep('number');
+    playSound('reveal');
+
+    // Cadence : une seule duree de ceremonie, celle que le serveur connait
+    // (OUVERTURE_MANCHE_MS). Elle valait 3 s a la premiere question et 1,7 s
+    // ensuite, pendant que le chrono tournait deja : le joueur perdait ce
+    // temps-la sans avoir vu la question. Le serveur decale maintenant le
+    // depart du chrono d'exactement cette valeur — la changer ici sans la
+    // changer la-bas remettrait le decalage.
+    const step1 = setTimeout(() => setIntroStep('category'), OUVERTURE_MANCHE_MS * 0.26);
+    const step2 = setTimeout(() => setIntroStep('question'), OUVERTURE_MANCHE_MS * 0.53);
+    const step3 = setTimeout(() => setShowIntro(false), OUVERTURE_MANCHE_MS);
+
+    return () => {
+      clearTimeout(step1);
+      clearTimeout(step2);
+      clearTimeout(step3);
+    };
+  }, [currentQuestion?.id, questionNumber, phase, playSound]);
 
   /**
    * B3 — le decompte se DEDUIT de l'echeance envoyee par le serveur.
@@ -386,7 +425,10 @@ export default function Game() {
       </motion.div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-start p-2 sm:p-4 pb-16 overflow-y-auto">
+      <div
+        className="flex-1 flex flex-col items-center justify-start p-2 sm:p-4 overflow-y-auto"
+        style={{ paddingBottom: hauteurBarre + 8 }}
+      >
         {/* PAS de `mode="wait"` ici.
             Avec lui, AnimatePresence n'introduit l'ecran suivant qu'une fois la
             SORTIE du precedent terminee. Or les phases s'enchainent parfois en
@@ -399,7 +441,9 @@ export default function Game() {
             meme correctif que celui deja applique au salon. */}
         <AnimatePresence>
           {/* INTRO SEQUENCE */}
-          {showIntro && (
+          {/* Double garde : la ceremonie ne s'affiche jamais hors de la phase
+              de question, meme si un etat tardif rallumait `showIntro`. */}
+          {showIntro && phase === 'question' && (
             <motion.div
               key="intro"
               className="text-center w-full"
@@ -703,6 +747,7 @@ export default function Game() {
 
       {/* Fixed Reaction Bar at bottom - always visible during game */}
       <motion.div
+        ref={barreRef}
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         className="fixed bottom-0 left-0 right-0 bg-black/45 backdrop-blur-xl pt-2 px-2 border-t border-white/10 z-40 space-y-1.5 safe-bottom"

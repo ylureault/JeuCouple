@@ -162,13 +162,13 @@ describe('Cadence de la revelation', () => {
   const tousLesTypes: QuestionType[] =
     ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
 
-  it('laisse 14 secondes pour lire deux reponses libres (type C)', () => {
-    expect(revealSeconds('C')).toBe(14);
+  it('laisse 16 secondes pour lire deux reponses libres (type C)', () => {
+    expect(revealSeconds('C')).toBe(16);
   });
 
   for (const type of tousLesTypes.filter(t => t !== 'C')) {
-    it(`enchaine en 7 secondes apres une question de type ${type}`, () => {
-      expect(revealSeconds(type)).toBe(7);
+    it(`enchaine en 9 secondes apres une question de type ${type}`, () => {
+      expect(revealSeconds(type)).toBe(9);
     });
   }
 
